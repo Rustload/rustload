@@ -1,0 +1,16 @@
+/target
+/.dev*
+/config
+/downloads
+*.log
+
+web/node_modules
+web/dist
+
+# Packaged browser extension (see extension/README.md)
+/dist
+/*.zip
+
+.DS_Store
+.idea
+.vscode

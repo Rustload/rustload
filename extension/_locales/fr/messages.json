@@ -1,0 +1,715 @@
+{
+  "localeCode": {
+    "message": "fr"
+  },
+  "extName": {
+    "message": "Rustload"
+  },
+  "extDescription": {
+    "message": "Envoyez liens, magnets et pages à votre gestionnaire de téléchargement Rustload et suivez les transferts en direct."
+  },
+  "menuSendLink": {
+    "message": "Envoyer le lien à Rustload"
+  },
+  "menuSendSelection": {
+    "message": "Envoyer les liens sélectionnés à Rustload"
+  },
+  "menuSendPageLinks": {
+    "message": "Envoyer les liens de cette page…"
+  },
+  "menuSendPage": {
+    "message": "Envoyer cette page à Rustload"
+  },
+  "unitB": {
+    "message": "o"
+  },
+  "unitKiB": {
+    "message": "Kio"
+  },
+  "unitMiB": {
+    "message": "Mio"
+  },
+  "unitGiB": {
+    "message": "Gio"
+  },
+  "unitTiB": {
+    "message": "Tio"
+  },
+  "perSecond": {
+    "message": "$VALUE$/s",
+    "placeholders": {
+      "value": {
+        "content": "$1"
+      }
+    }
+  },
+  "durDay": {
+    "message": "$N$ j",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durHour": {
+    "message": "$N$ h",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durMinute": {
+    "message": "$N$ min",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durSecond": {
+    "message": "$N$ s",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings": {
+    "message": "Paramètres"
+  },
+  "openSettings": {
+    "message": "Ouvrir les paramètres"
+  },
+  "openRustload": {
+    "message": "Ouvrir Rustload"
+  },
+  "pauseAll": {
+    "message": "Tout mettre en pause"
+  },
+  "resumeAll": {
+    "message": "Tout reprendre"
+  },
+  "add": {
+    "message": "Ajouter"
+  },
+  "addTitle": {
+    "message": "Ajouter à la file (Ctrl+Entrée)"
+  },
+  "retry": {
+    "message": "Réessayer"
+  },
+  "close": {
+    "message": "Fermer"
+  },
+  "categoryAuto": {
+    "message": "Automatique (par extension)"
+  },
+  "addPausedShort": {
+    "message": "En pause"
+  },
+  "addPausedTitle": {
+    "message": "Ajouter sans démarrer le téléchargement"
+  },
+  "sentLinks_one": {
+    "message": "$COUNT$ lien envoyé à Rustload",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentLinks_other": {
+    "message": "$COUNT$ liens envoyés à Rustload",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentPackages_one": {
+    "message": "$COUNT$ paquet ajouté",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentPackages_other": {
+    "message": "$COUNT$ paquets ajoutés",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "morePackages_one": {
+    "message": "$NAME$ et $COUNT$ autre paquet",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "morePackages_other": {
+    "message": "$NAME$ et $COUNT$ autres paquets",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "totalSpeed": {
+    "message": "Vitesse de téléchargement totale"
+  },
+  "statusPaused": {
+    "message": "Tout est en pause"
+  },
+  "statusScheduleClosed": {
+    "message": "Hors de la plage horaire"
+  },
+  "statusIdle": {
+    "message": "Au repos"
+  },
+  "statusRunning_one": {
+    "message": "$COUNT$ téléchargement en cours",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusRunning_other": {
+    "message": "$COUNT$ téléchargements en cours",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWaiting_one": {
+    "message": "$COUNT$ en attente",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWaiting_other": {
+    "message": "$COUNT$ en attente",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "connLive": {
+    "message": "Connecté à $HOST$, mises à jour en direct",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "connPolling": {
+    "message": "Connecté à $HOST$, actualisé toutes les 2 secondes (direct indisponible)",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "connectingTitle": {
+    "message": "Connexion…"
+  },
+  "sectionActive": {
+    "message": "En cours"
+  },
+  "rowResolving": {
+    "message": "Résolution du lien"
+  },
+  "rowRemote": {
+    "message": "Traitement distant"
+  },
+  "rowExtracting": {
+    "message": "Extraction"
+  },
+  "rowVerifying": {
+    "message": "Vérification"
+  },
+  "rowRemoteSpeed": {
+    "message": "distant $SPEED$",
+    "placeholders": {
+      "speed": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyTitle": {
+    "message": "Aucun téléchargement en cours"
+  },
+  "emptyBody": {
+    "message": "Collez des liens ci-dessous, ou faites un clic droit sur un lien dans une page."
+  },
+  "emptyQueued_one": {
+    "message": "$COUNT$ fichier attend dans la file.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyQueued_other": {
+    "message": "$COUNT$ fichiers attendent dans la file.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pasteLabel": {
+    "message": "Liens à ajouter"
+  },
+  "pastePlaceholder": {
+    "message": "Collez des liens ou des magnets"
+  },
+  "detectedLinks_one": {
+    "message": "$COUNT$ lien",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedLinks_other": {
+    "message": "$COUNT$ liens",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedMagnets_one": {
+    "message": "$COUNT$ magnet",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedMagnets_other": {
+    "message": "$COUNT$ magnets",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedNone": {
+    "message": "Aucun lien reconnu pour l’instant"
+  },
+  "pageLinks": {
+    "message": "Liens de la page"
+  },
+  "pageLinksTitle": {
+    "message": "Choisir des liens dans la page actuelle"
+  },
+  "pageLinksUnavailable": {
+    "message": "Le navigateur ne permet pas aux extensions de lire cette page."
+  },
+  "setupTitle": {
+    "message": "Connectez votre Rustload"
+  },
+  "setupBody": {
+    "message": "Saisissez une fois l’adresse de votre serveur et la clé d’API. La clé se trouve dans Rustload, sous Paramètres → Intégrations."
+  },
+  "permissionTitle": {
+    "message": "Accès à votre serveur nécessaire"
+  },
+  "permissionBody": {
+    "message": "Votre navigateur n’a pas encore autorisé l’extension à joindre $HOST$. Enregistrez à nouveau les paramètres pour accorder l’accès.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "unreachableTitle": {
+    "message": "Rustload injoignable"
+  },
+  "authTitle": {
+    "message": "Clé d’API refusée"
+  },
+  "refusedTitle": {
+    "message": "Requête refusée"
+  },
+  "notRustloadTitle": {
+    "message": "Ce n’est pas un serveur Rustload"
+  },
+  "serverErrorTitle": {
+    "message": "Rustload a renvoyé une erreur"
+  },
+  "errUnconfigured": {
+    "message": "Indiquez d’abord l’adresse du serveur."
+  },
+  "errPermission": {
+    "message": "Le navigateur n’a pas autorisé l’accès à $HOST$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "errUnreachable": {
+    "message": "Aucune réponse de $URL$. Vérifiez l’adresse et que Rustload fonctionne.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errTimeout": {
+    "message": "$URL$ n’a pas répondu en $SECONDS$ secondes.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      },
+      "url": {
+        "content": "$2"
+      }
+    }
+  },
+  "errAddTimeout": {
+    "message": "Rustload n’a pas répondu en $SECONDS$ secondes, mais les liens ont peut-être été ajoutés : vérifiez sa file avant de les renvoyer.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "errAuth": {
+    "message": "Clé d’API incorrecte. Copiez-la à nouveau depuis Paramètres → Intégrations dans Rustload."
+  },
+  "errAuthMissing": {
+    "message": "Ce serveur demande une clé d’API : copiez-la depuis Paramètres → Intégrations dans Rustload."
+  },
+  "errRefused": {
+    "message": "Le serveur ou un proxy placé devant lui a refusé la requête (HTTP 401). Vérifiez l’adresse, ou les règles d’accès du proxy."
+  },
+  "errNotRustload": {
+    "message": "$URL$ répond, mais ce n’est pas Rustload. Vérifiez l’adresse et le port.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errServer": {
+    "message": "Rustload a répondu par une erreur (HTTP $STATUS$). Ses journaux en disent plus.",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoLinks": {
+    "message": "Aucun lien ni magnet trouvé."
+  },
+  "errNoMagnetAccount": {
+    "message": "Les magnets nécessitent un compte de débridage compatible. Ajoutez-en un dans Rustload."
+  },
+  "errRejected": {
+    "message": "Rustload a refusé : $MESSAGE$",
+    "placeholders": {
+      "message": {
+        "content": "$1"
+      }
+    }
+  },
+  "categoryGone": {
+    "message": "La catégorie « $NAME$ » n’existe plus dans Rustload : les liens ont été ajoutés avec la catégorie automatique.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "errInvalidUrl": {
+    "message": "Saisissez une adresse complète, par exemple http://nas:8800."
+  },
+  "errUrlScheme": {
+    "message": "Seules les adresses http:// et https:// sont prises en charge."
+  },
+  "errUrlCredentials": {
+    "message": "N’incluez ni nom d’utilisateur ni mot de passe dans l’adresse."
+  },
+  "badgeSetup": {
+    "message": "pas encore configuré"
+  },
+  "notifyAddedTitle": {
+    "message": "Ajouté à Rustload"
+  },
+  "notifyAddedPausedTitle": {
+    "message": "Ajouté à Rustload, en pause"
+  },
+  "notifyFailedTitle": {
+    "message": "Envoi à Rustload impossible"
+  },
+  "notifyUncertainTitle": {
+    "message": "Envoi non confirmé"
+  },
+  "pickerWindowTitle": {
+    "message": "Liens de cette page"
+  },
+  "pickerTitle": {
+    "message": "Liens de cette page"
+  },
+  "pickerFilter": {
+    "message": "Filtrer par nom, hôte ou extension"
+  },
+  "pickerShow": {
+    "message": "Liens à afficher"
+  },
+  "pickerFiles": {
+    "message": "Fichiers"
+  },
+  "pickerAll": {
+    "message": "Tous"
+  },
+  "pickerHost": {
+    "message": "Hôte"
+  },
+  "pickerAllHosts": {
+    "message": "Tous les hôtes"
+  },
+  "pickerSelectShown": {
+    "message": "Tout sélectionner"
+  },
+  "pickerSelected": {
+    "message": "Sélection : $COUNT$ sur $TOTAL$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "pickerSend_one": {
+    "message": "Envoyer $COUNT$ lien",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerSend_other": {
+    "message": "Envoyer $COUNT$ liens",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerSendNone": {
+    "message": "Envoyer"
+  },
+  "pickerNoMatch": {
+    "message": "Aucun lien ne correspond à ces filtres"
+  },
+  "pickerEmptyTitle": {
+    "message": "Aucun lien dans cette page"
+  },
+  "pickerEmptyBody": {
+    "message": "Rustload accepte les liens http(s) et les magnets, et cette page n’en contient aucun."
+  },
+  "pickerExpiredTitle": {
+    "message": "Cette liste n’est plus disponible"
+  },
+  "pickerExpiredBody": {
+    "message": "Faites à nouveau un clic droit sur la page et choisissez « Envoyer les liens de cette page… »."
+  },
+  "facetMagnets": {
+    "message": "Magnets"
+  },
+  "facetHosters": {
+    "message": "Hébergeurs"
+  },
+  "facetMedia": {
+    "message": "Médias"
+  },
+  "facetSplit": {
+    "message": "Archives découpées"
+  },
+  "optionsTitle": {
+    "message": "Paramètres de l’extension Rustload"
+  },
+  "optionsSubtitle": {
+    "message": "Extension de navigateur"
+  },
+  "optServerSection": {
+    "message": "Serveur"
+  },
+  "optServerIntro": {
+    "message": "Le Rustload auquel ce navigateur envoie les liens."
+  },
+  "optServerUrl": {
+    "message": "Adresse du serveur"
+  },
+  "optServerUrlHint": {
+    "message": "L’adresse à laquelle vous ouvrez Rustload, avec son port. L’enregistrement demande au navigateur l’accès à cette seule adresse."
+  },
+  "optApiKey": {
+    "message": "Clé d’API"
+  },
+  "optApiKeyHint": {
+    "message": "Dans Rustload, ouvrez Paramètres → Intégrations et copiez la clé d’API."
+  },
+  "optShowKey": {
+    "message": "Afficher la clé"
+  },
+  "optHideKey": {
+    "message": "Masquer la clé"
+  },
+  "optTest": {
+    "message": "Tester la connexion"
+  },
+  "optTesting": {
+    "message": "Test en cours…"
+  },
+  "optConnected": {
+    "message": "Connecté à Rustload $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "optDiskFree": {
+    "message": "$SIZE$ libres",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "optSendingSection": {
+    "message": "Envoi des liens"
+  },
+  "optSendingIntro": {
+    "message": "Réglages par défaut des liens envoyés depuis ce navigateur."
+  },
+  "optAddPaused": {
+    "message": "Ajouter en pause"
+  },
+  "optAddPausedHint": {
+    "message": "Les nouveaux paquets attendent dans la file jusqu’à ce que vous les démarriez dans Rustload."
+  },
+  "optCategory": {
+    "message": "Catégorie"
+  },
+  "optCategoryHint": {
+    "message": "Détermine le dossier de destination. En automatique, Rustload choisit d’après les extensions de fichier."
+  },
+  "optCategoryOffline": {
+    "message": "Connectez-vous au serveur pour charger ses catégories."
+  },
+  "optCategoryMissing": {
+    "message": "$NAME$ (n’existe plus sur le serveur)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "optReloadCategories": {
+    "message": "Recharger les catégories"
+  },
+  "optNotify": {
+    "message": "Confirmer par une notification"
+  },
+  "optNotifyHint": {
+    "message": "Après un envoi depuis un menu contextuel. Le badge de la barre d’outils le confirme dans tous les cas."
+  },
+  "optPermSection": {
+    "message": "Autorisations"
+  },
+  "optPermIntro": {
+    "message": "L’extension ne communique qu’avec votre serveur. À l’enregistrement, le navigateur vous demande une seule fois d’autoriser cette adresse, et rien d’autre."
+  },
+  "permHost": {
+    "message": "Accès à votre serveur"
+  },
+  "permHostWhy": {
+    "message": "Envoyer des liens et lire la file via l’API de Rustload."
+  },
+  "permGranted": {
+    "message": "Autorisé pour $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "permNotGranted": {
+    "message": "Pas encore autorisé"
+  },
+  "permNoServer": {
+    "message": "Demandé à l’enregistrement de l’adresse"
+  },
+  "permGrant": {
+    "message": "Autoriser l’accès"
+  },
+  "permActiveTab": {
+    "message": "Onglet actuel, à votre demande"
+  },
+  "permActiveTabWhy": {
+    "message": "Lit les liens d’une page uniquement quand vous choisissez « Envoyer les liens de cette page… », « Liens de la page » ou « Envoyer les liens sélectionnés »."
+  },
+  "permMenus": {
+    "message": "Menu contextuel"
+  },
+  "permMenusWhy": {
+    "message": "Ajoute les entrées « Envoyer à Rustload » au clic droit."
+  },
+  "permOther": {
+    "message": "Stockage, alarmes et notifications"
+  },
+  "permOtherWhy": {
+    "message": "Conserver ces réglages sur cet appareil, actualiser le badge chaque minute, confirmer les envois."
+  },
+  "optSave": {
+    "message": "Enregistrer"
+  },
+  "optSaved": {
+    "message": "Enregistré"
+  },
+  "optUnsaved": {
+    "message": "Modifications non enregistrées"
+  },
+  "optPrivacy": {
+    "message": "Votre clé d’API reste dans le stockage de l’extension de ce navigateur et n’est envoyée qu’à votre serveur."
+  },
+  "magnetTitle": {
+    "message": "Lien magnet"
+  },
+  "magnetSending": {
+    "message": "Envoi à Rustload…"
+  },
+  "magnetAdded": {
+    "message": "Ajouté à Rustload"
+  },
+  "magnetInvalid": {
+    "message": "Ce lien magnet n’est pas valide."
+  },
+  "magnetClosing": {
+    "message": "Cet onglet va se fermer."
+  }
+}

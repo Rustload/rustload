@@ -1,0 +1,191 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/archivo/wdth.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens — see web/DESIGN.md and docs/brand/README.md.
+ * Light theme is "aluminium", dark theme is "steel". The signal colour (oxide in light, ember in
+ * dark) is reserved for things that are moving: live transfers and the primary action.
+ */
+:root {
+  --bg: #e8ecef;
+  --panel: #f5f7f8;
+  --raised: #ffffff;
+  --sunken: #dfe4e8;
+  --line: #cdd5dc;
+  --line-strong: #b3bec7;
+  --fg: #18212a;
+  --fg-muted: #56636f;
+  --fg-faint: #7d8994;
+  --brand: #c24e1b;
+  --signal: #c24e1b;
+  --signal-ink: #a6420f;
+  --signal-fg: #ffffff;
+  --signal-wash: color-mix(in oklab, #c24e1b 13%, transparent);
+  --ok: #1f8a5b;
+  --ok-wash: color-mix(in oklab, #1f8a5b 13%, transparent);
+  --bad: #c22f55;
+  --bad-fg: #ffffff;
+  --bad-wash: color-mix(in oklab, #c22f55 12%, transparent);
+  --info: #2f6db5;
+  --info-wash: color-mix(in oklab, #2f6db5 12%, transparent);
+  --warn: #8a6400;
+  --warn-wash: color-mix(in oklab, #c79a2a 16%, transparent);
+  --focus: #2f6db5;
+  --overlay: rgb(24 33 42 / 0.45);
+  --shadow-pop: 0 1px 2px rgb(24 33 42 / 0.08), 0 12px 32px -8px rgb(24 33 42 / 0.25);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #1c242c;
+  --panel: #222c35;
+  --raised: #2a3540;
+  --sunken: #182027;
+  --line: #34414d;
+  --line-strong: #465563;
+  --fg: #e4e9ed;
+  --fg-muted: #93a1ad;
+  --fg-faint: #6b7a87;
+  --brand: #f27318;
+  --signal: #f27318;
+  --signal-ink: #ff9150;
+  --signal-fg: #1f0f04;
+  --signal-wash: color-mix(in oklab, #f27318 12%, transparent);
+  --ok: #45c08e;
+  --ok-wash: color-mix(in oklab, #45c08e 12%, transparent);
+  --bad: #f2738a;
+  --bad-fg: #2b0711;
+  --bad-wash: color-mix(in oklab, #f2738a 12%, transparent);
+  --info: #79aee9;
+  --info-wash: color-mix(in oklab, #79aee9 12%, transparent);
+  --warn: #dcb862;
+  --warn-wash: color-mix(in oklab, #dcb862 12%, transparent);
+  --focus: #79aee9;
+  --overlay: rgb(10 14 18 / 0.6);
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -10px rgb(0 0 0 / 0.55);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-brand: var(--brand);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-fg: var(--signal-fg);
+  --color-signal-wash: var(--signal-wash);
+  --color-ok: var(--ok);
+  --color-ok-wash: var(--ok-wash);
+  --color-bad: var(--bad);
+  --color-bad-fg: var(--bad-fg);
+  --color-bad-wash: var(--bad-wash);
+  --color-info: var(--info);
+  --color-info-wash: var(--info-wash);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-overlay: var(--overlay);
+  --shadow-pop: var(--shadow-pop);
+}
+
+@theme {
+  --color-oxide: #c24e1b;
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Consolas, monospace;
+  /* Body text is 0.875rem (`text-sm`); these sit around it. */
+  --text-micro: 0.6875rem;
+  --text-small: 0.8125rem;
+  --text-lead: 0.9375rem;
+  --radius-chip: 4px;
+  --radius-control: 6px;
+  --radius-panel: 10px;
+}
+
+/* Numbers are condensed, words are not. */
+@utility num {
+  font-stretch: 78%;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+@utility readout {
+  font-stretch: 64%;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+@utility heading {
+  font-stretch: 112%;
+  letter-spacing: -0.005em;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--info) 35%, transparent);
+  }
+
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  kbd {
+    font-family: inherit;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,66 @@
+[package]
+name = "rustload"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.94"
+description = "Fast, lightweight, self-hosted download manager with debrid support"
+license = "MIT"
+repository = "https://github.com/rustload/rustload"
+readme = "README.md"
+keywords = ["download-manager", "debrid", "downloader", "self-hosted"]
+categories = ["command-line-utilities", "web-programming::http-server"]
+publish = false
+
+[dependencies]
+aes = "0.8"
+anyhow = "1"
+argon2 = "0.6"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["multipart", "macros"] }
+axum-extra = { version = "0.12", features = ["cookie"] }
+base64 = "0.22"
+bytes = "1"
+cbc = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+cookie = "0.18"
+crc32fast = "1"
+ctr = "0.9"
+fs4 = "1"
+futures-util = "0.3"
+hex = "0.4"
+md-5 = "0.11"
+mime_guess = "2"
+percent-encoding = "2"
+rand = "0.10"
+regex = "1"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "http2", "stream", "json", "form", "query", "multipart", "charset", "socks"] }
+rust-embed = "8"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha1 = "0.11"
+sha2 = "0.11"
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite-bundled", "migrate", "macros", "derive"] }
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tokio-util = { version = "0.7", features = ["rt", "io"] }
+tower-http = { version = "0.7", features = ["compression-gzip", "compression-br", "set-header"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+url = "2"
+zip = { version = "9", default-features = false, features = ["deflate", "deflate64", "bzip2", "lzma", "aes-crypto"] }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.31", features = ["user", "fs", "signal", "process"] }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["test-util"] }
+tower-http = { version = "0.7", features = ["fs"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

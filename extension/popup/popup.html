@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title data-i18n="extName">Rustload</title>
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="popup.css" />
+    <script type="module" src="popup.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">
+        <svg class="lockup" width="128.3" height="20" viewBox="0 -83.32 604.22 94.19" role="img" aria-label="Rustload">
+          <path fill="var(--brand)" transform="translate(0 -83.32) scale(5.8866)" d="M4 0H6V12H7V0H9V12H10V0H12V8H16L8 16L0 8H4Z" />
+          <path fill="currentColor" transform="translate(109.42 0)" d="M6.5 0V-52.8H21.5L22.7 -43.8H23.6Q25.1 -47 27.6 -49.3Q30 -51.6 33.1 -52.8Q36.2 -54 39.7 -54Q41.8 -54 43.5 -53.7Q45.4 -53.5 47 -52.9V-38.3H38.2Q34.7 -38.3 32.2 -37.2Q29.7 -36 28.1 -34.1Q26.5 -32.1 25.8 -29.7Q25 -27.2 25 -24.4V0H6.5ZM76.3 1.2Q64.9 1.2 59.1 -4.3Q53.3 -9.8 53.3 -20.9V-52.8H71.7V-23.5Q71.7 -20.8 72.5 -18.7Q73.3 -16.6 74.7 -15.3Q76.2 -13.9 78.3 -13.3Q80.5 -12.6 83.2 -12.6Q87.2 -12.6 90.4 -14.2Q93.7 -15.8 95.6 -18.7Q97.5 -21.5 97.5 -25.2V-52.8H116V0H101L99.8 -8.8H98.9Q96.1 -5.1 92.4 -2.9Q88.7 -0.8 84.6 0.2Q80.5 1.2 76.3 1.2ZM156.8 1.2Q150.9 1.2 145.3 0.2Q139.6 -0.7 135.1 -2.6Q130.5 -4.5 127.8 -7.7Q125.1 -10.8 125.1 -15.1Q125.1 -15.5 125.2 -15.9Q125.2 -16.3 125.3 -16.7H144.3Q144.2 -16.4 144.2 -16.1Q144.2 -15.8 144.2 -15.7Q144.2 -13.6 146 -12.3Q147.8 -11 150.6 -10.4Q153.5 -9.8 156.9 -9.8Q159.7 -9.8 162.9 -10.2Q166 -10.5 168.2 -11.5Q170.3 -12.5 170.3 -14.7Q170.3 -16.9 167.5 -17.8Q164.7 -18.7 159.8 -19.2Q155.1 -19.8 149.1 -20.6Q144.6 -21.2 140.6 -22.3Q136.6 -23.3 133.5 -25.1Q130.4 -26.9 128.6 -29.8Q126.9 -32.7 126.9 -36.8Q126.9 -41.6 129.2 -44.9Q131.6 -48.1 135.8 -50.2Q140 -52.2 145.6 -53.1Q151.2 -54 157.7 -54Q163.4 -54 168.6 -53.1Q173.9 -52.2 178 -50.4Q182.2 -48.5 184.6 -45.7Q187 -42.8 187 -38.9Q187 -38.5 187 -38.1Q187 -37.7 186.9 -37.5H168.1V-38.1Q168.1 -39.8 166.5 -40.8Q164.9 -41.9 162.6 -42.4Q160.2 -42.9 157.5 -42.9Q156.4 -42.9 154.4 -42.9Q152.4 -42.8 150.3 -42.4Q148.2 -42 146.7 -41.2Q145.3 -40.4 145.3 -38.9Q145.3 -37 147.8 -36.1Q150.2 -35.3 154.2 -34.9Q158.3 -34.5 163 -33.9Q167.8 -33.4 172.4 -32.5Q177.1 -31.6 180.7 -29.9Q184.4 -28.1 186.6 -25Q188.7 -21.9 188.7 -16.9Q188.7 -11.8 186.3 -8.3Q184 -4.8 179.7 -2.7Q175.4 -0.6 169.6 0.3Q163.7 1.2 156.8 1.2ZM224.4 1.2Q217.8 1.2 213.3 -0.3Q208.9 -1.8 206.6 -5.5Q204.3 -9.2 204.3 -15.8V-40.2H194V-52.8H205L208.7 -68.5H222.8V-52.8H237.5V-40.2H222.8V-19.2Q222.8 -15.4 224.4 -13.4Q226 -11.3 231 -11.3H237.5V-0.6Q236.1 -0.1 233.7 0.3Q231.2 0.8 228.7 1Q226.2 1.2 224.4 1.2ZM247.1 0V-72.5H265.6V0H247.1ZM310.1 1.2Q299.6 1.2 291.8 -1.9Q284 -5 279.6 -11.1Q275.3 -17.2 275.3 -26.4Q275.3 -35.6 279.6 -41.8Q284 -47.9 291.8 -50.9Q299.6 -54 310.1 -54Q320.7 -54 328.5 -50.9Q336.3 -47.9 340.6 -41.8Q344.9 -35.6 344.9 -26.4Q344.9 -17.2 340.6 -11.1Q336.3 -5 328.5 -1.9Q320.7 1.2 310.1 1.2ZM310.1 -11.3Q315.4 -11.3 318.9 -13.1Q322.4 -14.9 324.1 -18.1Q325.9 -21.2 325.9 -25.4V-27.4Q325.9 -31.6 324.1 -34.8Q322.4 -37.9 318.9 -39.7Q315.4 -41.4 310.1 -41.4Q304.9 -41.4 301.4 -39.7Q297.9 -37.9 296.2 -34.8Q294.4 -31.6 294.4 -27.4V-25.4Q294.4 -21.2 296.2 -18.1Q297.9 -14.9 301.4 -13.1Q304.9 -11.3 310.1 -11.3ZM375.2 1.2Q370.3 1.2 366 0.5Q361.8 -0.2 358.6 -2Q355.5 -3.8 353.7 -6.8Q352 -9.8 352 -14.5Q352 -20.8 355.4 -24.4Q358.8 -28.1 365.1 -29.7Q371.4 -31.4 379.9 -31.9Q388.5 -32.3 398.8 -32.3V-33.9Q398.8 -37 397.2 -38.8Q395.7 -40.6 392.8 -41.4Q389.8 -42.2 385.4 -42.2Q382.2 -42.2 379.2 -41.7Q376.2 -41.2 374.3 -40.2Q372.4 -39.1 372.4 -37.3V-36.5H353.7Q353.6 -36.9 353.6 -37.2Q353.6 -37.5 353.6 -38Q353.6 -42.7 357.3 -46.3Q361 -49.9 368.3 -51.9Q375.6 -54 386.4 -54Q396.3 -54 403.2 -52.2Q410.1 -50.5 413.7 -46.6Q417.2 -42.8 417.2 -36.3V-15.2Q417.2 -13.5 418 -12.4Q418.8 -11.3 420.5 -11.3H425.9V-0.7Q424.4 -0.1 421.3 0.6Q418.2 1.2 414.7 1.2Q409.8 1.2 406.8 0.2Q403.8 -0.8 402.4 -2.6Q400.9 -4.3 400.3 -6.4H399.5Q396.7 -4.1 392.9 -2.3Q389.2 -0.6 384.8 0.3Q380.4 1.2 375.2 1.2ZM380.4 -10.5Q382.7 -10.5 385.8 -11Q388.8 -11.6 391.8 -12.7Q394.8 -13.8 396.8 -15.5Q398.8 -17.3 398.8 -19.8V-22.8Q388.9 -22.8 382.6 -22Q376.3 -21.2 373.3 -19.6Q370.3 -17.9 370.3 -15.3Q370.3 -13.3 371.8 -12.2Q373.2 -11.2 375.6 -10.9Q377.9 -10.5 380.4 -10.5ZM456.8 1.2Q448.7 1.2 442.5 -1.8Q436.2 -4.8 432.6 -10.9Q429 -17 429 -26.4Q429 -35.8 432.6 -41.9Q436.2 -48 442.3 -51Q448.5 -54 456.3 -54Q459.8 -54 463.4 -53.2Q467 -52.4 470.1 -50.8Q473.3 -49.1 475.5 -46.5H476.3V-72.5H494.8V0H479.8L478.4 -8.2H477.5Q473.6 -3 468.2 -0.9Q462.8 1.2 456.8 1.2ZM462.1 -12.6Q466.9 -12.6 470 -14.3Q473.2 -16 474.8 -19Q476.4 -22 476.4 -26V-26.7Q476.4 -29.7 475.5 -32.2Q474.6 -34.7 472.8 -36.4Q471 -38.2 468.3 -39.2Q465.6 -40.2 462 -40.2Q457.3 -40.2 454.2 -38.5Q451 -36.9 449.4 -34Q447.8 -31.1 447.8 -27.2V-25.6Q447.8 -21.7 449.4 -18.7Q451.1 -15.8 454.2 -14.2Q457.4 -12.6 462.1 -12.6Z" />
+        </svg>
+      </span>
+      <span class="conn" id="conn" hidden>
+        <span class="status-dot" id="conn-dot"></span>
+        <span class="conn-host num truncate" id="conn-host"></span>
+      </span>
+      <button type="button" class="btn btn-ghost icon-btn" id="open-settings" data-i18n-title="settings" data-i18n-aria-label="settings">
+        <span data-icon="settings"></span>
+      </button>
+    </header>
+
+    <!-- Live view: speed readout, active transfers, paste box. -->
+    <main id="view-live" hidden>
+      <section class="meter" data-i18n-aria-label="totalSpeed">
+        <div class="meter-readout">
+          <p class="speed">
+            <span class="speed-value readout" id="speed-value">0</span>
+            <span class="speed-unit">
+              <span class="speed-arrow" id="speed-arrow" data-icon="arrow-down" data-size="14" data-stroke="2.25"></span>
+              <span id="speed-unit"></span>
+            </span>
+          </p>
+        </div>
+        <figure class="spark" aria-hidden="true">
+          <span class="spark-scale num" id="spark-scale"></span>
+          <div class="spark-plot">
+            <span class="spark-grid spark-grid-top"></span>
+            <span class="spark-grid spark-grid-mid"></span>
+            <span class="spark-grid spark-grid-base"></span>
+            <svg id="spark" preserveAspectRatio="none"></svg>
+          </div>
+        </figure>
+        <p class="status-line" id="status-line">
+          <span class="status-icon" id="status-icon"></span>
+          <span class="truncate" id="status-text"></span>
+        </p>
+      </section>
+
+      <section class="transfers">
+        <h2 class="section-title" id="rows-title" hidden>
+          <span class="heading" data-i18n="sectionActive"></span>
+          <span class="num faint" id="rows-count"></span>
+        </h2>
+        <ul class="rows" id="rows"></ul>
+        <div class="state empty" id="empty" hidden>
+          <div class="state-icon"><span data-icon="download" data-size="20" data-stroke="1.75"></span></div>
+          <p class="state-title" data-i18n="emptyTitle"></p>
+          <p class="state-body" id="empty-body"></p>
+        </div>
+      </section>
+
+      <form class="add" id="add-form" autocomplete="off">
+        <div class="add-head">
+          <label class="add-title" for="links" data-i18n="pasteLabel"></label>
+          <button type="button" class="btn btn-ghost btn-sm page-links" id="page-links" data-i18n-title="pageLinksTitle">
+            <span data-icon="list-checks" data-size="14"></span>
+            <span data-i18n="pageLinks"></span>
+          </button>
+        </div>
+        <textarea
+          class="textarea"
+          id="links"
+          rows="2"
+          spellcheck="false"
+          data-i18n-placeholder="pastePlaceholder"
+        ></textarea>
+        <div class="add-row">
+          <span class="detected num" id="detected" aria-live="polite"></span>
+          <label class="check add-paused" data-i18n-title="addPausedTitle">
+            <input type="checkbox" id="add-paused" />
+            <span data-i18n="addPausedShort"></span>
+          </label>
+          <button type="submit" class="btn btn-primary btn-sm add-btn" id="add-btn" disabled data-i18n-title="addTitle">
+            <span data-icon="plus" data-size="15"></span>
+            <span data-i18n="add"></span>
+          </button>
+        </div>
+        <p class="feedback" id="add-feedback" role="status" hidden></p>
+      </form>
+    </main>
+
+    <!-- Connecting, set-up and error states. -->
+    <main id="view-message" class="message" hidden>
+      <div class="state">
+        <div class="state-icon" id="message-icon"></div>
+        <h1 class="state-title" id="message-title"></h1>
+        <p class="state-body" id="message-body"></p>
+        <div class="state-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="message-primary" hidden></button>
+          <button type="button" class="btn btn-secondary btn-sm" id="message-secondary" hidden></button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bottom" id="footer" hidden>
+      <button type="button" class="btn btn-secondary btn-sm" id="toggle-pause" hidden>
+        <span id="toggle-pause-icon"></span>
+        <span id="toggle-pause-label"></span>
+      </button>
+      <a class="btn btn-ghost btn-sm open-app" id="open-app" href="#" hidden>
+        <span data-i18n="openRustload"></span>
+        <span data-icon="external-link" data-size="14"></span>
+      </a>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+body {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.card {
+  width: min(26rem, 100%);
+  padding: 2rem 1.75rem 1.75rem;
+}
+
+.magnet-name {
+  max-width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--fg-muted);
+}

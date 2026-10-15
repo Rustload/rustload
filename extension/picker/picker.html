@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title data-i18n="pickerWindowTitle">Rustload</title>
+    <link rel="icon" href="../icons/icon-32.png" />
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="picker.css" />
+    <script type="module" src="picker.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <svg class="top-logo" width="22" height="22" viewBox="2 2 28 28" aria-hidden="true">
+        <path fill="var(--brand)" d="M9 2H12.2L14.6 24L14.4 2H17.6L17.4 24L19.8 2H23V15H30L16 30L2 15H9Z" />
+      </svg>
+      <div class="top-text">
+        <h1 class="top-title heading" data-i18n="pickerTitle"></h1>
+        <p class="top-page truncate" id="page"></p>
+      </div>
+    </header>
+
+    <div class="tools" id="tools" hidden>
+      <div class="search">
+        <span data-icon="search" data-size="15"></span>
+        <input
+          class="input"
+          id="filter"
+          type="search"
+          spellcheck="false"
+          autocomplete="off"
+          data-i18n-placeholder="pickerFilter"
+          data-i18n-aria-label="pickerFilter"
+        />
+      </div>
+      <div class="segmented" role="radiogroup" data-i18n-aria-label="pickerShow">
+        <button type="button" role="radio" class="segment" data-mode="files" aria-checked="true">
+          <span data-i18n="pickerFiles"></span><span class="num segment-count" id="count-files"></span>
+        </button>
+        <button type="button" role="radio" class="segment" data-mode="all" aria-checked="false">
+          <span data-i18n="pickerAll"></span><span class="num segment-count" id="count-all"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="facets" id="facets" hidden>
+      <div class="chips" id="chips"></div>
+      <div class="select-wrap host-select">
+        <select class="select" id="host" data-i18n-aria-label="pickerHost"></select>
+        <span data-icon="chevron-down" data-size="14"></span>
+      </div>
+    </div>
+
+    <div class="list-head" id="list-head" hidden>
+      <label class="check">
+        <input type="checkbox" id="select-all" />
+        <span data-i18n="pickerSelectShown"></span>
+      </label>
+      <span class="num faint" id="selection-count"></span>
+    </div>
+
+    <main class="list-area">
+      <ul class="pick-list" id="list"></ul>
+      <div class="state list-state" id="list-state" hidden>
+        <div class="state-icon" id="state-icon"></div>
+        <p class="state-title" id="state-title"></p>
+        <p class="state-body" id="state-body"></p>
+        <div class="state-actions" id="state-actions"></div>
+      </div>
+    </main>
+
+    <footer class="bottom" id="footer" hidden>
+      <p class="feedback tone-bad" id="feedback" role="alert" hidden></p>
+      <div class="bottom-row">
+        <label class="check" data-i18n-title="addPausedTitle">
+          <input type="checkbox" id="paused" />
+          <span data-i18n="addPausedShort"></span>
+        </label>
+        <div class="select-wrap category-select">
+          <select class="select" id="category" data-i18n-aria-label="optCategory"></select>
+          <span data-icon="chevron-down" data-size="14"></span>
+        </div>
+        <button type="button" class="btn btn-primary send" id="send" disabled>
+          <span data-icon="download" data-size="15"></span>
+          <span id="send-label"></span>
+        </button>
+      </div>
+    </footer>
+  </body>
+</html>

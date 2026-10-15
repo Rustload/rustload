@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title data-i18n="optionsTitle">Rustload</title>
+    <link rel="icon" href="../icons/icon-32.png" />
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="options.css" />
+    <script type="module" src="options.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="page-head">
+        <span class="logo">
+          <svg class="tile" width="36" height="36" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="7" fill="#c24e1b" />
+            <path fill="#fff" transform="translate(6.13 6.13) scale(0.617)" d="M9 2H12.2L14.6 24L14.4 2H17.6L17.4 24L19.8 2H23V15H30L16 30L2 15H9Z" />
+          </svg>
+          <span>
+            <span class="page-title heading">Rustload</span>
+            <span class="page-subtitle" data-i18n="optionsSubtitle"></span>
+          </span>
+        </span>
+        <span class="version num" id="version"></span>
+      </header>
+
+      <form id="form" novalidate autocomplete="off">
+        <section class="panel" aria-labelledby="server-title">
+          <header class="panel-head">
+            <h2 class="panel-title heading" id="server-title" data-i18n="optServerSection"></h2>
+            <p class="panel-intro" data-i18n="optServerIntro"></p>
+          </header>
+          <div class="panel-body">
+            <div class="field">
+              <label class="label" for="server-url" data-i18n="optServerUrl"></label>
+              <input
+                class="input"
+                id="server-url"
+                type="url"
+                inputmode="url"
+                spellcheck="false"
+                placeholder="http://nas:8800"
+                aria-describedby="server-url-hint"
+              />
+              <p class="hint" id="server-url-hint" data-i18n="optServerUrlHint"></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="api-key" data-i18n="optApiKey"></label>
+              <div class="input-group">
+                <input
+                  class="input mono"
+                  id="api-key"
+                  type="password"
+                  spellcheck="false"
+                  autocomplete="off"
+                  aria-describedby="api-key-hint"
+                />
+                <button
+                  type="button"
+                  class="btn btn-secondary icon-btn"
+                  id="toggle-key"
+                  aria-pressed="false"
+                  data-i18n-title="optShowKey"
+                  data-i18n-aria-label="optShowKey"
+                >
+                  <span data-icon="eye"></span>
+                </button>
+              </div>
+              <p class="hint" id="api-key-hint" data-i18n="optApiKeyHint"></p>
+            </div>
+
+            <div class="test-row">
+              <button type="button" class="btn btn-secondary" id="test">
+                <span data-icon="refresh-cw" data-size="15"></span>
+                <span data-i18n="optTest"></span>
+              </button>
+              <p class="test-result" id="test-result" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="sending-title">
+          <header class="panel-head">
+            <h2 class="panel-title heading" id="sending-title" data-i18n="optSendingSection"></h2>
+            <p class="panel-intro" data-i18n="optSendingIntro"></p>
+          </header>
+          <div class="panel-body">
+            <div class="toggle-row">
+              <div>
+                <label class="label" for="add-paused" data-i18n="optAddPaused"></label>
+                <p class="hint" data-i18n="optAddPausedHint"></p>
+              </div>
+              <input class="switch" type="checkbox" role="switch" id="add-paused" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="category" data-i18n="optCategory"></label>
+              <div class="input-group">
+                <div class="select-wrap">
+                  <select class="select" id="category" aria-describedby="category-hint"></select>
+                  <span data-icon="chevron-down"></span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-secondary icon-btn"
+                  id="reload-categories"
+                  data-i18n-title="optReloadCategories"
+                  data-i18n-aria-label="optReloadCategories"
+                >
+                  <span data-icon="refresh-cw" data-size="15"></span>
+                </button>
+              </div>
+              <p class="hint" id="category-hint"></p>
+            </div>
+
+            <div class="toggle-row">
+              <div>
+                <label class="label" for="notify" data-i18n="optNotify"></label>
+                <p class="hint" data-i18n="optNotifyHint"></p>
+              </div>
+              <input class="switch" type="checkbox" role="switch" id="notify" />
+            </div>
+          </div>
+        </section>
+
+        <div class="save-bar">
+          <p class="save-status" id="save-status" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary" id="save">
+            <span data-i18n="optSave"></span>
+          </button>
+        </div>
+      </form>
+
+      <section class="panel perm-panel" aria-labelledby="perm-title">
+        <header class="panel-head">
+          <h2 class="panel-title heading" id="perm-title" data-i18n="optPermSection"></h2>
+          <p class="panel-intro" data-i18n="optPermIntro"></p>
+        </header>
+        <ul class="perm-list">
+          <li class="perm-row">
+            <span class="perm-icon" data-icon="server"></span>
+            <div class="perm-text">
+              <p class="perm-name" data-i18n="permHost"></p>
+              <p class="perm-why" data-i18n="permHostWhy"></p>
+            </div>
+            <div class="perm-status" id="perm-host-status"></div>
+          </li>
+          <li class="perm-row">
+            <span class="perm-icon" data-icon="list-checks"></span>
+            <div class="perm-text">
+              <p class="perm-name" data-i18n="permActiveTab"></p>
+              <p class="perm-why" data-i18n="permActiveTabWhy"></p>
+            </div>
+          </li>
+          <li class="perm-row">
+            <span class="perm-icon" data-icon="link"></span>
+            <div class="perm-text">
+              <p class="perm-name" data-i18n="permMenus"></p>
+              <p class="perm-why" data-i18n="permMenusWhy"></p>
+            </div>
+          </li>
+          <li class="perm-row">
+            <span class="perm-icon" data-icon="shield-check"></span>
+            <div class="perm-text">
+              <p class="perm-name" data-i18n="permOther"></p>
+              <p class="perm-why" data-i18n="permOtherWhy"></p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <p class="privacy" data-i18n="optPrivacy"></p>
+    </div>
+  </body>
+</html>

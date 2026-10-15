@@ -1,0 +1,10 @@
+.git
+.github
+target
+.dev*
+*.log
+config
+downloads
+web/node_modules
+web/dist
+**/.DS_Store

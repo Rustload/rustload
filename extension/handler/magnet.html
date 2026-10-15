@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title data-i18n="magnetTitle">Rustload</title>
+    <link rel="icon" href="../icons/icon-32.png" />
+    <link rel="stylesheet" href="../styles/base.css" />
+    <link rel="stylesheet" href="magnet.css" />
+    <script type="module" src="magnet.js"></script>
+  </head>
+  <body>
+    <main class="card panel">
+      <div class="state">
+        <div class="state-icon" id="icon"><span class="spinner"></span></div>
+        <h1 class="state-title" id="title" data-i18n="magnetSending"></h1>
+        <p class="magnet-name num truncate" id="name"></p>
+        <p class="state-body" id="body"></p>
+        <div class="state-actions" id="actions" hidden>
+          <button type="button" class="btn btn-secondary btn-sm" id="settings" data-i18n="openSettings" hidden></button>
+          <button type="button" class="btn btn-secondary btn-sm" id="close" data-i18n="close"></button>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,715 @@
+{
+  "localeCode": {
+    "message": "en"
+  },
+  "extName": {
+    "message": "Rustload"
+  },
+  "extDescription": {
+    "message": "Send links, magnets and pages to your self-hosted Rustload download manager and follow transfers live."
+  },
+  "menuSendLink": {
+    "message": "Send link to Rustload"
+  },
+  "menuSendSelection": {
+    "message": "Send selected links to Rustload"
+  },
+  "menuSendPageLinks": {
+    "message": "Send all links on this page…"
+  },
+  "menuSendPage": {
+    "message": "Send this page to Rustload"
+  },
+  "unitB": {
+    "message": "B"
+  },
+  "unitKiB": {
+    "message": "KiB"
+  },
+  "unitMiB": {
+    "message": "MiB"
+  },
+  "unitGiB": {
+    "message": "GiB"
+  },
+  "unitTiB": {
+    "message": "TiB"
+  },
+  "perSecond": {
+    "message": "$VALUE$/s",
+    "placeholders": {
+      "value": {
+        "content": "$1"
+      }
+    }
+  },
+  "durDay": {
+    "message": "$N$ d",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durHour": {
+    "message": "$N$ h",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durMinute": {
+    "message": "$N$ min",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "durSecond": {
+    "message": "$N$ s",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "openSettings": {
+    "message": "Open settings"
+  },
+  "openRustload": {
+    "message": "Open Rustload"
+  },
+  "pauseAll": {
+    "message": "Pause all"
+  },
+  "resumeAll": {
+    "message": "Resume all"
+  },
+  "add": {
+    "message": "Add"
+  },
+  "addTitle": {
+    "message": "Add to the queue (Ctrl+Enter)"
+  },
+  "retry": {
+    "message": "Try again"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "categoryAuto": {
+    "message": "Automatic (by file type)"
+  },
+  "addPausedShort": {
+    "message": "Paused"
+  },
+  "addPausedTitle": {
+    "message": "Add without starting the download"
+  },
+  "sentLinks_one": {
+    "message": "$COUNT$ link sent to Rustload",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentLinks_other": {
+    "message": "$COUNT$ links sent to Rustload",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentPackages_one": {
+    "message": "$COUNT$ package added",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sentPackages_other": {
+    "message": "$COUNT$ packages added",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "morePackages_one": {
+    "message": "$NAME$ and $COUNT$ other package",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "morePackages_other": {
+    "message": "$NAME$ and $COUNT$ other packages",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "totalSpeed": {
+    "message": "Total download speed"
+  },
+  "statusPaused": {
+    "message": "Everything is paused"
+  },
+  "statusScheduleClosed": {
+    "message": "Outside the download window"
+  },
+  "statusIdle": {
+    "message": "Idle"
+  },
+  "statusRunning_one": {
+    "message": "$COUNT$ download running",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusRunning_other": {
+    "message": "$COUNT$ downloads running",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWaiting_one": {
+    "message": "$COUNT$ waiting",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWaiting_other": {
+    "message": "$COUNT$ waiting",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "connLive": {
+    "message": "Connected to $HOST$, live updates",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "connPolling": {
+    "message": "Connected to $HOST$, refreshed every 2 seconds (live updates unavailable)",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "connectingTitle": {
+    "message": "Connecting…"
+  },
+  "sectionActive": {
+    "message": "In progress"
+  },
+  "rowResolving": {
+    "message": "Resolving link"
+  },
+  "rowRemote": {
+    "message": "Remote processing"
+  },
+  "rowExtracting": {
+    "message": "Extracting"
+  },
+  "rowVerifying": {
+    "message": "Verifying"
+  },
+  "rowRemoteSpeed": {
+    "message": "remote $SPEED$",
+    "placeholders": {
+      "speed": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyTitle": {
+    "message": "Nothing is downloading"
+  },
+  "emptyBody": {
+    "message": "Paste links below, or right-click a link on any page."
+  },
+  "emptyQueued_one": {
+    "message": "$COUNT$ file is waiting in the queue.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyQueued_other": {
+    "message": "$COUNT$ files are waiting in the queue.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pasteLabel": {
+    "message": "Links to add"
+  },
+  "pastePlaceholder": {
+    "message": "Paste links or magnets"
+  },
+  "detectedLinks_one": {
+    "message": "$COUNT$ link",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedLinks_other": {
+    "message": "$COUNT$ links",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedMagnets_one": {
+    "message": "$COUNT$ magnet",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedMagnets_other": {
+    "message": "$COUNT$ magnets",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedNone": {
+    "message": "No link recognised yet"
+  },
+  "pageLinks": {
+    "message": "Page links"
+  },
+  "pageLinksTitle": {
+    "message": "Choose links from the current page"
+  },
+  "pageLinksUnavailable": {
+    "message": "The browser doesn’t let extensions read this page."
+  },
+  "setupTitle": {
+    "message": "Connect your Rustload"
+  },
+  "setupBody": {
+    "message": "Enter your server address and API key once. You’ll find the key in Rustload under Settings → Integrations."
+  },
+  "permissionTitle": {
+    "message": "Access to your server is needed"
+  },
+  "permissionBody": {
+    "message": "Your browser hasn’t allowed the extension to reach $HOST$ yet. Save the settings again to grant access.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "unreachableTitle": {
+    "message": "Can’t reach Rustload"
+  },
+  "authTitle": {
+    "message": "API key refused"
+  },
+  "refusedTitle": {
+    "message": "Request refused"
+  },
+  "notRustloadTitle": {
+    "message": "Not a Rustload server"
+  },
+  "serverErrorTitle": {
+    "message": "Rustload returned an error"
+  },
+  "errUnconfigured": {
+    "message": "Set up the server address first."
+  },
+  "errPermission": {
+    "message": "The browser hasn’t allowed access to $HOST$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "errUnreachable": {
+    "message": "No answer from $URL$. Check the address and that Rustload is running.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errTimeout": {
+    "message": "$URL$ didn’t answer within $SECONDS$ seconds.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      },
+      "url": {
+        "content": "$2"
+      }
+    }
+  },
+  "errAddTimeout": {
+    "message": "Rustload didn’t answer within $SECONDS$ seconds, but the links may have been added: check its queue before sending them again.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "errAuth": {
+    "message": "Wrong API key. Copy it again from Settings → Integrations in Rustload."
+  },
+  "errAuthMissing": {
+    "message": "This server needs an API key: copy it from Settings → Integrations in Rustload."
+  },
+  "errRefused": {
+    "message": "The server or a proxy in front of it refused the request (HTTP 401). Check the address, or the proxy’s access rules."
+  },
+  "errNotRustload": {
+    "message": "$URL$ answers, but it isn’t Rustload. Check the address and the port.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errServer": {
+    "message": "Rustload answered with an error (HTTP $STATUS$). Its logs tell more.",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoLinks": {
+    "message": "No link or magnet found."
+  },
+  "errNoMagnetAccount": {
+    "message": "Magnets need a debrid account that supports them. Add one in Rustload."
+  },
+  "errRejected": {
+    "message": "Rustload refused: $MESSAGE$",
+    "placeholders": {
+      "message": {
+        "content": "$1"
+      }
+    }
+  },
+  "categoryGone": {
+    "message": "The category “$NAME$” no longer exists on Rustload, so the links were added with the automatic category.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "errInvalidUrl": {
+    "message": "Enter a full address, such as http://nas:8800."
+  },
+  "errUrlScheme": {
+    "message": "Only http:// and https:// addresses are supported."
+  },
+  "errUrlCredentials": {
+    "message": "Leave the user name and password out of the address."
+  },
+  "badgeSetup": {
+    "message": "not set up yet"
+  },
+  "notifyAddedTitle": {
+    "message": "Added to Rustload"
+  },
+  "notifyAddedPausedTitle": {
+    "message": "Added to Rustload, paused"
+  },
+  "notifyFailedTitle": {
+    "message": "Couldn’t send to Rustload"
+  },
+  "notifyUncertainTitle": {
+    "message": "Sending not confirmed"
+  },
+  "pickerWindowTitle": {
+    "message": "Links on this page"
+  },
+  "pickerTitle": {
+    "message": "Links on this page"
+  },
+  "pickerFilter": {
+    "message": "Filter by name, host or extension"
+  },
+  "pickerShow": {
+    "message": "Links to show"
+  },
+  "pickerFiles": {
+    "message": "Files"
+  },
+  "pickerAll": {
+    "message": "All"
+  },
+  "pickerHost": {
+    "message": "Host"
+  },
+  "pickerAllHosts": {
+    "message": "All hosts"
+  },
+  "pickerSelectShown": {
+    "message": "Select all shown"
+  },
+  "pickerSelected": {
+    "message": "$COUNT$ of $TOTAL$ selected",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "pickerSend_one": {
+    "message": "Send $COUNT$ link",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerSend_other": {
+    "message": "Send $COUNT$ links",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerSendNone": {
+    "message": "Send"
+  },
+  "pickerNoMatch": {
+    "message": "No link matches these filters"
+  },
+  "pickerEmptyTitle": {
+    "message": "No links on this page"
+  },
+  "pickerEmptyBody": {
+    "message": "Rustload can take http(s) links and magnets; this page has none."
+  },
+  "pickerExpiredTitle": {
+    "message": "This list is no longer available"
+  },
+  "pickerExpiredBody": {
+    "message": "Right-click the page again and choose “Send all links on this page…”."
+  },
+  "facetMagnets": {
+    "message": "Magnets"
+  },
+  "facetHosters": {
+    "message": "Hosters"
+  },
+  "facetMedia": {
+    "message": "Media"
+  },
+  "facetSplit": {
+    "message": "Split archives"
+  },
+  "optionsTitle": {
+    "message": "Rustload extension settings"
+  },
+  "optionsSubtitle": {
+    "message": "Browser extension"
+  },
+  "optServerSection": {
+    "message": "Server"
+  },
+  "optServerIntro": {
+    "message": "The Rustload this browser sends links to."
+  },
+  "optServerUrl": {
+    "message": "Server address"
+  },
+  "optServerUrlHint": {
+    "message": "The address you open Rustload at, with its port. Saving asks the browser for access to this address only."
+  },
+  "optApiKey": {
+    "message": "API key"
+  },
+  "optApiKeyHint": {
+    "message": "In Rustload, open Settings → Integrations and copy the API key."
+  },
+  "optShowKey": {
+    "message": "Show the key"
+  },
+  "optHideKey": {
+    "message": "Hide the key"
+  },
+  "optTest": {
+    "message": "Test connection"
+  },
+  "optTesting": {
+    "message": "Testing…"
+  },
+  "optConnected": {
+    "message": "Connected to Rustload $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "optDiskFree": {
+    "message": "$SIZE$ free",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "optSendingSection": {
+    "message": "Sending links"
+  },
+  "optSendingIntro": {
+    "message": "Defaults for links sent from this browser."
+  },
+  "optAddPaused": {
+    "message": "Add paused"
+  },
+  "optAddPausedHint": {
+    "message": "New packages wait in the queue until you start them in Rustload."
+  },
+  "optCategory": {
+    "message": "Category"
+  },
+  "optCategoryHint": {
+    "message": "Decides the destination folder. Automatic lets Rustload choose from the file extensions."
+  },
+  "optCategoryOffline": {
+    "message": "Connect to the server to load its categories."
+  },
+  "optCategoryMissing": {
+    "message": "$NAME$ (no longer on the server)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "optReloadCategories": {
+    "message": "Reload categories"
+  },
+  "optNotify": {
+    "message": "Confirm with a notification"
+  },
+  "optNotifyHint": {
+    "message": "After sending from a context menu. The toolbar badge confirms it either way."
+  },
+  "optPermSection": {
+    "message": "Permissions"
+  },
+  "optPermIntro": {
+    "message": "The extension only talks to your server. When you save, the browser asks you once to allow that address, and nothing else."
+  },
+  "permHost": {
+    "message": "Access to your server"
+  },
+  "permHostWhy": {
+    "message": "Send links and read the queue through the Rustload API."
+  },
+  "permGranted": {
+    "message": "Allowed for $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "permNotGranted": {
+    "message": "Not allowed yet"
+  },
+  "permNoServer": {
+    "message": "Asked when you save an address"
+  },
+  "permGrant": {
+    "message": "Allow access"
+  },
+  "permActiveTab": {
+    "message": "Current tab, when you ask"
+  },
+  "permActiveTabWhy": {
+    "message": "Reads the links of a page only when you choose “Send all links on this page…”, “Page links” or “Send selected links”."
+  },
+  "permMenus": {
+    "message": "Context menu"
+  },
+  "permMenusWhy": {
+    "message": "Adds the “Send to Rustload” entries when you right-click."
+  },
+  "permOther": {
+    "message": "Storage, alarms and notifications"
+  },
+  "permOtherWhy": {
+    "message": "Keep these settings on this device, refresh the badge once a minute, confirm what was sent."
+  },
+  "optSave": {
+    "message": "Save"
+  },
+  "optSaved": {
+    "message": "Saved"
+  },
+  "optUnsaved": {
+    "message": "Unsaved changes"
+  },
+  "optPrivacy": {
+    "message": "Your API key stays in this browser’s extension storage and is only ever sent to your server."
+  },
+  "magnetTitle": {
+    "message": "Magnet link"
+  },
+  "magnetSending": {
+    "message": "Sending to Rustload…"
+  },
+  "magnetAdded": {
+    "message": "Added to Rustload"
+  },
+  "magnetInvalid": {
+    "message": "This isn’t a valid magnet link."
+  },
+  "magnetClosing": {
+    "message": "This tab closes in a moment."
+  }
+}

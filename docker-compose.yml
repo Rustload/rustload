@@ -1,0 +1,25 @@
+# Example deployment. Adjust the volumes, then run `docker compose up -d` and open
+# http://<server>:8800 to create the administrator account.
+services:
+  rustload:
+    image: ghcr.io/rustload/rustload:latest
+    container_name: rustload
+    restart: unless-stopped
+    ports:
+      - "8800:8800"
+      # Click'n'Load (enable it in Settings › Integrations), see docs/configuration.md.
+      # - "127.0.0.1:9666:9666"
+    environment:
+      # Files are created as this user/group; use the values of `id` on the host.
+      PUID: "1000"
+      PGID: "1000"
+      UMASK: "022"
+      # Used by the download schedule.
+      TZ: "Europe/Paris"
+    volumes:
+      - ./config:/config
+      - /srv/downloads:/downloads
+      # Extra libraries usable as absolute category paths, e.g. /media/movies.
+      # - /srv/media:/media
+      # Watch folder (Settings › Integrations).
+      # - /srv/watch:/watch
