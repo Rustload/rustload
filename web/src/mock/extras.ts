@@ -78,6 +78,39 @@ export function checkLink(url: string, scanPages: boolean, known: Package[]): Li
     return info
   }
 
+  // `.m3u8` links are HLS streams, `.m3u` links lists of files (the server reads the content).
+  if (parsed.pathname.endsWith('.m3u8')) {
+    const segments = parsed.pathname.split('/').filter(Boolean)
+    const title = segments.length > 1 ? segments[segments.length - 2] : host
+    info.handler = { type: 'media', id: 'hls', name: 'HLS', account_id: null }
+    info.media = {
+      title,
+      uploader: null,
+      duration_secs: 596,
+      thumbnail: null,
+      webpage_url: url,
+      extractor: 'generic',
+      is_live: false,
+      playlist: null,
+      entries: [],
+      filesize_approx: null,
+    }
+    info.filename = `${title}.mp4`
+    return info
+  }
+
+  if (parsed.pathname.endsWith('.m3u')) {
+    const titles = ['Overture', 'Night Drive', 'Neon Rain', 'Dawn', 'Last Exit', 'Afterglow']
+    info.handler = { type: 'playlist', id: 'm3u', name: 'M3U', account_id: null }
+    info.folder = {
+      name: lastSegment(parsed)!.replace(/\.m3u$/, ''),
+      files: titles.length,
+      size: null,
+      entries: titles.map((title) => ({ name: title, size: null, rel_dir: '' })),
+    }
+    return info
+  }
+
   if (host === 'mega.nz' && parsed.pathname.startsWith('/folder')) {
     info.handler = { type: 'hoster', id: 'mega', name: 'MEGA', account_id: null }
     const entries = ['cover.jpg', 'CD1/01 - Overture.flac', 'CD1/02 - Night Drive.flac', 'CD2/01 - Dawn.flac']

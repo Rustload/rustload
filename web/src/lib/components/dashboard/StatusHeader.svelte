@@ -73,7 +73,7 @@
   class="grid items-end gap-x-12 gap-y-5 border-b border-line pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,24rem)]"
 >
   <div class="min-w-0">
-    <h2 class="text-[1.5rem] leading-[1.15] font-semibold heading text-balance sm:text-[2rem]">
+    <h2 class="heading text-[1.5rem] leading-[1.15] font-semibold text-balance sm:text-[2rem]">
       {#if state === 'downloading'}
         {headline[0]}<span class="whitespace-nowrap"
           ><span class="readout text-[1.15em] font-medium">{readout.value}</span>&nbsp;<span

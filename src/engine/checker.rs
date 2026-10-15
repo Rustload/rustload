@@ -10,7 +10,7 @@ use super::{
     Engine,
     handler::Handler,
     lifecycle::{self, Settled},
-    naming,
+    m3u, naming,
     transfer::Probe,
 };
 use crate::{
@@ -47,6 +47,8 @@ pub(super) enum Availability {
     Online {
         filename: Option<String>,
         size: Option<u64>,
+        /// Of a link probed over HTTP.
+        content_type: Option<String>,
     },
     Offline(String),
     /// A link handled by nothing but itself answered with a web page instead of a file.
@@ -64,6 +66,14 @@ async fn check(engine: &Engine, download: DownloadRow) {
     } else {
         tokio::time::timeout(TIMEOUT, probe(engine, &download.url)).await.unwrap_or(Availability::Unknown)
     };
+    // A playlist not recognised when it was added: see `m3u::settle_queued`.
+    if let Availability::Online { filename, content_type, .. } = &availability
+        && (content_type.as_deref().is_some_and(m3u::is_playlist_type)
+            || filename.as_deref().is_some_and(m3u::has_playlist_extension))
+        && m3u::settle_queued(engine, &download).await
+    {
+        return;
+    }
 
     let host = url_host(&download.url);
     let result = match availability {
@@ -76,7 +86,7 @@ async fn check(engine: &Engine, download: DownloadRow) {
                 Err(error) => Err(error),
             }
         }
-        Availability::Online { filename, size } => {
+        Availability::Online { filename, size, .. } => {
             if let Some(name) = &filename {
                 rename_package_from_file(engine, download.package_id, name).await;
             }
@@ -107,7 +117,7 @@ pub(super) async fn probe_with(engine: &Engine, handler: &Handler<'_>, url: &str
     let (target, headers) = match handler {
         Handler::Debrid(account) => {
             return match account.link_info(url).await {
-                Ok(Some(info)) => Availability::Online { filename: info.filename, size: info.size },
+                Ok(Some(info)) => Availability::Online { filename: info.filename, size: info.size, content_type: None },
                 Ok(None) => Availability::Unknown,
                 Err(DebridError::LinkDown(reason)) => Availability::Offline(reason),
                 Err(_) => Availability::Unknown,
@@ -117,7 +127,7 @@ pub(super) async fn probe_with(engine: &Engine, handler: &Handler<'_>, url: &str
             let Ok(parsed) = url::Url::parse(url) else { return Availability::Unknown };
             match hoster.resolve(&engine.download_client(), &parsed).await {
                 Ok(link) if link.filename.is_some() => {
-                    return Availability::Online { filename: link.filename, size: link.size };
+                    return Availability::Online { filename: link.filename, size: link.size, content_type: None };
                 }
                 Ok(link) => (link.url, link.headers),
                 Err(HosterError::Offline(reason)) => return Availability::Offline(reason),
@@ -146,7 +156,7 @@ pub(super) async fn probe_with(engine: &Engine, handler: &Handler<'_>, url: &str
         return if matches!(handler, Handler::Direct) { Availability::WebPage } else { Availability::Unknown };
     }
     let filename = probe.filename.or_else(|| naming::from_url(&probe.final_url));
-    Availability::Online { filename, size: probe.size }
+    Availability::Online { filename, size: probe.size, content_type: probe.content_type }
 }
 
 /// Gives packages named after a URL a better name once the first file name is known.

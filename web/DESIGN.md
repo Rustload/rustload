@@ -15,7 +15,7 @@ instrument: calm, dense, legible at a glance, with one live readout that matters
    appears.
 2. **Numbers are condensed, words are not.** Every figure (speeds, sizes, ETAs, counters) uses the
    `num` utility: Archivo at 78 % width with tabular figures, so live values never shift the layout.
-   The hero readout uses `readout` (64 % width). Headings use `heading` (112 % width).
+   The hero readout uses `readout` (64 % width). Headings use `heading` (the system face).
 3. **Say it, then show it.** The dashboard opens with one plain sentence about what Rustload is
    doing ("Rustload is downloading at 84 MiB/s", "Everything is paused"), the figures that matter
    under it, then one panel per package on the move: its overall bar and percentage first, the
@@ -29,7 +29,9 @@ instrument: calm, dense, legible at a glance, with one live readout that matters
    sign-in screen plays the same idea once (`FillStrip`), then steps back.
 6. **Check before committing.** Anything the user adds goes through the link grabber first: links
    light up as they are checked (lamp: hollow = checking/unknown, green = online, red = unavailable,
-   gold = no account), grouped into the packages that will be created.
+   gold = no account), grouped into the packages that will be created. The grabber is one column
+   that grows as links arrive: one row per package (several links fold under it), and the options
+   summed up in one line that opens on demand.
 7. **Keyboard first.** <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>/</kbd> opens the command palette,
    <kbd>N</kbd> adds, <kbd>G</kbd> then a letter navigates, <kbd>?</kbd> lists shortcuts. Pasting
    links anywhere opens the grabber with them.
@@ -58,8 +60,9 @@ and the dashboard summary, `text-small` (0.8125rem) for secondary lines, hints a
 these rather than arbitrary values.
 
 Typeface: **Archivo** variable (width + weight axes), self-hosted. Width carries the role: 125 %
-for the wordmark, 112 % for headings (`heading`), 100 % for text, 78 % for figures (`num`) and 64 %
-for the hero readout (`readout`). Logs use the system monospace.
+for the wordmark, 100 % for text, 78 % for figures (`num`) and 64 % for the hero readout
+(`readout`). Headings (`heading`) use the system interface face (Segoe UI, San Francisco,
+Roboto...), so titles read like the rest of the user's desktop. Logs use the system monospace.
 
 ## Building blocks (`src/lib/components/ui`)
 

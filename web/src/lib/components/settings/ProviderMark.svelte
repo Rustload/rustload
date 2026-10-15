@@ -9,7 +9,7 @@
 
 <span
   aria-hidden="true"
-  class="grid shrink-0 place-items-center rounded-control border border-line bg-sunken font-semibold heading text-fg-muted
+  class="grid shrink-0 place-items-center rounded-control border border-line bg-sunken heading font-semibold text-fg-muted
     {size === 'sm' ? 'size-7 text-micro' : 'size-9 text-xs'}"
 >
   {initials}

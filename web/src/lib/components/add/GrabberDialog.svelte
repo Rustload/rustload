@@ -1,15 +1,11 @@
 <script lang="ts">
-  import Archive from '@lucide/svelte/icons/archive'
   import FileUp from '@lucide/svelte/icons/file-up'
-  import Folder from '@lucide/svelte/icons/folder'
-  import ListVideo from '@lucide/svelte/icons/list-video'
   import Magnet from '@lucide/svelte/icons/magnet'
-  import Package from '@lucide/svelte/icons/package'
   import TriangleAlert from '@lucide/svelte/icons/triangle-alert'
   import X from '@lucide/svelte/icons/x'
   import { untrack } from 'svelte'
   import { SvelteMap } from 'svelte/reactivity'
-  import { api, type AddOptions, type AddRequest, type MediaOptions } from '$lib/api'
+  import { api, type AddOptions as AddRequestOptions, type AddRequest, type MediaOptions } from '$lib/api'
   import { t } from '$lib/i18n/index.svelte'
   import { accounts } from '$lib/stores/catalog.svelte'
   import { grabber } from '$lib/stores/grabber.svelte'
@@ -18,18 +14,18 @@
   import { errorMessage, toasts } from '$lib/stores/toasts.svelte'
   import { ui } from '$lib/stores/ui.svelte'
   import { formatBytes } from '$lib/utils/format'
-  import { groupLinks, type GrabbedLink, type GroupKind, type GroupMode, type LinkGroup } from '$lib/utils/grouping'
+  import { groupLinks, type GrabbedLink, type LinkGroup } from '$lib/utils/grouping'
   import { isTorrentFile, parseLinks } from '$lib/utils/links'
-  import PackageOptionsFields, { type PackageOptions } from '../queue/PackageOptionsFields.svelte'
+  import type { PackageOptions } from '../queue/PackageOptionsFields.svelte'
   import Alert from '../ui/Alert.svelte'
   import Button from '../ui/Button.svelte'
+  import Checkbox from '../ui/Checkbox.svelte'
   import Dialog from '../ui/Dialog.svelte'
   import IconButton from '../ui/IconButton.svelte'
-  import Segmented from '../ui/Segmented.svelte'
   import TextArea from '../ui/TextArea.svelte'
   import Toggle from '../ui/Toggle.svelte'
-  import GrabbedLinkRow from './GrabbedLinkRow.svelte'
-  import MediaOptionsFields from './MediaOptionsFields.svelte'
+  import AddOptions from './AddOptions.svelte'
+  import GrabbedGroup from './GrabbedGroup.svelte'
 
   /** Packages per `POST /api/packages/batch` request (server maximum). */
   const BATCH_LIMIT = 100
@@ -39,7 +35,7 @@
   let paused = $state(false)
   let options = $state<PackageOptions>(defaults())
   let media = $state<MediaOptions>(mediaDefaults())
-  let mode = $state<GroupMode>('smart')
+  let single = $state(false)
   const names = new SvelteMap<string, string>()
   let submitting = $state(false)
   let error = $state<string | null>(null)
@@ -58,20 +54,19 @@
       return { ...link, info: check?.state === 'done' ? check.info : null }
     }),
   )
-  const groups = $derived(groupLinks(links, mode))
+  const groups = $derived(groupLinks(links, single ? 'single' : 'smart'))
   const total = $derived(links.length + files.length)
   const packageCount = $derived(groups.length + files.length)
   const hasMedia = $derived(links.some((l) => l.info?.handler.type === 'media'))
   const needsMagnets = $derived(parsed.magnets.length + files.length > 0)
 
   const counts = $derived.by(() => {
-    const c = { checking: 0, online: 0, offline: 0, unknown: 0, duplicates: 0 }
+    const c = { checking: 0, online: 0, offline: 0, duplicates: 0 }
     for (const link of links) {
       const check = grabber.results.get(link.url)
       if (check?.state === 'checking' || (!check && checking)) c.checking++
       else if (link.info?.status === 'online') c.online++
       else if (isUnavailable(link)) c.offline++
-      else c.unknown++
       if (link.info?.duplicate) c.duplicates++
     }
     return c
@@ -120,7 +115,7 @@
       paused = settings.current ? !settings.current.downloads.auto_start : false
       options = defaults()
       media = mediaDefaults()
-      mode = 'smart'
+      single = false
       names.clear()
       error = null
       checking = ui.addTrusted
@@ -196,14 +191,6 @@
     return settled && group.kind !== 'magnet' && group.name ? group.name : undefined
   }
 
-  const KIND_ICON: Record<GroupKind, typeof Package> = {
-    files: Package,
-    archive: Archive,
-    folder: Folder,
-    playlist: ListVideo,
-    magnet: Magnet,
-  }
-
   /** Files the group will create: folders count their content; magnets are unknown until processed. */
   function groupFiles(group: LinkGroup): number | null {
     if (group.kind === 'magnet') return null
@@ -225,7 +212,7 @@
     if (total === 0) return
     submitting = true
     error = null
-    const common: AddOptions = {
+    const common: AddRequestOptions = {
       category_id: options.category_id,
       create_subfolder: options.create_subfolder,
       extract: options.extract,
@@ -267,11 +254,10 @@
   }
 </script>
 
-<Dialog bind:open={ui.addOpen} title={t('grabber.title')} size="xl" fill initialFocus="textarea">
-  <!-- Phones stack input, preview, then options; wider screens keep the preview beside the form. -->
+<Dialog bind:open={ui.addOpen} title={t('grabber.title')} size="lg" fill initialFocus="textarea">
   <form
     id="grabber-form"
-    class="grid grid-cols-[minmax(0,1fr)] lg:h-full lg:grid-cols-[21rem_minmax(0,1fr)]"
+    class="flex flex-col sm:min-h-0 sm:flex-1"
     onsubmit={submit}
     ondragover={(e) => {
       e.preventDefault()
@@ -282,234 +268,166 @@
     }}
     {ondrop}
   >
-    <div class="contents lg:block lg:space-y-5 lg:overflow-y-auto lg:border-r lg:border-line lg:px-5 lg:pb-5">
-      <div class="order-1 space-y-4 px-5 pb-5 lg:p-0">
-        <div>
-          <label for="grabber-links" class="mb-1.5 block font-medium">{t('grabber.input')}</label>
-          <TextArea
-            id="grabber-links"
-            bind:value={text}
-            mono
-            rows={7}
-            spellcheck={false}
-            autocomplete="off"
-            placeholder={t('grabber.inputPlaceholder')}
-            class="min-h-32 [overflow-wrap:anywhere]"
-          />
+    <div class="shrink-0 space-y-3 px-5 pb-4">
+      <div class="relative">
+        <label for="grabber-links" class="sr-only">{t('grabber.input')}</label>
+        <TextArea
+          id="grabber-links"
+          bind:value={text}
+          mono
+          rows={4}
+          spellcheck={false}
+          autocomplete="off"
+          placeholder={t('grabber.inputPlaceholder')}
+          class="[field-sizing:content] max-h-40 min-h-24 [overflow-wrap:anywhere]"
+        />
+        {#if dragging}
           <div
-            role="group"
-            aria-label={t('grabber.dropZone')}
-            class="mt-2 flex flex-wrap items-center gap-1.5 rounded-control border border-dashed px-3 py-2.5 text-small
-            transition-colors {dragging ? 'border-info bg-info-wash text-fg' : 'border-line-strong text-fg-muted'}"
+            class="pointer-events-none absolute inset-0 grid place-items-center rounded-control border-2 border-dashed
+              border-info bg-info-wash font-medium text-fg"
           >
-            <FileUp size={15} class="text-fg-faint" aria-hidden="true" />
-            {#if dragging}
-              {t('add.dropActive')}
-            {:else}
-              {t('add.drop')}
-              <button
-                type="button"
-                class="font-medium text-fg underline underline-offset-2"
-                onclick={() => fileInput?.click()}
-              >
-                {t('common.browse')}
-              </button>
-            {/if}
-            <input
-              bind:this={fileInput}
-              type="file"
-              accept=".torrent,application/x-bittorrent"
-              multiple
-              class="hidden"
-              onchange={(e) => {
-                addFiles(e.currentTarget.files)
-                e.currentTarget.value = ''
-              }}
-            />
+            {t('add.dropActive')}
           </div>
-        </div>
-
-        {#if needsMagnets && !accounts.magnetCapable}
-          <Alert tone="warn" icon={TriangleAlert} class="text-small">{t('add.noMagnetAccount')}</Alert>
         {/if}
       </div>
 
-      <div class="order-3 space-y-5 border-t border-line px-5 py-5 lg:border-0 lg:p-0">
-        <PackageOptionsFields bind:options />
+      <p class="flex flex-wrap items-center gap-x-1.5 text-small text-fg-muted">
+        <FileUp size={14} class="text-fg-faint" aria-hidden="true" />
+        {t('add.drop')}
+        <button
+          type="button"
+          class="font-medium text-fg underline underline-offset-2"
+          onclick={() => fileInput?.click()}
+        >
+          {t('common.browse')}
+        </button>
+        <input
+          bind:this={fileInput}
+          type="file"
+          accept=".torrent,application/x-bittorrent"
+          multiple
+          class="hidden"
+          onchange={(e) => {
+            addFiles(e.currentTarget.files)
+            e.currentTarget.value = ''
+          }}
+        />
+      </p>
 
-        {#if hasMedia}
-          <section aria-labelledby="grabber-media" class="space-y-3 border-t border-line pt-5">
-            <h3 id="grabber-media" class="font-semibold heading">{t('media.title')}</h3>
-            <MediaOptionsFields bind:options={media} />
-          </section>
-        {/if}
+      {#if total === 0}
+        <p class="text-small text-fg-faint">{t('grabber.hint')}</p>
+      {/if}
 
-        <Toggle bind:checked={paused} label={t('add.paused')} />
-      </div>
+      {#if needsMagnets && !accounts.magnetCapable}
+        <Alert tone="warn" icon={TriangleAlert} class="text-small">{t('add.noMagnetAccount')}</Alert>
+      {/if}
     </div>
 
-    <div class="order-2 flex min-h-0 flex-col border-t border-line lg:border-t-0">
-      <div class="flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-5 py-2">
-        <p class="flex flex-wrap items-baseline gap-x-4 gap-y-1 num text-small text-fg-muted">
-          {#if total === 0}
-            <span class="text-fg-faint">{t('add.nothingDetected')}</span>
-          {:else}
-            <span class="font-medium text-fg">{t('grabber.linkCount', { count: total })}</span>
-            {#if counts.online}
-              <span class="flex items-center gap-1.5">
-                <span class="size-1.5 rounded-full bg-ok" aria-hidden="true"></span>{t('grabber.online', {
-                  count: counts.online,
-                })}
-              </span>
-            {/if}
-            {#if counts.offline}
-              <span class="flex items-center gap-1.5 text-bad">
-                <span class="size-1.5 rounded-full bg-bad" aria-hidden="true"></span>{t('grabber.offline', {
-                  count: counts.offline,
-                })}
-              </span>
-            {/if}
-            {#if counts.checking}
-              <span class="flex items-center gap-1.5">
-                <span class="size-1.5 animate-pulse rounded-full bg-fg-faint" aria-hidden="true"></span>{t(
-                  'grabber.checkingCount',
-                  { count: counts.checking },
-                )}
-              </span>
-            {/if}
-            {#if counts.duplicates}
-              <span class="text-warn">{t('grabber.duplicates', { count: counts.duplicates })}</span>
-            {/if}
+    {#if total > 0}
+      <div class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-5 py-2.5">
+        <p class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-small text-fg-muted">
+          <span class="font-medium text-fg">{t('queue.count', { count: packageCount })}</span>
+          <span class="num">{t('grabber.linkCount', { count: total })}</span>
+          {#if counts.online}
+            <span class="flex items-center gap-1.5 num">
+              <span class="size-1.5 rounded-full bg-ok" aria-hidden="true"></span>
+              {t('grabber.online', { count: counts.online })}
+            </span>
+          {/if}
+          {#if counts.checking}
+            <span class="flex items-center gap-1.5 num">
+              <span class="size-1.5 animate-pulse rounded-full bg-fg-faint" aria-hidden="true"></span>
+              {t('grabber.checkingCount', { count: counts.checking })}
+            </span>
+          {/if}
+          {#if counts.offline}
+            <span class="flex items-center gap-1.5 num text-bad">
+              <span class="size-1.5 rounded-full bg-bad" aria-hidden="true"></span>
+              {t('grabber.offline', { count: counts.offline })}
+              <button
+                type="button"
+                class="font-medium underline underline-offset-2"
+                aria-label={t('grabber.removeOffline', { count: counts.offline })}
+                onclick={() => removeWhere(isUnavailable)}
+              >
+                {t('common.remove')}
+              </button>
+            </span>
+          {/if}
+          {#if counts.duplicates}
+            <span class="flex items-center gap-1.5 num text-warn">
+              {t('grabber.duplicates', { count: counts.duplicates })}
+              <button
+                type="button"
+                class="font-medium underline underline-offset-2"
+                aria-label={t('grabber.removeDuplicates', { count: counts.duplicates })}
+                onclick={() => removeWhere((l) => !!l.info?.duplicate)}
+              >
+                {t('common.remove')}
+              </button>
+            </span>
           {/if}
         </p>
         <!-- Announced once, when every link has been checked, instead of at each change. -->
         <p class="sr-only" aria-live="polite">
-          {#if checking && total > 0 && counts.checking === 0}
+          {#if checking && counts.checking === 0}
             {t('grabber.checkedSummary', { count: total, online: counts.online, offline: counts.offline })}
           {/if}
         </p>
         {#if links.length > 1}
-          <Segmented
-            class="ml-auto"
-            label={t('grabber.grouping')}
-            bind:value={mode}
-            options={[
-              { value: 'smart', label: t('grabber.groupSmart') },
-              { value: 'single', label: t('grabber.groupSingle') },
-            ]}
+          <Checkbox bind:checked={single} label={t('grabber.singlePackage')} class="text-small" />
+        {/if}
+      </div>
+
+      {#if !checking}
+        <div class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-warn-wash px-5 py-3">
+          <p class="min-w-0 flex-1 basis-64 text-small text-warn">{t('grabber.untrusted')}</p>
+          <Button size="sm" onclick={() => (checking = true)}>{t('grabber.checkNow')}</Button>
+        </div>
+      {/if}
+
+      <ul class="divide-y divide-line border-t border-line sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
+        {#each groups as group (group.key)}
+          <GrabbedGroup
+            {group}
+            name={groupName(group)}
+            placeholder={placeholderName(group)}
+            files={groupFiles(group)}
+            size={groupSize(group)}
+            onrename={(name) => names.set(group.key, name)}
+            onremove={(urls) => removeLinks(urls)}
+            onscan={scan}
           />
-        {/if}
-      </div>
+        {/each}
+        {#each files as file (file.name)}
+          <li class="group/row flex items-center gap-3 py-2 pr-3 pl-5">
+            <Magnet size={14} class="-mx-[3px] shrink-0 text-fg-faint" aria-hidden="true" />
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-medium">{file.name}</p>
+              <p class="mt-px text-xs text-fg-faint">{t('grabber.torrentFile')}</p>
+            </div>
+            <span class="w-20 shrink-0 text-right num text-xs text-fg-muted">{formatBytes(file.size)}</span>
+            <span class="w-7 shrink-0" aria-hidden="true"></span>
+            <IconButton
+              icon={X}
+              label={t('add.removeFile', { name: file.name })}
+              size="sm"
+              class="shrink-0 opacity-60 group-hover/row:opacity-100 focus-visible:opacity-100"
+              onclick={() => (files = files.filter((f) => f !== file))}
+            />
+          </li>
+        {/each}
+      </ul>
+    {/if}
 
-      <div class="min-h-0 flex-1 lg:overflow-y-auto">
-        {#if !checking && total > 0}
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-warn-wash px-5 py-3">
-            <p class="min-w-0 flex-1 basis-64 text-small text-warn">{t('grabber.untrusted')}</p>
-            <Button size="sm" onclick={() => (checking = true)}>{t('grabber.checkNow')}</Button>
-          </div>
-        {/if}
-        {#if total === 0}
-          <div class="mx-auto max-w-md px-6 py-12 lg:py-20">
-            <h3 class="text-base font-semibold heading">{t('grabber.emptyTitle')}</h3>
-            <p class="mt-1.5 text-fg-muted">{t('grabber.emptyBody')}</p>
-            <dl class="mt-6 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-small">
-              <dt class="text-fg-faint">{t('grabber.example.hosters')}</dt>
-              <dd class="font-mono text-xs text-fg-muted">https://1fichier.com/?k3y…</dd>
-              <dt class="text-fg-faint">{t('grabber.example.media')}</dt>
-              <dd class="font-mono text-xs text-fg-muted">https://youtu.be/jNQXAC9IVRw</dd>
-              <dt class="text-fg-faint">{t('grabber.example.magnets')}</dt>
-              <dd class="font-mono text-xs text-fg-muted">magnet:?xt=urn:btih:…</dd>
-              <dt class="text-fg-faint">{t('grabber.example.pages')}</dt>
-              <dd class="font-mono text-xs text-fg-muted">https://example.org/downloads</dd>
-            </dl>
-          </div>
-        {:else}
-          {#each groups as group (group.key)}
-            {@const Icon = KIND_ICON[group.kind]}
-            <section class="border-b border-line">
-              <header class="flex items-center gap-3 pt-3 pr-1.5 pb-1 pl-4">
-                <Icon size={15} class="shrink-0 text-fg-faint" aria-hidden="true" />
-                <input
-                  value={groupName(group)}
-                  placeholder={placeholderName(group)}
-                  oninput={(e) => names.set(group.key, e.currentTarget.value)}
-                  onkeydown={(e) => {
-                    // Enter confirms the name; it must not submit the whole form.
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      e.currentTarget.blur()
-                    }
-                  }}
-                  aria-label={t('grabber.packageName')}
-                  spellcheck={false}
-                  class="-ml-1.5 min-w-0 flex-1 rounded-chip bg-transparent px-1.5 py-0.5 font-semibold heading
-                    hover:bg-sunken focus:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-info/40"
-                />
-                {#if groupFiles(group) !== null}
-                  <span class="hidden shrink-0 num text-xs text-fg-muted sm:inline">
-                    {t('queue.files', { count: groupFiles(group) ?? 0 })}
-                  </span>
-                {/if}
-                <span class="w-24 shrink-0 text-right num text-xs text-fg-muted">{formatBytes(groupSize(group))}</span>
-                <span class="w-[4.25rem] shrink-0" aria-hidden="true"></span>
-              </header>
-              <ul class="pb-1.5">
-                {#each group.links as link (link.url)}
-                  <GrabbedLinkRow
-                    {link}
-                    check={grabber.results.get(link.url)}
-                    scanning={grabber.scanning.has(link.url)}
-                    onremove={() => removeLinks(new Set([link.url]))}
-                    onscan={() => scan(link.url)}
-                  />
-                {/each}
-              </ul>
-            </section>
-          {/each}
-
-          {#if files.length}
-            <section class="border-b border-line">
-              <header class="flex items-center gap-2.5 px-4 pt-3 pb-1.5">
-                <Magnet size={15} class="text-fg-faint" aria-hidden="true" />
-                <h3 class="flex-1 font-semibold heading">{t('grabber.torrents')}</h3>
-              </header>
-              <ul class="pb-1.5">
-                {#each files as file (file.name)}
-                  <li class="flex items-center gap-3 py-1.5 pr-1.5 pl-4 text-small">
-                    <span class="size-2 shrink-0 rounded-full border border-fg-faint" aria-hidden="true"></span>
-                    <span class="min-w-0 flex-1 truncate">{file.name}</span>
-                    <span class="shrink-0 num text-xs text-fg-muted">{formatBytes(file.size)}</span>
-                    <IconButton
-                      icon={X}
-                      label={t('add.removeFile', { name: file.name })}
-                      size="sm"
-                      onclick={() => (files = files.filter((f) => f !== file))}
-                    />
-                  </li>
-                {/each}
-              </ul>
-            </section>
-          {/if}
-        {/if}
-      </div>
-    </div>
+    <AddOptions bind:options bind:media {hasMedia} />
   </form>
 
   {#snippet footer()}
+    <Toggle bind:checked={paused} label={t('add.paused')} class="mr-auto" />
     {#if error}
-      <p role="alert" class="mr-auto w-full text-small text-bad sm:w-auto">{error}</p>
+      <p role="alert" class="w-full text-small text-bad sm:order-first">{error}</p>
     {/if}
-    {#if counts.offline}
-      <Button size="sm" variant="ghost" onclick={() => removeWhere(isUnavailable)}>
-        {t('grabber.removeOffline', { count: counts.offline })}
-      </Button>
-    {/if}
-    {#if counts.duplicates}
-      <Button size="sm" variant="ghost" onclick={() => removeWhere((l) => !!l.info?.duplicate)}>
-        {t('grabber.removeDuplicates', { count: counts.duplicates })}
-      </Button>
-    {/if}
-    <span class="hidden flex-1 sm:block"></span>
     <Button onclick={() => (ui.addOpen = false)}>{t('common.cancel')}</Button>
     <Button type="submit" form="grabber-form" variant="primary" loading={submitting} disabled={total === 0}>
       {paused ? t('grabber.submitPaused', { count: packageCount }) : t('grabber.submit', { count: packageCount })}

@@ -20,15 +20,15 @@ use super::{
     handler::Handler,
     lifecycle,
     live::LiveDownload,
-    naming,
+    m3u, naming,
     task::{self, Outcome, TaskError},
 };
 use crate::{
     db::{self, downloads::DownloadUpdate, media::NewEntry, packages::PackageUpdate},
     events::{Notice, NoticeLevel},
     media::{
-        self, MediaError, MediaInfo, MediaOptions, MediaOptionsPatch, YtDlp,
-        info::{MAX_ENTRIES, MediaEntry, RawInfo, predicted_name},
+        self, MediaError, MediaInfo, MediaMeta, MediaOptions, MediaOptionsPatch, YtDlp,
+        info::{MAX_ENTRIES, MediaEntry, RawInfo, clip_title, predicted_name},
         output::{self, ErrorKind, Line, ProgressTracker},
         process::Running,
     },
@@ -57,11 +57,14 @@ pub(super) enum Origin {
     Link,
     /// A web page that nothing else recognised (`media.generic_pages`).
     WebPage,
+    /// An HLS stream recognised from its content when its download started (`engine::m3u`).
+    Stream,
 }
 
 /// Whether a download goes to yt-dlp instead of debrid accounts, hoster plugins or a direct
-/// transfer: links found by yt-dlp (playlist entries, downloads it started) and links of media
-/// sites, unless yt-dlp is missing and something else handles the site (see [`takes_site_link`]).
+/// transfer: links found by yt-dlp (playlist entries, downloads it started), HLS streams (their
+/// `media` is set when they are recognised, see `engine::m3u`) and links of media sites, unless
+/// yt-dlp is missing and something else handles the site (see [`takes_site_link`]).
 pub(super) async fn routes(engine: &Engine, download: &DownloadRow) -> bool {
     if !engine.settings.get().media.enabled {
         return false;
@@ -318,6 +321,7 @@ fn task_error(error: MediaError, ffmpeg: bool, origin: Origin) -> TaskError {
     match error {
         MediaError::Cancelled => TaskError::Stopped,
         MediaError::Unavailable(message) => failure(&message, ffmpeg, origin),
+        MediaError::Disabled if origin == Origin::Stream => TaskError::Fatal(m3u::NEEDS_YTDLP.into()),
         error @ (MediaError::Disabled | MediaError::Missing) => TaskError::Fatal(error.to_string()),
         error => TaskError::Transient(error.to_string()),
     }
@@ -354,7 +358,7 @@ pub(super) async fn download(
         .ok_or_else(|| TaskError::Fatal("package not found".into()))?;
     let options = package_options(&settings, &package);
     if package.media.is_none() {
-        // Reached through `generic_pages`: show the options used.
+        // Reached through `generic_pages` or as a stream: show the options used.
         db::media::set_package_options(&engine.db, package.id, Some(&options)).await?;
     }
 
@@ -409,7 +413,9 @@ pub(super) async fn download(
     let cookies = ytdlp.cookies().map_err(|e| TaskError::Fatal(e.to_string()))?;
     let mut args = ytdlp.base_args(cookies.as_ref());
     args.extend(output::output_args().into_iter().map(OsString::from));
-    args.extend(["--windows-filenames", "-o", OUTPUT_TEMPLATE, "-P"].map(OsString::from));
+    args.extend(["--windows-filenames", "-o"].map(OsString::from));
+    args.push(output_template(&meta).into());
+    args.push("-P".into());
     args.push(work.clone().into());
     let limit = settings.speed_limit_at(chrono::Local::now().naive_local()).0;
     if let Some(rate) = rate_limit(limit, engine.live.running_count()) {
@@ -538,6 +544,15 @@ async fn follow(
             Some(Line::Other(text)) if !text.trim().is_empty() => tracing::debug!("yt-dlp: {text}"),
             Some(_) => {}
         }
+    }
+}
+
+/// yt-dlp's file names (see `predicted_name`): `title [id]`, or the title alone for links named
+/// after their URL, which have no id (`MediaInfo::name_after_url`).
+fn output_template(meta: &MediaMeta) -> String {
+    match (&meta.id, meta.title.as_deref().map(str::trim).filter(|t| !t.is_empty())) {
+        (None, Some(title)) => format!("{}.%(ext)s", naming::sanitize(clip_title(title)).replace('%', "%%")),
+        _ => OUTPUT_TEMPLATE.to_owned(),
     }
 }
 
@@ -739,6 +754,22 @@ mod tests {
         ));
         assert!(matches!(task_error(MediaError::Timeout(30), true, Origin::Link), TaskError::Transient(_)));
         assert!(matches!(task_error(MediaError::Cancelled, true, Origin::Link), TaskError::Stopped));
+        assert!(matches!(
+            task_error(MediaError::Disabled, false, Origin::Stream),
+            TaskError::Fatal(message) if message.contains("HLS")
+        ));
+    }
+
+    #[test]
+    fn names_files_after_the_title() {
+        let meta = |id: Option<&str>, title: Option<&str>| MediaMeta {
+            id: id.map(str::to_owned),
+            title: title.map(str::to_owned),
+            ..MediaMeta::default()
+        };
+        assert_eq!(output_template(&meta(Some("abc"), Some("Clip"))), OUTPUT_TEMPLATE);
+        assert_eq!(output_template(&meta(None, None)), OUTPUT_TEMPLATE);
+        assert_eq!(output_template(&meta(None, Some("100% Live: a/b"))), "100%% Live_ a_b.%(ext)s");
     }
 
     #[test]

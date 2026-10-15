@@ -336,7 +336,6 @@ export const fr: Messages = {
   },
 
   add: {
-    nothingDetected: 'Aucun lien détecté pour l’instant',
     drop: 'Déposez des fichiers .torrent ici ou',
     dropActive: 'Relâchez pour ajouter les fichiers',
     onlyTorrents: 'Seuls les fichiers .torrent et les liens peuvent être déposés ici.',
@@ -357,7 +356,7 @@ export const fr: Messages = {
   grabber: {
     title: 'Ajouter des téléchargements',
     input: 'Liens, magnets ou pages web',
-    inputPlaceholder: 'Collez n’importe quel texte contenant des liens',
+    inputPlaceholder: 'Collez des liens, magnets ou pages web…',
     linkCount: { one: '{count} lien', other: '{count} liens' },
     online: { one: '{count} en ligne', other: '{count} en ligne' },
     offline: { one: '{count} indisponible', other: '{count} indisponibles' },
@@ -376,6 +375,8 @@ export const fr: Messages = {
     handler: {
       direct: 'Lien direct',
       page: 'Page web',
+      playlist: 'Liste de lecture M3U',
+      hls: 'Flux vidéo HLS',
     },
     playlistCount: { one: '{count} vidéo', other: '{count} vidéos' },
     folderCount: { one: '{count} fichier', other: '{count} fichiers' },
@@ -386,7 +387,6 @@ export const fr: Messages = {
     foundLinks: { one: '{count} lien trouvé sur la page', other: '{count} liens trouvés sur la page' },
     noLinksFound: 'Aucun lien téléchargeable sur cette page',
     scanFailed: 'La page n’a pas pu être lue.',
-    dropZone: 'Déposez des fichiers .torrent ici',
     checkedSummary: {
       one: '{count} lien vérifié : {online} en ligne, {offline} indisponible',
       other: '{count} liens vérifiés : {online} en ligne, {offline} indisponibles',
@@ -398,19 +398,21 @@ export const fr: Messages = {
     removeLink: 'Retirer {name}',
     removeOffline: { one: 'Retirer le lien indisponible', other: 'Retirer les {count} liens indisponibles' },
     removeDuplicates: { one: 'Retirer le doublon', other: 'Retirer les {count} doublons' },
-    grouping: 'Paquets',
-    groupSmart: 'Regroupement intelligent',
-    groupSingle: 'Un seul paquet',
     packageName: 'Nom du paquet',
-    torrents: 'Fichiers torrent',
-    emptyTitle: 'Collez ce que vous voulez, Rustload fait le tri',
-    emptyBody:
-      'Les liens sont vérifiés dès que vous les collez : nom, taille, disponibilité et compte utilisé. Les archives en plusieurs parties, les dossiers et les playlists forment leur propre paquet.',
-    example: {
-      hosters: 'Hébergeurs',
-      media: 'Sites vidéo',
-      magnets: 'Magnets',
-      pages: 'Pages web',
+    hint: 'Hébergeurs, sites vidéo, flux HLS, listes M3U, magnets et pages web : chaque lien est vérifié dès que vous le collez.',
+    singlePackage: 'Tout dans un seul paquet',
+    torrentFile: 'Fichier torrent',
+    options: 'Options',
+    summary: {
+      automatic: 'destination automatique',
+      subfolder: 'un dossier par paquet',
+      extract: 'extraction des archives',
+      extractDelete: 'extraction puis suppression des archives',
+      noExtract: 'sans extraction',
+      password: 'mot de passe des archives',
+      audio: 'audio seulement',
+      bestVideo: 'meilleure qualité vidéo',
+      video: 'vidéo {height}p',
     },
     submit: { one: 'Ajouter {count} paquet', other: 'Ajouter {count} paquets' },
     submitPaused: { one: 'Ajouter {count} paquet en pause', other: 'Ajouter {count} paquets en pause' },

@@ -9,7 +9,7 @@
     title: string
     description?: string
     size?: 'sm' | 'md' | 'lg' | 'xl'
-    /** The body fills a fixed-height dialog and manages its own scrolling (multi-pane layouts). */
+    /** The body manages its own scrolling: no padding, a flex column on screens wider than a phone. */
     fill?: boolean
     /** Called after the dialog closed, whatever the reason (Escape, backdrop, close button). */
     onclose?: () => void
@@ -35,7 +35,7 @@
   const id = $props.id()
 
   const widths = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-6xl' }
-  const height = $derived(fill ? 'h-[min(92dvh,56rem)]' : 'max-h-[min(90dvh,52rem)]')
+  const height = 'max-h-[min(90dvh,52rem)]'
 
   $effect(() => {
     if (!dialog) return
@@ -72,14 +72,18 @@
     <div class="flex {height} flex-col">
       <header class="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
         <div class="min-w-0">
-          <h2 id="{id}-title" class="text-lg font-semibold heading">{title}</h2>
+          <h2 id="{id}-title" class="heading text-lg font-semibold">{title}</h2>
           {#if description}
             <p id="{id}-description" class="mt-1 text-fg-muted">{description}</p>
           {/if}
         </div>
         <IconButton icon={X} label={t('common.close')} size="sm" class="-mr-1.5" onclick={() => dialog?.close()} />
       </header>
-      <div class="min-h-0 flex-1 {fill ? 'overflow-y-auto lg:overflow-hidden' : 'overflow-y-auto px-5 pb-5'}">
+      <div
+        class="min-h-0 flex-1 {fill
+          ? 'overflow-y-auto sm:flex sm:flex-col sm:overflow-hidden'
+          : 'overflow-y-auto px-5 pb-5'}"
+      >
         {@render children()}
       </div>
       {#if footer}

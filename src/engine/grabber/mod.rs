@@ -15,6 +15,7 @@ use super::{
     checker::{self, Availability},
     handler::Handler,
     intake::IntakeError,
+    m3u::{self, Playlist},
     magnet, naming,
 };
 use crate::{
@@ -84,6 +85,8 @@ pub enum HandlerKind {
     Magnet,
     /// A media site downloaded with yt-dlp.
     Media,
+    /// An M3U list of links: added as its entries, like a folder.
+    Playlist,
 }
 
 /// Who will download a link, as shown to users.
@@ -110,6 +113,10 @@ impl HandlerInfo {
             },
             Handler::Direct => Self::plain(HandlerKind::Direct, "Direct"),
         }
+    }
+
+    fn media(site: Site) -> Self {
+        Self { kind: HandlerKind::Media, id: Some(site.id.to_owned()), name: site.name.to_owned(), account_id: None }
     }
 
     fn account(kind: HandlerKind, account: &AccountHandle) -> Self {
@@ -300,6 +307,12 @@ async fn check_http(engine: &Engine, link: &Link, scan_pages: bool, deadline: In
     {
         return check_media(engine, link, site, deadline).await;
     }
+    // Playlists are read before debrid accounts and hoster plugins see them: a stream goes to
+    // yt-dlp and a list stands for its links, wherever they are hosted.
+    let listed = m3u::is_candidate_url(url);
+    if listed && let Some(info) = check_playlist(engine, link, deadline).await {
+        return info;
+    }
     let handler = match timeout_at(deadline, Handler::select(engine, url)).await {
         Ok(handler) => handler,
         Err(_) => {
@@ -335,7 +348,16 @@ async fn check_http(engine: &Engine, link: &Link, scan_pages: bool, deadline: In
     }
 
     match timeout_at(deadline, checker::probe_with(engine, &handler, url)).await {
-        Ok(Availability::Online { filename, size }) => LinkInfo { status: LinkStatus::Online, filename, size, ..info },
+        Ok(Availability::Online { filename, size, content_type }) => {
+            // Recognised by its type only (`…/stream?id=42`).
+            if !listed
+                && content_type.as_deref().is_some_and(m3u::is_playlist_type)
+                && let Some(found) = check_playlist(engine, link, deadline).await
+            {
+                return found;
+            }
+            LinkInfo { status: LinkStatus::Online, filename, size, ..info }
+        }
         Ok(Availability::Offline(reason)) => info.fail(LinkStatus::Offline, reason),
         Ok(Availability::Unknown) => info,
         Ok(Availability::WebPage) => {
@@ -348,14 +370,46 @@ async fn check_http(engine: &Engine, link: &Link, scan_pages: bool, deadline: In
     }
 }
 
-async fn check_media(engine: &Engine, link: &Link, site: Site, deadline: Instant) -> LinkInfo {
-    let handler = HandlerInfo {
-        kind: HandlerKind::Media,
-        id: Some(site.id.to_owned()),
-        name: site.name.to_owned(),
-        account_id: None,
-    };
+/// An M3U playlist: a stream checked like a media link, or a list previewed like a folder. `None`
+/// when the link turns out not to be a playlist.
+async fn check_playlist(engine: &Engine, link: &Link, deadline: Instant) -> Option<LinkInfo> {
+    let playlist = timeout_at(deadline, m3u::fetch(&engine.download_client(), &link.url)).await.ok().flatten()?;
+    Some(match playlist {
+        Playlist::Stream if !engine.settings.get().media.enabled => {
+            LinkInfo { host: url_host(&link.url), ..LinkInfo::new(link, HandlerInfo::media(m3u::STREAM)) }
+                .fail(LinkStatus::Unsupported, m3u::NEEDS_YTDLP)
+        }
+        Playlist::Stream => check_media(engine, link, m3u::STREAM, deadline).await,
+        Playlist::List(entries) => list_preview(link, entries),
+    })
+}
+
+fn list_preview(link: &Link, entries: Vec<m3u::Entry>) -> LinkInfo {
+    let handler =
+        HandlerInfo { kind: HandlerKind::Playlist, id: Some("m3u".into()), name: "M3U".into(), account_id: None };
     let info = LinkInfo { host: url_host(&link.url), ..LinkInfo::new(link, handler) };
+    if entries.is_empty() {
+        return info.fail(LinkStatus::Offline, "the playlist lists no links");
+    }
+    let folder = FolderPreview {
+        name: m3u::list_name(&link.url),
+        files: entries.len(),
+        size: None,
+        entries: entries
+            .into_iter()
+            .take(MAX_FOLDER_ENTRIES)
+            .map(|entry| FolderPreviewEntry {
+                name: entry.title.or_else(|| naming::from_url(&entry.url)).unwrap_or(entry.url),
+                size: None,
+                rel_dir: String::new(),
+            })
+            .collect(),
+    };
+    LinkInfo { status: LinkStatus::Online, folder: Some(folder), ..info }
+}
+
+async fn check_media(engine: &Engine, link: &Link, site: Site, deadline: Instant) -> LinkInfo {
+    let info = LinkInfo { host: url_host(&link.url), ..LinkInfo::new(link, HandlerInfo::media(site)) };
     let limit = deadline.saturating_duration_since(Instant::now()).saturating_sub(MEDIA_MARGIN);
     // Finding yt-dlp may run it (`--version`): the deadline bounds that too.
     match timeout_at(deadline, media::probe(engine, &link.url, limit)).await {

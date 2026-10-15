@@ -39,8 +39,9 @@ falls back to the next one when a quota runs out.
 
 **Video and audio sites.** YouTube, Vimeo, Twitch, SoundCloud, X, Instagram, TikTok and about
 twenty other sites through yt-dlp, plus any page yt-dlp supports once *Try yt-dlp on other web
-pages* is on: pick a quality or audio only, grab whole playlists, subtitles, SponsorBlock.
-yt-dlp updates itself; ffmpeg ships in the Docker image.
+pages* is on: pick a quality or audio only, grab whole playlists, subtitles, SponsorBlock. HLS
+streams (`.m3u8`) become one video file and M3U lists their links. yt-dlp updates itself; ffmpeg
+ships in the Docker image.
 
 **Files you can trust.** Automatic extraction (RAR, 7z, ZIP, tar, multi-volume, password lists),
 checksum verification (SFV, MD5, SHA) with a "verified" mark, categories that pick their folder by

@@ -66,8 +66,9 @@ export function packageNameFromFile(filename: string): string {
 
 /** Name of a link as a package name: titles of media links are kept as they are. */
 function stemOf(link: GrabbedLink): string {
-  const name = linkName(link)
-  return link.info?.handler.type === 'media' ? name : packageNameFromFile(name)
+  const info = link.info
+  if (info?.handler.type === 'media') return info.media?.title ?? linkName(link)
+  return packageNameFromFile(linkName(link))
 }
 
 /** Longest common prefix of several names, cut back to a word boundary; null when not meaningful. */

@@ -1,25 +1,31 @@
 <script lang="ts">
   import ScanSearch from '@lucide/svelte/icons/scan-search'
   import X from '@lucide/svelte/icons/x'
+  import type { Snippet } from 'svelte'
   import { t } from '$lib/i18n/index.svelte'
   import type { CheckState } from '$lib/stores/grabber.svelte'
   import { formatBytes, formatDuration, hostOf } from '$lib/utils/format'
   import { linkName, type GrabbedLink } from '$lib/utils/grouping'
-  import { linkTone, toneFill, toneText } from '$lib/utils/status'
+  import { linkTone, toneText } from '$lib/utils/status'
   import Button from '../ui/Button.svelte'
   import DisclosureButton from '../ui/DisclosureButton.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Spinner from '../ui/Spinner.svelte'
+  import LinkLamp from './LinkLamp.svelte'
 
   type Props = {
     link: GrabbedLink
     check: CheckState | undefined
     scanning: boolean
+    /** Replaces the link name, e.g. with the package name field when the link is a package alone. */
+    title?: Snippet
+    /** One of several links of a package, shown under its row. */
+    nested?: boolean
     onremove: () => void
     onscan: () => void
   }
 
-  let { link, check, scanning, onremove, onscan }: Props = $props()
+  let { link, check, scanning, title, nested = false, onremove, onscan }: Props = $props()
 
   let expanded = $state(false)
   const entriesId = $props.id()
@@ -33,10 +39,6 @@
     if (!info || isPage) return 'unknown'
     return info.status
   })
-  // Hollow while nothing is known, filled with the status colour once it is.
-  const lampClass = $derived(
-    linkTone[lamp] === 'muted' ? 'border-fg-faint' : `border-transparent ${toneFill[linkTone[lamp]]}`,
-  )
   const lampLabel = $derived.by(() => {
     if (lamp === 'checking') return t('grabber.checking')
     if (!check || check.state === 'failed') return t('grabber.status.notChecked')
@@ -56,6 +58,10 @@
         return t('grabber.handler.direct')
       case 'page':
         return t('grabber.handler.page')
+      case 'playlist':
+        return t('grabber.handler.playlist')
+      case 'media':
+        return h.id === 'hls' ? t('grabber.handler.hls') : h.name
       default:
         return h.name
     }
@@ -67,18 +73,9 @@
   const noLinksFound = $derived(isPage && info?.found !== null && info?.found.length === 0)
 </script>
 
-<li class="group/row py-2 pr-1.5 pl-4">
+<li class="group/row py-2 pr-3 {nested ? 'pl-10' : 'pl-5'}">
   <div class="flex items-center gap-3">
-    <span
-      class="relative size-2 shrink-0 rounded-full border {lampClass}"
-      role="img"
-      aria-label={lampLabel}
-      title={lampLabel}
-    >
-      {#if lamp === 'checking'}
-        <span class="absolute -inset-1 animate-ping rounded-full border border-fg-faint opacity-50"></span>
-      {/if}
-    </span>
+    <LinkLamp state={lamp} label={lampLabel} />
 
     {#if media?.thumbnail}
       <span class="relative hidden h-9 w-16 shrink-0 overflow-hidden rounded-chip bg-sunken sm:block">
@@ -92,9 +89,13 @@
     {/if}
 
     <div class="min-w-0 flex-1">
-      <p class="truncate text-small {checking ? 'text-fg-muted' : 'text-fg'}" title={link.url}>
-        {linkName(link)}
-      </p>
+      {#if title}
+        {@render title()}
+      {:else}
+        <p class="truncate text-small {checking ? 'text-fg-muted' : 'text-fg'}" title={link.url}>
+          {linkName(link)}
+        </p>
+      {/if}
       <p class="mt-px flex min-w-0 flex-wrap gap-x-3 text-xs text-fg-faint">
         {#if host}<span class="truncate">{host}</span>{/if}
         {#if handler}<span>{handler}</span>{/if}
@@ -122,7 +123,7 @@
         {t('grabber.findLinks')}
       </Button>
     {:else}
-      <span class="flex w-24 shrink-0 justify-end num text-xs text-fg-muted">
+      <span class="flex w-20 shrink-0 justify-end num text-xs text-fg-muted">
         {#if checking}
           <Spinner size={13} class="text-fg-faint" />
         {:else if size !== null}
@@ -155,7 +156,7 @@
       {#each folder.entries as entry, i (i)}
         <li class="flex gap-3">
           <span class="min-w-0 flex-1 truncate">{entry.rel_dir ? `${entry.rel_dir}/` : ''}{entry.name}</span>
-          <span class="shrink-0 num text-fg-faint">{formatBytes(entry.size)}</span>
+          {#if entry.size !== null}<span class="shrink-0 num text-fg-faint">{formatBytes(entry.size)}</span>{/if}
         </li>
       {/each}
       {#if folder.files > folder.entries.length}

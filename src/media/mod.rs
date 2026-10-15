@@ -253,7 +253,9 @@ impl YtDlp {
         }
         let raw: RawInfo = serde_json::from_slice(&finished.stdout)
             .map_err(|e| MediaError::Failed(format!("unexpected yt-dlp output: {e}")))?;
-        Ok(raw.into_media_info())
+        let mut info = raw.into_media_info();
+        info.name_after_url(url);
+        Ok(info)
     }
 }
 

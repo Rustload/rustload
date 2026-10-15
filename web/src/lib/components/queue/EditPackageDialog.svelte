@@ -93,7 +93,7 @@
     <PackageOptionsFields bind:options destinationLocked={locked} {destinationError} />
     {#if media}
       <section aria-labelledby="edit-media-{pkg.id}" class="space-y-3 border-t border-line pt-4">
-        <h3 id="edit-media-{pkg.id}" class="font-semibold heading">{t('media.title')}</h3>
+        <h3 id="edit-media-{pkg.id}" class="heading font-semibold">{t('media.title')}</h3>
         <MediaOptionsFields bind:options={media} />
       </section>
     {/if}

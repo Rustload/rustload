@@ -340,7 +340,7 @@ export type MediaInfo = {
 
 // ---- Link grabber ----
 
-export type LinkHandlerType = 'debrid' | 'hoster' | 'media' | 'direct' | 'page' | 'magnet'
+export type LinkHandlerType = 'debrid' | 'hoster' | 'media' | 'direct' | 'page' | 'playlist' | 'magnet'
 
 export type LinkInfo = {
   url: string

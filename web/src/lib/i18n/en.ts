@@ -333,7 +333,6 @@ export const en = {
   },
 
   add: {
-    nothingDetected: 'No link detected yet',
     drop: 'Drop .torrent files here or',
     dropActive: 'Release to add the files',
     onlyTorrents: 'Only .torrent files and links can be dropped here.',
@@ -353,7 +352,7 @@ export const en = {
   grabber: {
     title: 'Add downloads',
     input: 'Links, magnets or web pages',
-    inputPlaceholder: 'Paste anything that contains links',
+    inputPlaceholder: 'Paste links, magnets or web pages…',
     linkCount: { one: '{count} link', other: '{count} links' },
     online: { one: '{count} online', other: '{count} online' },
     offline: { one: '{count} unavailable', other: '{count} unavailable' },
@@ -372,6 +371,8 @@ export const en = {
     handler: {
       direct: 'Direct link',
       page: 'Web page',
+      playlist: 'M3U playlist',
+      hls: 'HLS stream',
     },
     playlistCount: { one: '{count} video', other: '{count} videos' },
     folderCount: { one: '{count} file', other: '{count} files' },
@@ -382,7 +383,6 @@ export const en = {
     foundLinks: { one: 'Found {count} link on the page', other: 'Found {count} links on the page' },
     noLinksFound: 'No downloadable link on this page',
     scanFailed: 'The page could not be read.',
-    dropZone: 'Drop .torrent files here',
     checkedSummary: {
       one: '{count} link checked: {online} online, {offline} unavailable',
       other: '{count} links checked: {online} online, {offline} unavailable',
@@ -394,19 +394,21 @@ export const en = {
     removeLink: 'Remove {name}',
     removeOffline: { one: 'Remove the unavailable link', other: 'Remove {count} unavailable links' },
     removeDuplicates: { one: 'Remove the duplicate', other: 'Remove {count} duplicates' },
-    grouping: 'Packages',
-    groupSmart: 'Smart grouping',
-    groupSingle: 'One package',
     packageName: 'Package name',
-    torrents: 'Torrent files',
-    emptyTitle: 'Paste anything, Rustload sorts it out',
-    emptyBody:
-      'Links are checked as you paste them: name, size, availability and which account will download them. Archive sets, folders and playlists become their own packages.',
-    example: {
-      hosters: 'File hosts',
-      media: 'Video sites',
-      magnets: 'Magnets',
-      pages: 'Web pages',
+    hint: 'File hosts, video sites, HLS streams, M3U playlists, magnets and web pages: each link is checked as soon as you paste it.',
+    singlePackage: 'Everything in one package',
+    torrentFile: 'Torrent file',
+    options: 'Options',
+    summary: {
+      automatic: 'automatic destination',
+      subfolder: 'a folder per package',
+      extract: 'extract archives',
+      extractDelete: 'extract, then delete archives',
+      noExtract: 'no extraction',
+      password: 'archive password',
+      audio: 'audio only',
+      bestVideo: 'best video quality',
+      video: 'video {height}p',
     },
     submit: { one: 'Add {count} package', other: 'Add {count} packages' },
     submitPaused: { one: 'Add {count} package, paused', other: 'Add {count} packages, paused' },

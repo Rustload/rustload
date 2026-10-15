@@ -40,6 +40,8 @@ First public version.
   Pixeldrain, Gofile, including folder links.
 - Video and audio sites through yt-dlp: quality presets, audio only, playlists, subtitles,
   SponsorBlock, managed and self-updating yt-dlp binary; ffmpeg in the Docker image.
+- M3U playlists are read to know what they are: HLS streams (`.m3u8`) are downloaded by yt-dlp as
+  one video file named after their address, other M3U lists are added as the links they list.
 
 ### After downloading
 

@@ -68,13 +68,13 @@ rather than red so it never reads as oxide. The full token list lives in `web/sr
 
 ## Typography
 
-One family: [Archivo](https://github.com/Omnibus-Type/Archivo) (SIL Open Font License), self-hosted.
-Its width axis gives each role its voice.
+[Archivo](https://github.com/Omnibus-Type/Archivo) (SIL Open Font License), self-hosted: its width
+axis gives each role its voice. Headings in the interface use the system face instead (Segoe UI,
+San Francisco, Roboto...).
 
 | Role                           | Width         | Weight             |
 | ------------------------------ | ------------- | ------------------ |
 | Wordmark                       | 125 %         | 800, tracking −1 % |
-| Headings                       | 112 %         | 600                |
 | Text                           | 100 %         | 400–500            |
 | Figures (speeds, sizes, times) | 78 %, tabular | 400–500            |
 | Hero readout                   | 64 %, tabular | 300–500            |

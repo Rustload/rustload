@@ -260,7 +260,8 @@ type PackagePatch = {
 
 Links are checked before they are added: who will download them, whether they are online, their
 name and size, duplicates, folder contents. Nothing is added by the check; add the links the user
-keeps with `POST /api/packages/batch` (folder links are added as is and expanded when added).
+keeps with `POST /api/packages/batch` (folder links and M3U lists are added as is and expanded
+when added).
 
 | Method | Path | Body | Response |
 |---|---|---|---|
@@ -277,9 +278,10 @@ type LinkInfo = {
   url: string                      // as sent, trimmed
   kind: "http" | "magnet"
   handler: {
-    type: "debrid" | "hoster" | "direct" | "page" | "magnet" | "media"   // more types may be added
-    id: string | null              // Provider.id ("alldebrid") or hoster plugin id ("mega"); null for direct/page
-    name: string                   // "AllDebrid", "MEGA", "Direct", "Web page", "Magnet" (no account)
+    type: "debrid" | "hoster" | "direct" | "page" | "magnet" | "media" | "playlist"   // more types may be added
+    id: string | null              // Provider.id ("alldebrid"), hoster plugin id ("mega"), media site id
+                                   // ("youtube", "hls" for HLS streams), "m3u" for lists; null for direct/page
+    name: string                   // "AllDebrid", "MEGA", "Direct", "Web page", "Magnet" (no account), "HLS", "M3U"
     account_id: number | null      // debrid account used first (others follow on failure)
   }
   host: string | null              // "1fichier.com"; null for magnets
@@ -314,11 +316,20 @@ type LinkInfo = {
   an HTML page is `type: "page"`, `status: "unsupported"`: scan it instead of adding it.
 - **Folders** (MEGA, Google Drive, MediaFire, Pixeldrain lists, Gofile) are listed by their plugin
   whoever downloads the files: `status: "online"` with `folder`, or `offline` when gone or empty.
+- **M3U playlists** (links ending in `.m3u8`/`.m3u`, or served as `application/vnd.apple.mpegurl`,
+  `audio/x-mpegurl`...) are read before debrid accounts and hoster plugins. An HLS stream is
+  `type: "media"`, `id: "hls"`, `name: "HLS"`, checked like a media link (title derived from the
+  address as `filename`, `media`); `unsupported` when video sites are disabled. A `.m3u8` link that
+  cannot be read (`403`...) is treated as a stream: yt-dlp may get it with the right headers. Any
+  other playlist is `type: "playlist"`, `id: "m3u"`, `name: "M3U"`: `status: "online"`, `filename`
+  and `size` null, `folder` with the list name and its links (`#EXTINF` title or file name, `size`
+  null, at most 200 shown out of 1000 kept), or `offline` when it lists no link. Lists are added
+  as their links, like folders.
 - **Duplicates**: same URL as a file already in a package (exact match, fragment included), or same
   info-hash as a magnet package. Unfinished packages (`queue`) win over the `history`.
 - **Page scan** keeps magnets, links of hosts handled by a plugin or an enabled debrid account, and
   links whose file name ends with an archive (incl. `.partN.rar`, `.001`, `.r00`), disk image,
-  installer/package, video, audio, ebook/PDF or `.torrent` extension; relative links are resolved
+  installer/package, video, audio, ebook/PDF, `.torrent`, `.m3u8` or `.m3u` extension; relative links are resolved
   against the final page address and `<base href>`, duplicates removed, document order kept.
 
 ## History

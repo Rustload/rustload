@@ -17,7 +17,7 @@
   <div class="mb-4 grid size-12 place-items-center rounded-full border border-line text-fg-faint">
     <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
   </div>
-  <h2 class="text-base font-semibold heading">{title}</h2>
+  <h2 class="heading text-base font-semibold">{title}</h2>
   {#if body}
     <p class="mt-1.5 max-w-[42ch] text-fg-muted">{body}</p>
   {/if}

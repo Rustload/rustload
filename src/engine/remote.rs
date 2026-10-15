@@ -125,6 +125,7 @@ async fn materialize(
                 size: file.size.map(|s| s as i64),
                 host: Some(account.provider.to_owned()),
                 account_id: Some(account.id),
+                media: None,
             }
         })
         .collect();

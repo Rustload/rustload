@@ -13,9 +13,9 @@ use crate::{
 };
 
 /// Extensions of files worth downloading: archives, disk images, installers and packages, video,
-/// audio, ebooks and documents, torrents. Split archive volumes (`.001`, `.r00`, `.z01`) are
-/// recognised separately; `.part1.rar` ends with `.rar`.
-const FILE_EXTENSIONS: [&[&str]; 7] = [
+/// audio, ebooks and documents, torrents, playlists (HLS streams, M3U lists). Split archive
+/// volumes (`.001`, `.r00`, `.z01`) are recognised separately; `.part1.rar` ends with `.rar`.
+const FILE_EXTENSIONS: [&[&str]; 8] = [
     &[
         "7z", "ace", "arj", "bz2", "cab", "gz", "lz", "lzma", "rar", "tar", "tbz2", "tgz", "txz", "xz", "zip", "zipx",
         "zst",
@@ -26,6 +26,7 @@ const FILE_EXTENSIONS: [&[&str]; 7] = [
     &["aac", "aiff", "alac", "ape", "dsf", "flac", "m4a", "m4b", "mka", "mp3", "ogg", "opus", "wav", "wma"],
     &["azw", "azw3", "cbr", "cbz", "djvu", "epub", "fb2", "mobi", "pdf"],
     &["torrent"],
+    &["m3u", "m3u8"],
 ];
 
 /// Absolute http(s) and magnet links of `html`, deduplicated, in document order. `page` is the

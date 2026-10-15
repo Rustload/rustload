@@ -8,6 +8,7 @@ use serde::Deserialize;
 use super::{
     Engine,
     checker::package_name_from_file,
+    m3u::{self, Playlist},
     media::{self, Collection},
     naming, remote,
 };
@@ -166,32 +167,36 @@ pub async fn add_links(engine: &Engine, links: &[String], options: &AddOptions) 
     let mut downloads = Vec::new();
     let mut folder_name = None;
     for url in links {
-        match expand_folder(engine, url).await {
-            Some(listing) => {
-                folder_name = folder_name.or(listing.name);
-                downloads.extend(listing.entries.into_iter().map(|entry| NewDownload {
-                    host: url_host(&entry.url),
-                    url: entry.url,
-                    rel_dir: entry.rel_dir,
-                    filename: entry.name,
-                    size: entry.size.map(|s| s as i64),
-                    account_id: None,
-                }));
-            }
-            None => downloads.push(NewDownload {
-                url: url.clone(),
-                rel_dir: String::new(),
-                filename: None,
-                size: None,
-                host: url_host(url),
+        if let Some(listing) = expand_folder(engine, url).await {
+            folder_name = folder_name.or(listing.name);
+            downloads.extend(listing.entries.into_iter().map(|entry| NewDownload {
+                host: url_host(&entry.url),
+                url: entry.url,
+                rel_dir: entry.rel_dir,
+                filename: entry.name,
+                size: entry.size.map(|s| s as i64),
                 account_id: None,
-            }),
+                media: None,
+            }));
+            continue;
+        }
+        match read_playlist(engine, url).await {
+            Some(Playlist::Stream) => {
+                downloads.push(NewDownload { media: Some(m3u::stream_meta(url)), ..NewDownload::link(url.clone()) });
+            }
+            Some(Playlist::List(entries)) if !entries.is_empty() => {
+                folder_name = folder_name.or_else(|| m3u::list_name(url));
+                downloads.extend(entries.into_iter().map(|entry| NewDownload::link(entry.url)));
+            }
+            _ => downloads.push(NewDownload::link(url.clone())),
         }
     }
     if downloads.is_empty() {
         return Err(IntakeError::NoLinks);
     }
-    let media = if engine.settings.get().media.enabled && downloads.iter().any(|d| detect_str(&d.url).is_some()) {
+    let media = if engine.settings.get().media.enabled
+        && downloads.iter().any(|d| d.media.is_some() || detect_str(&d.url).is_some())
+    {
         Some(media_options(engine, options)?)
     } else {
         None
@@ -328,6 +333,14 @@ async fn add_transfer(
     Ok(id)
 }
 
+/// Reads a link ending in `.m3u8`/`.m3u`. Anything but a playlist keeps the link as is.
+async fn read_playlist(engine: &Engine, link: &str) -> Option<Playlist> {
+    if !m3u::is_candidate_url(link) {
+        return None;
+    }
+    m3u::fetch(&engine.download_client(), link).await
+}
+
 /// Lists the files of a folder link handled by a hoster plugin. Failures keep the link as is:
 /// the error then shows up on the file.
 async fn expand_folder(engine: &Engine, link: &str) -> Option<FolderListing> {
@@ -376,8 +389,14 @@ fn clean_name(name: Option<&str>) -> Option<String> {
     name.map(str::trim).filter(|n| !n.is_empty()).map(str::to_owned)
 }
 
-/// Package name for a link list: the file name if the URL shows one, otherwise the host.
+/// Package name for a link list: the file name if the URL shows one, otherwise the host. Streams
+/// are named after what their URL says (`…/big-buck-bunny/master.m3u8`).
 fn default_name(url: &str) -> String {
+    if m3u::is_candidate_url(url)
+        && let Some(name) = m3u::list_name(url)
+    {
+        return name;
+    }
     naming::from_url(url)
         .filter(|name| name.contains('.'))
         .map(|name| package_name_from_file(&name))
@@ -413,5 +432,6 @@ mod tests {
         assert_eq!(magnet_display_name("magnet:?xt=urn:btih:abc"), None);
         assert_eq!(default_name("https://host.com/files/Movie.part1.rar"), "Movie");
         assert_eq!(default_name("https://1fichier.com/?abcdef"), "1fichier.com");
+        assert_eq!(default_name("https://cdn.example.com/big-buck-bunny/hls/master.m3u8"), "big-buck-bunny");
     }
 }

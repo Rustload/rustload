@@ -54,7 +54,7 @@
 <main class="grid min-h-dvh place-items-center px-5 py-10">
   <div class="w-full max-w-sm">
     <Logo size={32} withName />
-    <h1 class="mt-12 text-[1.75rem] leading-tight font-semibold heading">
+    <h1 class="mt-12 heading text-[1.75rem] leading-tight font-semibold">
       {mode === 'setup' ? t('auth.setupTitle') : t('auth.loginTitle')}
     </h1>
     {#if mode === 'setup'}

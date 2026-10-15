@@ -180,8 +180,9 @@ Threads, TED, Niconico, VK and OK.ru. With **Try yt-dlp on other web pages** (`g
 link to a web page that nothing else handles is also tried with yt-dlp before failing.
 
 - **One link, one file.** The package is named after the video once it is probed, and the file is
-  named `<title> [<id>].<ext>` (made safe for Windows/SMB shares). The automatic category picks
-  *Videos* or *Music* from the expected extension.
+  named `<title> [<id>].<ext>` (made safe for Windows/SMB shares; `<title>.<ext>` for streams and
+  links that only have a name from their address). The automatic category picks *Videos* or
+  *Music* from the expected extension.
 - **Playlists, channels and albums** become their own package, named after the playlist, with one
   file per video (at most 500, in order). Their entries are not probed one by one: sizes appear
   when each video starts.
@@ -253,6 +254,36 @@ LOCALLY*), put the file in the config folder and set **Cookies file** (`cookies_
 the config folder or absolute). Each yt-dlp run works on a private copy, so the file is never
 modified. Treat it like a password.
 
+### HLS streams and M3U lists
+
+Links ending in `.m3u8` or `.m3u`, and links served as an M3U playlist
+(`application/vnd.apple.mpegurl`, `audio/x-mpegurl`...), are read to know what they are, before
+debrid accounts and hoster plugins see them:
+
+- An **HLS stream** (a playlist with `#EXT-X-` tags: the master playlist of a streamed video, or
+  one of its renditions) is one video downloaded by yt-dlp, whatever site serves it. The quality
+  option picks among the renditions of a master playlist and the segments become a single file,
+  named after the address since a stream has no title: `…/big-buck-bunny/hls/master.m3u8` gives
+  `big-buck-bunny.mp4` (generic names such as `master`, `index`, `hls` or `720p` are skipped).
+  Video sites must be enabled. Live streams are refused as on media sites. AES-128 encrypted
+  streams work, DRM-protected ones do not. Without ffmpeg, renditions whose video and audio are
+  separate cannot be combined: choose another quality or install ffmpeg.
+- Any other playlist is a **list of links**: it is added as its entries (at most 1000) in one
+  package named after the list, and each entry then follows its own route (debrid account, hoster
+  plugin, media site, direct link). The link grabber shows the entries with their `#EXTINF`
+  titles. Relative links are resolved against the playlist address; local paths and other
+  protocols are skipped.
+- Links recognised by their `Content-Type` only (no extension) are read by the link grabber and by
+  the availability check of the queue. A stream that slipped through is still recognised when its
+  download starts; a list found then is downloaded as the file it is.
+
+Streaming servers often only answer the player of their own site: a link copied from the
+browser's developer tools may get `403 Forbidden` without the site's `Referer` or cookies. A
+`.m3u8` link Rustload cannot read is handed to yt-dlp as a stream anyway: add
+`--referer https://the-site.example/` (or `--add-header "Origin:https://the-site.example"`) to
+**Extra arguments**, set a **Cookies file** if needed, or add the page of the video instead when
+yt-dlp supports the site.
+
 ### Advanced
 
 **Extra arguments** (`extra_args`) are appended to every yt-dlp command, e.g.
@@ -279,12 +310,14 @@ ignored (all of them, with a warning in the log at startup) until they are chang
 ## Adding downloads
 
 Everything you add goes through the **link grabber** first (the *Add* button, <kbd>N</kbd>, or
-pasting links anywhere outside a text field): links are checked before anything starts — name,
-size, availability, which account, plugin or yt-dlp will download them, and whether they are
-already in the queue or the history. Multi-part archives, folders and playlists become their own
-packages, files with similar names are grouped together (*One package* puts everything in one).
-Links that lead to a web page can be scanned for the downloadable links on the page. Dropping
-`.torrent` files anywhere on the page opens the grabber with them.
+pasting links anywhere outside a text field): links are checked before anything starts — name, size,
+availability, which account, plugin or yt-dlp will download them, and whether they are already in
+the queue or the history. Multi-part archives, folders and playlists become their own packages,
+files with similar names are grouped together (*Everything in one package* makes a single one).
+Links that lead to a web page can be scanned for the downloadable links on the page; M3U lists are
+expanded into their links and HLS streams (`.m3u8`) downloaded as videos (see [HLS streams and M3U
+lists](#hls-streams-and-m3u-lists)). Dropping `.torrent` files anywhere on the page opens the
+grabber with them.
 
 Other ways in:
 

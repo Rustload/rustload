@@ -20,7 +20,7 @@
   {#if title || actions}
     <header class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 pt-4 {flush ? 'pb-3' : ''}">
       <div class="min-w-0">
-        {#if title}<h2 id={headingId} class="text-lead font-semibold heading">{title}</h2>{/if}
+        {#if title}<h2 id={headingId} class="heading text-lead font-semibold">{title}</h2>{/if}
         {#if description}<p class="mt-0.5 max-w-[68ch] text-small text-fg-muted">{description}</p>{/if}
       </div>
       {#if actions}<div class="flex items-center gap-2">{@render actions()}</div>{/if}

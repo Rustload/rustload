@@ -64,7 +64,7 @@
   </nav>
 
   <div class="max-w-3xl min-w-0 space-y-6">
-    <h2 class="text-lg font-semibold heading">{t(`settings.sections.${current.id}`)}</h2>
+    <h2 class="heading text-lg font-semibold">{t(`settings.sections.${current.id}`)}</h2>
     {#if settings.draft}
       <View />
     {:else}

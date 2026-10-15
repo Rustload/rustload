@@ -42,7 +42,8 @@ ordre, et Rustload passe au suivant quand un quota est atteint.
 **Sites vidéo et audio.** YouTube, Vimeo, Twitch, SoundCloud, X, Instagram, TikTok et une vingtaine
 d'autres sites grâce à yt-dlp, plus toute page que yt-dlp connaît si *Essayer yt-dlp sur les
 autres pages web* est activé : choix de la qualité ou audio seul, playlists complètes, sous-titres,
-SponsorBlock. yt-dlp se met à jour tout seul ; ffmpeg est inclus dans l'image Docker.
+SponsorBlock. Les flux HLS (`.m3u8`) deviennent un seul fichier vidéo et les listes M3U leurs
+liens. yt-dlp se met à jour tout seul ; ffmpeg est inclus dans l'image Docker.
 
 **Des fichiers fiables.** Extraction automatique (RAR, 7z, ZIP, tar, multi-volumes, liste de mots de
 passe), vérification des sommes de contrôle (SFV, MD5, SHA) avec une marque « vérifié », catégories

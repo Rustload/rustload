@@ -99,6 +99,8 @@
 @theme {
   --color-oxide: #c24e1b;
   --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Titles use the system's own interface face: Segoe UI, San Francisco, Roboto... */
+  --font-heading: system-ui, -apple-system, 'Segoe UI Variable Display', 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Consolas, monospace;
   /* Body text is 0.875rem (`text-sm`); these sit around it. */
   --text-micro: 0.6875rem;
@@ -124,8 +126,7 @@
 }
 
 @utility heading {
-  font-stretch: 112%;
-  letter-spacing: -0.005em;
+  font-family: var(--font-heading);
 }
 
 @layer base {

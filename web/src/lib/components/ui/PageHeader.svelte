@@ -13,7 +13,7 @@
 
 <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <h1 class="text-2xl font-semibold heading">{title}</h1>
+    <h1 class="heading text-2xl font-semibold">{title}</h1>
     {#if count}<p class="mt-0.5 num text-fg-muted">{count}</p>{/if}
   </div>
   {@render actions?.()}

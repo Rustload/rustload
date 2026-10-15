@@ -5,8 +5,9 @@ use sqlx::{QueryBuilder, Sqlite};
 
 use super::{Db, packages::KnownLink};
 use crate::{
+    media::MediaMeta,
     models::{DownloadRow, DownloadStatus},
-    util::now,
+    util::{now, url_host},
 };
 
 pub struct NewDownload {
@@ -16,15 +17,60 @@ pub struct NewDownload {
     pub size: Option<i64>,
     pub host: Option<String>,
     pub account_id: Option<i64>,
+    /// Set for links yt-dlp downloads although no media site rule knows them (HLS streams).
+    pub media: Option<MediaMeta>,
+}
+
+impl NewDownload {
+    /// A link known by its URL only.
+    pub fn link(url: String) -> Self {
+        Self {
+            host: url_host(&url),
+            url,
+            rel_dir: String::new(),
+            filename: None,
+            size: None,
+            account_id: None,
+            media: None,
+        }
+    }
 }
 
 pub async fn insert_many(db: &Db, package_id: i64, items: &[NewDownload]) -> Result<()> {
     let mut tx = super::begin_write(db).await?;
+    insert(&mut tx, package_id, 0, items).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Replaces a playlist added as a single file by the links it lists, after the package's other
+/// files. Does nothing if the file started meanwhile.
+pub async fn replace_with_links(db: &Db, download_id: i64, package_id: i64, items: &[NewDownload]) -> Result<bool> {
+    let mut tx = super::begin_write(db).await?;
+    let removed = sqlx::query("DELETE FROM downloads WHERE id = ? AND status IN ('queued', 'paused')")
+        .bind(download_id)
+        .execute(&mut *tx)
+        .await?
+        .rows_affected();
+    if removed == 0 {
+        return Ok(false);
+    }
+    let first: i64 = sqlx::query_scalar("SELECT COALESCE(MAX(position), -1) + 1 FROM downloads WHERE package_id = ?")
+        .bind(package_id)
+        .fetch_one(&mut *tx)
+        .await?;
+    insert(&mut tx, package_id, first, items).await?;
+    tx.commit().await?;
+    Ok(true)
+}
+
+async fn insert(tx: &mut sqlx::SqliteConnection, package_id: i64, first: i64, items: &[NewDownload]) -> Result<()> {
     let created = now();
-    for (position, item) in items.iter().enumerate() {
+    for (index, item) in items.iter().enumerate() {
         sqlx::query(
-            "INSERT INTO downloads (package_id, url, rel_dir, filename, size, host, account_id, position, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO downloads (package_id, url, rel_dir, filename, size, host, account_id, media, position,
+                created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(package_id)
         .bind(&item.url)
@@ -33,12 +79,12 @@ pub async fn insert_many(db: &Db, package_id: i64, items: &[NewDownload]) -> Res
         .bind(item.size)
         .bind(&item.host)
         .bind(item.account_id)
-        .bind(position as i64)
+        .bind(item.media.as_ref().map(serde_json::to_string).transpose()?)
+        .bind(first + index as i64)
         .bind(created)
         .execute(&mut *tx)
         .await?;
     }
-    tx.commit().await?;
     Ok(())
 }
 

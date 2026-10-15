@@ -9,6 +9,7 @@ pub mod intake;
 mod lifecycle;
 pub mod limiter;
 pub mod live;
+mod m3u;
 mod magnet;
 pub mod media;
 pub mod naming;

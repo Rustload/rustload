@@ -26,7 +26,7 @@
   <div class="flex items-center gap-4">
     <Logo size={48} tile />
     <div>
-      <p class="text-xl font-semibold heading">Rustload</p>
+      <p class="heading text-xl font-semibold">Rustload</p>
       <p class="text-fg-muted">{t('settings.about.tagline')}</p>
     </div>
   </div>

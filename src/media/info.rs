@@ -1,10 +1,41 @@
 //! What yt-dlp reports about a link (`-J` output and `--print` lines), and the shapes Rustload
 //! keeps from it.
 
+use percent_encoding::percent_decode_str;
 use serde::{Deserialize, Serialize};
+use url::Url;
+
+use crate::engine::naming;
 
 /// Entries kept from a playlist (and listed by the probe endpoint).
 pub const MAX_ENTRIES: usize = 500;
+/// Bytes of a title kept in file names, as in yt-dlp's `%(title).180B`.
+const MAX_TITLE_BYTES: usize = 180;
+/// Path segments that say nothing about a stream (`…/my-film/hls/720p/index.m3u8`).
+const GENERIC_SEGMENTS: [&str; 22] = [
+    "audio",
+    "chunklist",
+    "dash",
+    "default",
+    "hls",
+    "index",
+    "live",
+    "main",
+    "manifest",
+    "master",
+    "media",
+    "output",
+    "play",
+    "playlist",
+    "prog_index",
+    "source",
+    "stream",
+    "streams",
+    "video",
+    "videos",
+    "vod",
+    "watch",
+];
 
 /// The subset of yt-dlp's info dictionary Rustload reads. Every field is optional: extractors
 /// fill what their site provides.
@@ -188,6 +219,60 @@ impl MediaInfo {
             extractor: self.extractor.clone(),
         }
     }
+
+    /// yt-dlp names a direct link (an HLS playlist, a video file) after the file name of its URL,
+    /// `master` for most streams, and uses the same text as id. Such links get [`title_from_url`]
+    /// and no id instead, so that their file is `<title>.<ext>`.
+    pub fn name_after_url(&mut self, url: &str) {
+        if self.extractor.as_deref() != Some("generic") {
+            return;
+        }
+        let stem = naming::from_url(url).map(|name| naming::split_extension(&name).0.to_owned());
+        if self.title.is_some() && self.title != stem {
+            // A title of its own, read from a web page.
+            return;
+        }
+        self.title = title_from_url(url).or(self.title.take());
+        self.id = None;
+    }
+}
+
+/// A title for a link that has no other: the file name without its extension, or the closest
+/// folder that means something when the file name is generic (`master.m3u8`), else the host.
+pub fn title_from_url(url: &str) -> Option<String> {
+    let url = Url::parse(url).ok()?;
+    let segments: Vec<String> = url
+        .path_segments()
+        .map(|segments| {
+            segments.filter(|s| !s.is_empty()).map(|s| percent_decode_str(s).decode_utf8_lossy().into_owned()).collect()
+        })
+        .unwrap_or_default();
+    for (index, segment) in segments.iter().enumerate().rev() {
+        let name = if index + 1 == segments.len() { naming::split_extension(segment).0 } else { segment };
+        let name = name.trim();
+        if !name.is_empty() && !is_generic_segment(name) {
+            return Some(name.to_owned());
+        }
+    }
+    url.host_str().map(|host| host.trim_start_matches("www.").to_owned())
+}
+
+/// `master`, `index`, `hls`, `720p`, `3000k`...
+fn is_generic_segment(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    let measure = |suffix: char| {
+        lower.strip_suffix(suffix).is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+    };
+    GENERIC_SEGMENTS.contains(&lower.as_str()) || measure('p') || measure('k')
+}
+
+/// `title` cut to the bytes yt-dlp keeps in file names.
+pub fn clip_title(title: &str) -> &str {
+    let mut cut = title.len().min(MAX_TITLE_BYTES);
+    while !title.is_char_boundary(cut) {
+        cut -= 1;
+    }
+    &title[..cut]
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -237,15 +322,11 @@ impl FormatSize {
     }
 }
 
-/// File name yt-dlp would give a video with the output template Rustload uses
-/// (`%(title).180B [%(id)s].%(ext)s`), before sanitising. Used to name links early.
+/// File name yt-dlp would give a video with the output templates Rustload uses
+/// (`%(title).180B [%(id)s].%(ext)s`, the title alone without an id), before sanitising. Used to
+/// name links early.
 pub fn predicted_name(meta: &MediaMeta, ext: &str) -> Option<String> {
-    let title = meta.title.as_deref().map(str::trim).filter(|t| !t.is_empty())?;
-    let mut cut = title.len().min(180);
-    while !title.is_char_boundary(cut) {
-        cut -= 1;
-    }
-    let title = &title[..cut];
+    let title = clip_title(meta.title.as_deref().map(str::trim).filter(|t| !t.is_empty())?);
     Some(match &meta.id {
         Some(id) => format!("{title} [{id}].{ext}"),
         None => format!("{title}.{ext}"),
@@ -344,5 +425,50 @@ mod tests {
         let name = predicted_name(&long, "m4a").unwrap();
         assert!(name.len() <= 184 && name.ends_with(".m4a"));
         assert_eq!(predicted_name(&MediaMeta::default(), "mp4"), None);
+    }
+
+    #[test]
+    fn titles_links_after_their_url() {
+        let title = |url: &str| title_from_url(url);
+        assert_eq!(title("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8").as_deref(), Some("x36xhzz"));
+        assert_eq!(
+            title("https://cdn.example.com/My%20Film/hls/720p/index.m3u8?token=a.b").as_deref(),
+            Some("My Film")
+        );
+        assert_eq!(title("https://cdn.example.com/films/Night.Drive.2026.m3u8").as_deref(), Some("Night.Drive.2026"));
+        assert_eq!(title("https://cdn.example.com/vod/3000k/master.m3u8").as_deref(), Some("cdn.example.com"));
+        assert_eq!(title("https://www.example.com/stream").as_deref(), Some("example.com"));
+        assert_eq!(title("not a url"), None);
+    }
+
+    #[test]
+    fn renames_direct_links_only() {
+        let probed = |title: Option<&str>, extractor: &str| MediaInfo {
+            title: title.map(str::to_owned),
+            uploader: None,
+            duration_secs: Some(596),
+            thumbnail: None,
+            webpage_url: None,
+            extractor: Some(extractor.into()),
+            is_live: false,
+            playlist: None,
+            entries: Vec::new(),
+            filesize_approx: None,
+            id: Some("master".into()),
+            ext: Some("mp4".into()),
+        };
+        let url = "https://cdn.example.com/big-buck-bunny/master.m3u8";
+        let mut stream = probed(Some("master"), "generic");
+        stream.name_after_url(url);
+        assert_eq!((stream.title.as_deref(), stream.id.as_deref()), (Some("big-buck-bunny"), None));
+        assert_eq!(predicted_name(&stream.meta(), "mp4").as_deref(), Some("big-buck-bunny.mp4"));
+
+        // A web page read by the generic extractor has a title of its own; sites keep theirs.
+        let mut page = probed(Some("A talk"), "generic");
+        page.name_after_url(url);
+        assert_eq!((page.title.as_deref(), page.id.as_deref()), (Some("A talk"), Some("master")));
+        let mut site = probed(Some("master"), "youtube");
+        site.name_after_url(url);
+        assert_eq!(site.id.as_deref(), Some("master"));
     }
 }

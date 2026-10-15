@@ -474,6 +474,7 @@ mod tests {
                 size: None,
                 host: None,
                 account_id: None,
+                media: None,
             })
             .collect();
         db::downloads::insert_many(&engine.db, id, &new).await.unwrap();

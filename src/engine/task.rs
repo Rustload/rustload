@@ -11,6 +11,7 @@ use tokio_util::sync::CancellationToken;
 use super::{
     Engine, lifecycle,
     live::{LiveDownload, StopReason},
+    m3u::{self, Playlist},
     media, naming,
     resolve::{self, Resolved},
     transfer::{Connection, Probe, ResumeState, Transfer, TransferError, TransferOptions},
@@ -105,6 +106,18 @@ async fn execute(engine: &Engine, id: i64, live: &LiveDownload) -> Result<Outcom
     };
 
     let filename = naming::sanitize(&choose_filename(&download, &resolved, &probe));
+    // An HLS stream nothing recognised before (no `.m3u8` in the link, playlist unreachable when
+    // it was added and checked): yt-dlp takes it. Other playlists are downloaded as files.
+    let playlist =
+        probe.content_type.as_deref().is_some_and(m3u::is_playlist_type) || m3u::has_playlist_extension(&filename);
+    if playlist
+        && resolved.is_direct()
+        && cancellable(&cancel, m3u::fetch(&client, &resolved.url)).await? == Some(Playlist::Stream)
+    {
+        drop(probe);
+        tracing::info!("{} is an HLS stream: yt-dlp downloads it", download.url);
+        return media::download(engine, &download, live, media::Origin::Stream).await;
+    }
     if looks_like_web_page(&probe, &filename) {
         if resolved.is_direct() && media::tries_web_pages(engine).await {
             return media::download(engine, &download, live, media::Origin::WebPage).await;

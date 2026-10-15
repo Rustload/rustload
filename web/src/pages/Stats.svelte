@@ -243,7 +243,7 @@
 
     <div class="grid gap-x-12 gap-y-10 lg:grid-cols-3">
       <section aria-labelledby="stats-hours">
-        <h2 id="stats-hours" class="font-semibold heading">{t('stats.hours')}</h2>
+        <h2 id="stats-hours" class="heading font-semibold">{t('stats.hours')}</h2>
         <p class="mt-0.5 mb-4 text-small text-fg-muted">{t('stats.hoursHint')}</p>
         <ColumnChart
           columns={hourColumns}
@@ -274,13 +274,13 @@
       </section>
 
       <section aria-labelledby="stats-hosts">
-        <h2 id="stats-hosts" class="font-semibold heading">{t('stats.hosts')}</h2>
+        <h2 id="stats-hosts" class="heading font-semibold">{t('stats.hosts')}</h2>
         <p class="mt-0.5 mb-4 text-small text-fg-muted">{t('stats.hostsHint')}</p>
         <BarList rows={hostRows} format={bytes} label={t('stats.hosts')} />
       </section>
 
       <section aria-labelledby="stats-providers">
-        <h2 id="stats-providers" class="font-semibold heading">{t('stats.providers')}</h2>
+        <h2 id="stats-providers" class="heading font-semibold">{t('stats.providers')}</h2>
         <p class="mt-0.5 mb-4 text-small text-fg-muted">{t('stats.providersHint')}</p>
         <BarList rows={providerRows} format={bytes} label={t('stats.providers')} />
       </section>
