@@ -12,6 +12,14 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/rustload/rustload/releases/latest"><img src="https://img.shields.io/github/v/release/rustload/rustload?color=18212a" alt="Latest release"></a>
+  <a href="https://github.com/rustload/rustload/stargazers"><img src="https://img.shields.io/github/stars/rustload/rustload?color=c24e1b" alt="GitHub stars"></a>
+  <a href="https://github.com/rustload/rustload/actions/workflows/ci.yml"><img src="https://github.com/rustload/rustload/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/rustload/rustload/pkgs/container/rustload"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fipitio%2Fbackage%2Fraw%2Findex%2FRustload%2Frustload%2Frustload.json&query=%24.downloads&label=docker%20pulls&color=c24e1b" alt="Docker pulls from ghcr.io/rustload/rustload"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-18212a" alt="MIT license"></a>
+</p>
+
+<p align="center">
   <a href="README.fr.md">Version française</a> ·
   <a href="docs/configuration.md">Configuration</a> ·
   <a href="docs/API.md">API</a> ·
