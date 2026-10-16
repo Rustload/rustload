@@ -1,14 +1,14 @@
-//! Destination folders: categories, automatic category by extension, package sub-folders, and
-//! file cleanup.
+//! Destination folders: categories, automatic category by rule and extension, package sub-folders,
+//! and file cleanup.
 
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
 
-use anyhow::Result;
+use regex::{Regex, RegexBuilder};
 
-use super::{Engine, naming};
+use super::{Engine, naming, task::TaskError};
 use crate::{
     db::{self, packages::PackageUpdate},
     models::{CategoryRow, DownloadRow, DownloadStatus, PackageRow},
@@ -26,9 +26,48 @@ pub fn category_path(root: &Path, category: &CategoryRow) -> PathBuf {
     }
 }
 
-/// Picks the category whose extensions match the most file names, falling back to the default
-/// category (or the first one).
-pub fn pick_category<'a>(categories: &'a [CategoryRow], file_names: &[&str]) -> Option<&'a CategoryRow> {
+/// The folder of a category outside the download root (an absolute path: a Docker volume, a network
+/// share) when it does not exist. Rustload creates the folders below the download root, never this
+/// one: writing to an unmounted volume would fill the container or the local disk instead.
+pub async fn missing_mount(root: &Path, category: &CategoryRow) -> Option<PathBuf> {
+    if !Path::new(category.path.trim()).is_absolute() {
+        return None;
+    }
+    let dir = category_path(root, category);
+    match tokio::fs::metadata(&dir).await {
+        Ok(metadata) if metadata.is_dir() => None,
+        _ => Some(dir),
+    }
+}
+
+/// Compiled size limit of a rule: rules are short expressions, this only stops pathological ones.
+const RULE_SIZE_LIMIT: usize = 1 << 20;
+
+/// Compiles the rule of a category: a case-insensitive regular expression found anywhere in the
+/// text (`jeu\.fr`, `S\d{2}E\d{2}`).
+pub fn rule(pattern: &str) -> Result<Regex, regex::Error> {
+    RegexBuilder::new(pattern).case_insensitive(true).size_limit(RULE_SIZE_LIMIT).build()
+}
+
+/// Picks the category of a package in automatic mode, in this order:
+/// 1. the first category, in list order, whose rule matches one of `texts` (package name, links)
+///    or `file_names`;
+/// 2. the category whose extensions match the most file names;
+/// 3. the default category (or the first one).
+pub fn pick_category<'a>(
+    categories: &'a [CategoryRow],
+    texts: &[&str],
+    file_names: &[&str],
+) -> Option<&'a CategoryRow> {
+    let ruled = categories.iter().find(|category| {
+        let pattern = category.pattern.trim();
+        !pattern.is_empty()
+            && rule(pattern).is_ok_and(|rule| texts.iter().chain(file_names).any(|text| rule.is_match(text)))
+    });
+    if ruled.is_some() {
+        return ruled;
+    }
+
     let mut scores: HashMap<i64, usize> = HashMap::new();
     for name in file_names {
         let Some(ext) = naming::extension(name) else { continue };
@@ -47,7 +86,8 @@ pub fn pick_category<'a>(categories: &'a [CategoryRow], file_names: &[&str]) -> 
 
 impl Engine {
     /// The package folder, resolved and stored the first time a file of the package starts.
-    pub async fn package_dir(&self, package_id: i64) -> Result<PathBuf> {
+    /// `starting` is that file (download id and name), whose name may not be stored yet.
+    pub async fn package_dir(&self, package_id: i64, starting: Option<(i64, &str)>) -> Result<PathBuf, TaskError> {
         let _guard = self.dir_lock.lock().await;
         let package = db::packages::get(&self.db, package_id)
             .await?
@@ -61,10 +101,34 @@ impl Engine {
             Some(category) => Some(category),
             None => {
                 let files = db::downloads::list_by_package(&self.db, package_id).await?;
-                let names: Vec<&str> = files.iter().filter_map(|f| f.filename.as_deref()).collect();
-                pick_category(&categories, &names)
+                // Files not checked yet have no name stored: the starting one knows its own, the
+                // others have the name in their link.
+                let file_names: Vec<String> = files
+                    .iter()
+                    .filter_map(|f| match starting {
+                        Some((id, name)) if id == f.id => Some(name.to_owned()),
+                        _ => f.filename.clone().or_else(|| naming::from_url(&f.url)),
+                    })
+                    .collect();
+                let file_names: Vec<&str> = file_names.iter().map(String::as_str).collect();
+                let texts: Vec<&str> = [package.name.as_str()]
+                    .into_iter()
+                    .chain(package.source.as_deref())
+                    .chain(files.iter().map(|f| f.url.as_str()))
+                    .collect();
+                pick_category(&categories, &texts, &file_names)
             }
         };
+        if let Some(category) = category
+            && let Some(dir) = missing_mount(&self.config.download_root, category).await
+        {
+            // Not stored: the next attempt resolves the folder again, once it is mounted.
+            return Err(TaskError::Fatal(format!(
+                "the folder {} of the category {} does not exist: mount it in the container or create it, then retry",
+                dir.display(),
+                category.name
+            )));
+        }
         let base = match category {
             Some(category) => category_path(&self.config.download_root, category),
             None => self.config.download_root.clone(),
@@ -154,17 +218,47 @@ mod tests {
             extensions: extensions.into(),
             is_default,
             position: id,
+            pattern: String::new(),
         }
     }
 
     #[test]
     fn picks_category_by_majority_extension() {
         let categories = vec![category(1, "", true), category(2, "mkv,mp4", false), category(3, "mp3,flac", false)];
-        let pick = |names: &[&str]| pick_category(&categories, names).map(|c| c.id);
+        let pick = |names: &[&str]| pick_category(&categories, &[], names).map(|c| c.id);
         assert_eq!(pick(&["a.mkv", "b.MKV", "c.mp3"]), Some(2));
         assert_eq!(pick(&["a.flac"]), Some(3));
         assert_eq!(pick(&["a.part1.rar"]), Some(1));
         assert_eq!(pick(&[]), Some(1));
+    }
+
+    #[test]
+    fn rules_come_before_extensions_in_list_order() {
+        let mut games = category(2, "msi", false);
+        games.pattern = r"jeu\.fr".into();
+        let mut shows = category(3, "", false);
+        shows.pattern = r"S\d{2}E\d{2}".into();
+        let mut broken = category(4, "", false);
+        broken.pattern = "(".into();
+        let categories = vec![category(1, "mkv", true), games, shows, broken];
+        let pick = |texts: &[&str], names: &[&str]| pick_category(&categories, texts, names).map(|c| c.id);
+
+        // The link matches the rule of Games, whatever the files are.
+        assert_eq!(pick(&["https://www.JEU.fr/dl/123"], &["game.part1.rar"]), Some(2));
+        // File names are matched too, case-insensitively, and win over the extensions.
+        assert_eq!(pick(&["https://host.example/x"], &["Show.s01e02.mkv"]), Some(3));
+        // Both rules match: the first in the list wins.
+        assert_eq!(pick(&["jeu.fr Show S01E02"], &[]), Some(2));
+        // No rule matches: extensions, then the default. An invalid rule never matches.
+        assert_eq!(pick(&["https://host.example/x"], &["setup.msi"]), Some(2));
+        assert_eq!(pick(&["("], &["a.zip"]), Some(1));
+    }
+
+    #[test]
+    fn validates_rules() {
+        assert!(rule(r"jeu\.fr").unwrap().is_match("https://JEU.FR/a"));
+        assert!(rule("(").is_err());
+        assert!(rule(r"\w{1000}{1000}").is_err());
     }
 
     #[test]

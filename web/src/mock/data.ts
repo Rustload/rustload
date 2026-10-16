@@ -72,34 +72,51 @@ export const providers: Provider[] = [
   },
 ]
 
+// A fresh install only has Downloads; the others show what users build: mounted volumes, a rule.
 export const categories: Category[] = [
-  { id: 1, name: 'Downloads', path: '', resolved_path: '/downloads', extensions: [], is_default: true, position: 0 },
+  {
+    id: 1,
+    name: 'Downloads',
+    path: '',
+    resolved_path: '/downloads',
+    extensions: [],
+    is_default: true,
+    position: 0,
+    pattern: '',
+    missing: false,
+  },
   {
     id: 2,
-    name: 'Videos',
-    path: 'videos',
-    resolved_path: '/downloads/videos',
-    extensions: ['mkv', 'mp4', 'avi', 'mov', 'm4v', 'webm', 'wmv'],
+    name: 'Movies',
+    path: '/movies',
+    resolved_path: '/movies',
+    extensions: ['mkv', 'mp4', 'avi', 'mov', 'm4v', 'webm'],
     is_default: false,
     position: 1,
+    pattern: '',
+    missing: false,
   },
   {
     id: 3,
-    name: 'Series',
-    path: 'series',
-    resolved_path: '/downloads/series',
+    name: 'TV shows',
+    path: '/tv',
+    resolved_path: '/tv',
     extensions: [],
     is_default: false,
     position: 2,
+    pattern: 'S\\d{2}E\\d{2}',
+    missing: false,
   },
   {
     id: 4,
     name: 'Music',
     path: 'music',
     resolved_path: '/downloads/music',
-    extensions: ['mp3', 'flac', 'm4a', 'ogg', 'opus', 'wav'],
+    extensions: ['mp3', 'flac', 'm4a', 'ogg', 'opus'],
     is_default: false,
     position: 3,
+    pattern: '',
+    missing: false,
   },
 ]
 
@@ -266,7 +283,7 @@ export function seedQueue(): Package[] {
         ['Spring.2019', 'Coffee.Run.2020', 'Sprite.Fright.2021', 'Charge.2022'].map((name, i) =>
           makeFile(p, `${name}.2160p.mkv`, Math.round((2.1 + i * 0.13) * GiB), '1fichier.com'),
         ),
-      { category_id: 2, dest_dir: '/downloads/videos/Blender.Open.Movies.2160p' },
+      { category_id: 2, dest_dir: '/movies/Blender.Open.Movies.2160p' },
     ),
     makePackage('ubuntu-24.04.3-desktop-amd64', (p) => [
       makeFile(p, 'ubuntu-24.04.3-desktop-amd64.iso', Math.round(5.9 * GiB), 'releases.ubuntu.com', { via: 'direct' }),
@@ -326,7 +343,7 @@ export function seedHistory(): Package[] {
         status: i === 2 ? 'failed' : 'completed',
         error: i === 2 ? 'Extraction failed: wrong password' : null,
         finished_at: finished,
-        dest_dir: `/downloads/videos/${name}`,
+        dest_dir: `/movies/${name}`,
         category_id: 2,
       },
     )

@@ -48,7 +48,9 @@ First public version.
 - Checksum verification (SFV, MD5, SHA-1, SHA-256, SHA-512 and hashes reported by hosts), with one
   automatic redownload of corrupted files.
 - Automatic extraction of RAR/7z/ZIP/tar and multi-volume archives with a password list.
-- Categories with automatic selection by file extension, folder per package.
+- Categories with automatic selection by rule (regular expression on the package name, links and
+  file names) or file extension, folder per package. A new installation starts with the download
+  root only; folders outside it (mounted volumes) must exist, or their files fail with a clear error.
 - Notifications (webhook, Discord, Telegram, ntfy, Gotify, browser), hooks on completion or failure.
 
 ### Operating

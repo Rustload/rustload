@@ -195,6 +195,8 @@ pub struct CategoryRow {
     pub extensions: String,
     pub is_default: bool,
     pub position: i64,
+    /// Regular expression, empty when the category has no rule.
+    pub pattern: String,
 }
 
 impl CategoryRow {

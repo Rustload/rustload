@@ -26,6 +26,7 @@ use crate::{
         Engine,
         intake::{self, AddOptions, Source},
         remote_torrent_path,
+        storage::rule,
     },
     media::MediaOptions,
     models::{AccountRow, CategoryRow, SourceKind, Stage},
@@ -66,6 +67,9 @@ pub struct BackupCategory {
     pub extensions: Vec<String>,
     #[serde(default)]
     pub is_default: bool,
+    /// Rule (regular expression), empty for none.
+    #[serde(default)]
+    pub pattern: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -202,6 +206,7 @@ pub async fn export(db: &Db, settings: &Settings, config_dir: &Path) -> anyhow::
                 name: c.name,
                 path: c.path,
                 is_default: c.is_default,
+                pattern: c.pattern,
             })
             .collect(),
         accounts: accounts
@@ -233,6 +238,11 @@ pub fn parse(data: &[u8]) -> Result<Backup, BackupError> {
     backup.settings = backup.settings.validate().map_err(BackupError::Invalid)?;
     if backup.categories.iter().any(|c| c.name.trim().is_empty()) {
         return Err(BackupError::Invalid("every category needs a name".into()));
+    }
+    if let Some(category) =
+        backup.categories.iter().find(|c| !c.pattern.trim().is_empty() && rule(c.pattern.trim()).is_err())
+    {
+        return Err(BackupError::Invalid(format!("the rule of the category {} is invalid", category.name.trim())));
     }
     Ok(backup)
 }
@@ -304,6 +314,7 @@ async fn apply_configuration(store: &SettingsStore, backup: &Backup) -> anyhow::
             path: item.path.clone(),
             extensions: item.extensions.clone(),
             is_default: false,
+            pattern: item.pattern.clone(),
         };
         saved.push(match item.existing {
             Some(id) => {
@@ -389,6 +400,7 @@ struct PlannedCategory {
     name: String,
     path: String,
     extensions: Vec<String>,
+    pattern: String,
 }
 
 #[derive(Debug, PartialEq)]
@@ -421,6 +433,7 @@ fn plan_categories(current: &[CategoryRow], backup: &[BackupCategory]) -> Catego
             name: name.to_owned(),
             path: category.path.trim().to_owned(),
             extensions: normalize_extensions(&category.extensions),
+            pattern: category.pattern.trim().to_owned(),
         });
     }
     CategoryPlan { items, default }
@@ -466,11 +479,26 @@ mod tests {
     use super::*;
 
     fn category(id: i64, name: &str, is_default: bool) -> CategoryRow {
-        CategoryRow { id, name: name.into(), path: String::new(), extensions: String::new(), is_default, position: id }
+        CategoryRow {
+            id,
+            name: name.into(),
+            path: String::new(),
+            extensions: String::new(),
+            is_default,
+            position: id,
+            pattern: String::new(),
+        }
     }
 
     fn saved_category(id: i64, name: &str, path: &str, is_default: bool) -> BackupCategory {
-        BackupCategory { id: Some(id), name: name.into(), path: path.into(), extensions: Vec::new(), is_default }
+        BackupCategory {
+            id: Some(id),
+            name: name.into(),
+            path: path.into(),
+            extensions: Vec::new(),
+            is_default,
+            pattern: String::new(),
+        }
     }
 
     fn account(provider: &str, credentials: Value) -> BackupAccount {
@@ -521,6 +549,8 @@ mod tests {
         assert!(matches!(parse(&bad_settings), Err(BackupError::Invalid(message)) if message.contains("connections")));
         let unnamed = document(json!({ "categories": [{ "name": " " }] }));
         assert!(matches!(parse(&unnamed), Err(BackupError::Invalid(_))));
+        let bad_rule = document(json!({ "categories": [{ "name": "Games", "pattern": "(" }] }));
+        assert!(matches!(parse(&bad_rule), Err(BackupError::Invalid(message)) if message.contains("Games")));
     }
 
     #[test]
@@ -615,12 +645,20 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let db = db::open(&dir.path().join("rustload.db")).await.unwrap();
         db::categories::seed_defaults(&db).await.unwrap();
+        let videos = CategoryInput {
+            name: "Videos".into(),
+            path: "videos".into(),
+            extensions: vec!["mkv".into()],
+            is_default: false,
+            pattern: r"S\d{2}E\d{2}".into(),
+        };
+        db::categories::insert(&db, &videos).await.unwrap();
         db::accounts::insert(&db, "alldebrid", "Mine", r#"{"api_key":"abc"}"#, true).await.unwrap();
         let store = SettingsStore::load(db.clone()).await.unwrap();
         let api_key = store.get().integrations.api_key.clone();
 
         let mut backup = export(&db, &store.get(), dir.path()).await.unwrap();
-        assert_eq!(backup.categories.len(), 4);
+        assert_eq!(backup.categories.len(), 2);
         assert_eq!(backup.accounts[0].credentials, json!({ "api_key": "abc" }));
         assert_eq!(backup.settings.integrations.api_key, api_key);
 
@@ -637,7 +675,7 @@ mod tests {
         let backup = parse(&serde_json::to_vec(&backup).unwrap()).unwrap();
 
         let applied = apply_configuration(&store, &backup).await.unwrap();
-        assert_eq!(applied.categories, 5);
+        assert_eq!(applied.categories, 3);
         assert_eq!(applied.accounts.len(), 1);
         let categories = db::categories::list(&db).await.unwrap();
         let books = categories.iter().find(|c| c.name == "Books").unwrap();
@@ -645,6 +683,7 @@ mod tests {
         assert_eq!(categories.iter().filter(|c| c.is_default).count(), 1);
         let videos = categories.iter().find(|c| c.name == "Videos").unwrap();
         assert_eq!((Some(videos.id), videos.path.as_str()), (videos_id, "/media/videos"));
+        assert_eq!(videos.pattern, r"S\d{2}E\d{2}");
         assert_eq!(applied.category_ids["books"], books.id);
         assert_eq!(db::accounts::list(&db).await.unwrap().len(), 2);
 

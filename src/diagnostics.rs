@@ -13,7 +13,10 @@ use tokio::sync::OnceCell;
 
 use crate::{
     db,
-    engine::Engine,
+    engine::{
+        Engine,
+        storage::{category_path, missing_mount},
+    },
     models::AccountRow,
     stats::Snapshot,
     util::{human_bytes, random_token},
@@ -101,6 +104,7 @@ pub async fn run(ctx: &Context<'_>) -> Vec<Check> {
     let config = &ctx.engine.config;
     let checks: Vec<(&'static str, &'static str, BoxFuture<'_, Outcome>)> = vec![
         ("download_dir_writable", "Download folder", writable(&config.download_root).boxed()),
+        ("category_folders", "Category folders", category_folders(ctx).boxed()),
         ("config_dir_writable", "Configuration folder", writable(&config.config_dir).boxed()),
         ("disk_space", "Disk space", disk_space(ctx).boxed()),
         ("extractor", "Archive extraction", extractor(ctx).boxed()),
@@ -132,6 +136,36 @@ async fn writable(dir: &Path) -> Outcome {
             Outcome::ok(format!("{} is writable.", dir.display()))
         }
         Err(error) => Outcome::error(format!("Cannot write to {}: {error}.", dir.display()), Some(PERMISSION_HINT)),
+    }
+}
+
+const MOUNT_HINT: &str = "Mount these folders in the container (volumes of docker-compose.yml) or create them, \
+     writable by the user Rustload runs as: the packages sent there fail until then.";
+
+/// Folders outside the download root (Docker volumes, network shares) must exist: Rustload does
+/// not create them.
+async fn category_folders(ctx: &Context<'_>) -> Outcome {
+    let categories = match db::categories::list(&ctx.engine.db).await {
+        Ok(categories) => categories,
+        Err(error) => return Outcome::warn(format!("Cannot read the categories: {error:#}"), None),
+    };
+    let root = &ctx.engine.config.download_root;
+    let mut problems = Vec::new();
+    let mut mounted = 0;
+    for category in categories.iter().filter(|c| Path::new(c.path.trim()).is_absolute()) {
+        let dir = category_path(root, category);
+        if missing_mount(root, category).await.is_some() {
+            problems.push(format!("{} ({}) does not exist", category.name, dir.display()));
+        } else if writable(&dir).await.status != Status::Ok {
+            problems.push(format!("{} ({}) is not writable", category.name, dir.display()));
+        } else {
+            mounted += 1;
+        }
+    }
+    match (problems.is_empty(), mounted) {
+        (false, _) => Outcome::warn(format!("{}.", problems.join("; ")), Some(MOUNT_HINT)),
+        (true, 0) => Outcome::ok("Every category is inside the download folder."),
+        (true, n) => Outcome::ok(format!("{n} folder(s) outside the download folder, all writable.")),
     }
 }
 

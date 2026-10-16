@@ -19,7 +19,9 @@ services:
     volumes:
       - ./config:/config
       - /srv/downloads:/downloads
-      # Extra libraries usable as absolute category paths, e.g. /media/movies.
-      # - /srv/media:/media
+      # Your own destination folders: mount them here, then create a category with that folder
+      # in Settings › Folders (e.g. "TV shows" → /series). Rustload never creates them itself.
+      # - /srv/series:/series
+      # - /srv/games:/games
       # Watch folder (Settings › Integrations).
       # - /srv/watch:/watch

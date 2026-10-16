@@ -38,14 +38,37 @@ downloads use a hidden `.rustload-media-<id>/` folder instead (see below).
 
 ## Folders and categories
 
-*Settings › Folders* lists the **categories**. Each one has a folder (relative to the download root,
-or absolute such as `/media/movies` if you mounted it in the container) and an optional list of
-file extensions.
+A new installation has one category, *Downloads*: the download root, used by default. You add your
+own in *Settings › Folders*. Each category has:
 
-When adding links you pick a category, or **Automatic**: Rustload looks at the file names of the
-package and picks the category matching most of them (e.g. `mkv,mp4` → *Videos*), otherwise the
-default category. Four categories are created on first start: *Downloads* (default, the root),
-*Videos*, *Series* and *Music*.
+- a **folder**, relative to the download root (`music` → `/downloads/music`, created when needed)
+  or absolute. An absolute folder is a volume you mount: with Docker, add it to the `volumes` of
+  `docker-compose.yml` first (`/srv/series:/series`), then use `/series`;
+- an optional **rule**: a regular expression, case-insensitive, matched against the package name,
+  its links and its file names (`jeu\.fr` for everything coming from that site, `S\d{2}E\d{2}` for
+  episodes);
+- optional **extensions** (`msi`, `mkv`...).
+
+When adding links you pick a category, or **Automatic**, which takes:
+
+1. the first category, in the order of the list, whose rule matches;
+2. otherwise the category whose extensions match the most file names of the package;
+3. otherwise the default category.
+
+A category without rule nor extension is only used when you pick it.
+
+Rustload never creates an absolute folder: if it does not exist (volume not mounted, network share
+disconnected), the files sent there fail with a clear error instead of filling the container or
+the local disk, *Settings › Folders* flags the category and the health check reports it. Mount the
+folder, then retry the files.
+
+```yaml
+    volumes:
+      - ./config:/config
+      - /srv/downloads:/downloads
+      - /srv/series:/series     # category "TV shows", folder /series, rule S\d{2}E\d{2}
+      - /srv/games:/games       # category "Games", folder /games, extension msi
+```
 
 **Create a folder for each package** puts the files of a package in `<category>/<package name>/`.
 For torrents, the torrent's own folder structure is kept below it.
@@ -181,8 +204,8 @@ link to a web page that nothing else handles is also tried with yt-dlp before fa
 
 - **One link, one file.** The package is named after the video once it is probed, and the file is
   named `<title> [<id>].<ext>` (made safe for Windows/SMB shares; `<title>.<ext>` for streams and
-  links that only have a name from their address). The automatic category picks *Videos* or
-  *Music* from the expected extension.
+  links that only have a name from their address). The automatic category sees the expected
+  extension (`mp4`, `mkv`, `m4a`...) and the video title.
 - **Playlists, channels and albums** become their own package, named after the playlist, with one
   file per video (at most 500, in order). Their entries are not probed one by one: sizes appear
   when each video starts.

@@ -63,10 +63,23 @@ const system = () => ({
   disk_low: false,
 })
 const changed = () => emit('queue', {})
+/** Volumes mounted in the demo container: other absolute category folders are "missing". */
+const MOUNTS = ['/downloads', '/movies', '/tv']
+
 const resolveCategory = (c: (typeof state.categories)[number]) => ({
   ...c,
+  pattern: c.pattern ?? '',
   resolved_path: c.path.startsWith('/') ? c.path : `/downloads${c.path ? `/${c.path}` : ''}`,
+  missing: c.path.startsWith('/') && !MOUNTS.some((m) => c.path === m || c.path.startsWith(`${m}/`)),
 })
+
+function checkRule(body: { pattern?: string }) {
+  try {
+    if (body.pattern) new RegExp(body.pattern, 'i')
+  } catch (err) {
+    throw new HttpError(400, 'INVALID_PATTERN', `invalid rule: ${(err as Error).message}`)
+  }
+}
 
 function addPackages(body: { links: string; name?: string; category_id?: number | null; paused?: boolean }): Package[] {
   const tokens = body.links.split(/\s+/).filter(Boolean)
@@ -289,6 +302,7 @@ const routes: [string, RegExp, Handler][] = [
     'POST',
     /^categories$/,
     (_m, b) => {
+      checkRule(b)
       const category = { ...b, id: seed.id(), position: state.categories.length, is_default: false, resolved_path: '' }
       state.categories.push(category)
       return resolveCategory(category)
@@ -306,6 +320,7 @@ const routes: [string, RegExp, Handler][] = [
     /^categories\/(\d+)$/,
     (m, b) => {
       const category = state.categories.find((c) => c.id === Number(m[1]))!
+      checkRule(b)
       if (b.is_default) state.categories.forEach((c) => (c.is_default = false))
       Object.assign(category, b, { is_default: b.is_default || category.is_default })
       return resolveCategory(category)

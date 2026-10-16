@@ -382,19 +382,26 @@ type Stats = {
 ```ts
 type Category = {
   id: number
-  name: string                // "Downloads", "Videos", "Series", "Music"...
+  name: string                // "Downloads" on a new installation, then the user's own
   path: string                // relative to download_root, or absolute
   resolved_path: string       // absolute path actually used
   extensions: string[]        // lowercase, without dot. Used by automatic mode
-  is_default: boolean         // fallback when no extension matches
-  position: number
+  pattern: string             // rule: case-insensitive regular expression ("" = none), see below
+  is_default: boolean         // fallback when no rule nor extension matches
+  position: number            // rules are tried in this order
+  missing: boolean            // absolute folder that does not exist (unmounted volume)
 }
 ```
+
+Automatic mode takes the first category whose `pattern` matches the package name, one of its links
+or file names, then the one whose `extensions` match the most file names, then the default. Files
+sent to a `missing` folder fail until it exists. The default category is the download root on a new
+installation.
 
 | Method | Path | Body | Response |
 |---|---|---|---|
 | GET | `/api/categories` | – | `{ categories: Category[], download_root: string }` |
-| POST | `/api/categories` | `{ name, path, extensions: string[], is_default?: bool }` | `Category` |
+| POST | `/api/categories` | `{ name, path, extensions: string[], pattern?: string, is_default?: bool }` | `Category`. `400 INVALID_PATTERN` for an invalid rule (at most 500 characters) |
 | PUT | `/api/categories/:id` | same as POST | `Category` |
 | DELETE | `/api/categories/:id` | – | `204`. `409 DEFAULT_CATEGORY` for the default one |
 | POST | `/api/categories/reorder` | `{ ids: number[] }` | `204` |

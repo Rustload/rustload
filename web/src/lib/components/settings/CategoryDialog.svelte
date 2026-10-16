@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import type { Category } from '$lib/api'
+  import { ApiError, type Category } from '$lib/api'
   import { t } from '$lib/i18n/index.svelte'
   import { categories } from '$lib/stores/catalog.svelte'
   import { errorMessage } from '$lib/stores/toasts.svelte'
@@ -18,9 +18,11 @@
   let name = $state('')
   let path = $state('')
   let extensions = $state<string[]>([])
+  let pattern = $state('')
   let isDefault = $state(false)
   let saving = $state(false)
   let error = $state<string | null>(null)
+  let patternError = $state<string | null>(null)
 
   $effect(() => {
     if (!open) return
@@ -28,8 +30,10 @@
       name = category?.name ?? ''
       path = category?.path ?? ''
       extensions = [...(category?.extensions ?? [])]
+      pattern = category?.pattern ?? ''
       isDefault = category?.is_default ?? false
       error = null
+      patternError = null
     })
   })
 
@@ -54,16 +58,22 @@
     if (!name.trim()) return
     saving = true
     error = null
+    patternError = null
     try {
       await categories.save(category?.id ?? null, {
         name: name.trim(),
         path: path.trim(),
         extensions,
+        pattern: pattern.trim(),
         is_default: isDefault,
       })
       open = false
     } catch (err) {
-      error = errorMessage(err)
+      if (err instanceof ApiError && err.code === 'INVALID_PATTERN') {
+        patternError = t('settings.folders.ruleInvalid', { reason: err.message.replace(/^invalid rule: /, '') })
+      } else {
+        error = errorMessage(err)
+      }
     } finally {
       saving = false
     }
@@ -85,17 +95,37 @@
         </p>
       {/snippet}
     </Field>
-    <Field label={t('settings.folders.extensions')} hint={t('settings.folders.extensionsHint')}>
-      {#snippet children({ id, describedBy })}
-        <TagInput
-          {id}
-          {describedBy}
-          bind:values={extensions}
-          normalize={normalizeExtension}
-          placeholder={t('settings.folders.extensionsPlaceholder')}
-        />
-      {/snippet}
-    </Field>
+    <fieldset class="space-y-4">
+      <legend class="font-medium">{t('settings.folders.automatic')}</legend>
+      <p class="-mt-2 text-small text-fg-muted">{t('settings.folders.automaticHint')}</p>
+      <Field label={t('settings.folders.rule')} hint={t('settings.folders.ruleHint')} error={patternError} optional>
+        {#snippet children({ id, describedBy, invalid })}
+          <TextInput
+            {id}
+            bind:value={pattern}
+            {invalid}
+            mono
+            spellcheck={false}
+            autocomplete="off"
+            maxlength={500}
+            placeholder={t('settings.folders.rulePlaceholder')}
+            aria-describedby={describedBy}
+            oninput={() => (patternError = null)}
+          />
+        {/snippet}
+      </Field>
+      <Field label={t('settings.folders.extensions')} hint={t('settings.folders.extensionsHint')} optional>
+        {#snippet children({ id, describedBy })}
+          <TagInput
+            {id}
+            {describedBy}
+            bind:values={extensions}
+            normalize={normalizeExtension}
+            placeholder={t('settings.folders.extensionsPlaceholder')}
+          />
+        {/snippet}
+      </Field>
+    </fieldset>
     <Toggle
       bind:checked={isDefault}
       label={t('settings.folders.default')}

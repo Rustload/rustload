@@ -383,7 +383,8 @@ pub(super) async fn download(
     name_package(engine, package.id, meta.title.as_deref()).await;
     let label = meta.title.clone().unwrap_or_else(|| download.url.clone());
 
-    let dir = task::download_dir(engine, download).await?;
+    // The probe stored the file name.
+    let dir = task::download_dir(engine, download, None).await?;
     let work = work_dir(&dir, download.id);
     task::create_dir(&work).await?;
     let known_size = db::downloads::get(&engine.db, download.id).await?.and_then(|d| d.size).map(|s| s.max(0) as u64);

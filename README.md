@@ -53,7 +53,7 @@ ships in the Docker image.
 
 **Files you can trust.** Automatic extraction (RAR, 7z, ZIP, tar, multi-volume, password lists),
 checksum verification (SFV, MD5, SHA) with a "verified" mark, categories that pick their folder by
-file extension, and clean file ownership in Docker (`PUID`/`PGID`/`UMASK`).
+rule or file extension (mounted volumes welcome), and clean file ownership in Docker (`PUID`/`PGID`/`UMASK`).
 
 **Runs itself.** A download window and speed rules ("slow during the day, full speed at night"), a
 free-space guard, notifications (Discord, Telegram, ntfy, Gotify, webhooks, browser), scripts on

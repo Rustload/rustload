@@ -11,6 +11,8 @@ pub struct CategoryInput {
     pub path: String,
     pub extensions: Vec<String>,
     pub is_default: bool,
+    /// Regular expression (see [`crate::engine::storage::rule`]), empty for none.
+    pub pattern: String,
 }
 
 /// Extensions as stored: lowercase, without leading dot, letters and digits only, each once.
@@ -46,11 +48,13 @@ pub async fn insert_at(conn: &mut SqliteConnection, input: &CategoryInput, posit
         sqlx::query("UPDATE categories SET is_default = 0").execute(&mut *conn).await?;
     }
     Ok(sqlx::query_scalar(
-        "INSERT INTO categories (name, path, extensions, is_default, position) VALUES (?, ?, ?, ?, ?) RETURNING id",
+        "INSERT INTO categories (name, path, extensions, pattern, is_default, position)
+         VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
     )
     .bind(&input.name)
     .bind(&input.path)
     .bind(input.extensions.join(","))
+    .bind(&input.pattern)
     .bind(input.is_default)
     .bind(position)
     .fetch_one(conn)
@@ -71,13 +75,14 @@ pub async fn update_in(conn: &mut SqliteConnection, id: i64, input: &CategoryInp
     }
     // The default flag can be moved to another category but never removed from the last holder.
     sqlx::query(
-        "UPDATE categories SET name = ?, path = ?, extensions = ?,
+        "UPDATE categories SET name = ?, path = ?, extensions = ?, pattern = ?,
             is_default = CASE WHEN ? THEN 1 ELSE is_default END
          WHERE id = ?",
     )
     .bind(&input.name)
     .bind(&input.path)
     .bind(input.extensions.join(","))
+    .bind(&input.pattern)
     .bind(input.is_default)
     .bind(id)
     .execute(conn)
@@ -96,30 +101,21 @@ pub async fn delete(db: &Db, id: i64) -> Result<()> {
     Ok(())
 }
 
-/// Creates the default categories on first start.
+/// Creates the one category of a new installation: the download root, used by default. Users add
+/// their own folders from there.
 pub async fn seed_defaults(db: &Db) -> Result<()> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM categories").fetch_one(db).await?;
     if count > 0 {
         return Ok(());
     }
-    let defaults = [
-        ("Downloads", "", "", true),
-        ("Videos", "videos", "mkv,mp4,avi,mov,wmv,m4v,webm,mpg,mpeg,ts,m2ts,flv", false),
-        ("Series", "series", "", false),
-        ("Music", "music", "mp3,flac,m4a,aac,ogg,opus,wav,alac,wma", false),
-    ];
-    for (name, path, extensions, is_default) in defaults {
-        insert(
-            db,
-            &CategoryInput {
-                name: name.into(),
-                path: path.into(),
-                extensions: extensions.split(',').filter(|e| !e.is_empty()).map(str::to_owned).collect(),
-                is_default,
-            },
-        )
-        .await?;
-    }
+    let downloads = CategoryInput {
+        name: "Downloads".into(),
+        path: String::new(),
+        extensions: Vec::new(),
+        is_default: true,
+        pattern: String::new(),
+    };
+    insert(db, &downloads).await?;
     Ok(())
 }
 

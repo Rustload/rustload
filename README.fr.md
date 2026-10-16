@@ -55,7 +55,7 @@ liens. yt-dlp se met à jour tout seul ; ffmpeg est inclus dans l'image Docker
 
 **Des fichiers fiables.** Extraction automatique (RAR, 7z, ZIP, tar, multi-volumes, liste de mots de
 passe), vérification des sommes de contrôle (SFV, MD5, SHA) avec une marque « vérifié », catégories
-qui choisissent leur dossier selon l'extension, et propriétaires de fichiers propres sous Docker
+qui choisissent leur dossier par règle ou par extension (volumes montés bienvenus), et propriétaires de fichiers propres sous Docker
 (`PUID`/`PGID`/`UMASK`).
 
 **Autonome.** Plage horaire de téléchargement et règles de vitesse (« lent en journée, pleine

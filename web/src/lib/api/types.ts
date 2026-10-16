@@ -126,12 +126,17 @@ export type Category = {
   extensions: string[]
   is_default: boolean
   position: number
+  /** Rule: regular expression matched against the package name, its links and file names. */
+  pattern: string
+  /** The folder is outside the download root and does not exist (an unmounted volume). */
+  missing: boolean
 }
 
 export type CategoryInput = {
   name: string
   path: string
   extensions: string[]
+  pattern?: string
   is_default?: boolean
 }
 

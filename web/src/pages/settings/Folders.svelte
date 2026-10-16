@@ -5,6 +5,7 @@
   import Plus from '@lucide/svelte/icons/plus'
   import Star from '@lucide/svelte/icons/star'
   import Trash2 from '@lucide/svelte/icons/trash-2'
+  import TriangleAlert from '@lucide/svelte/icons/triangle-alert'
   import type { Category } from '$lib/api'
   import CategoryDialog from '$lib/components/settings/CategoryDialog.svelte'
   import Badge from '$lib/components/ui/Badge.svelte'
@@ -38,6 +39,7 @@
         name: category.name,
         path: category.path,
         extensions: category.extensions,
+        pattern: category.pattern,
         is_default: true,
       }),
     )
@@ -80,14 +82,29 @@
           <p class="mt-0.5 truncate font-mono text-xs text-fg-muted" title={category.resolved_path}>
             {category.resolved_path}
           </p>
+          {#if category.missing}
+            <p class="mt-1 flex items-start gap-1.5 text-small text-warn">
+              <TriangleAlert size={14} class="mt-0.5 shrink-0" aria-hidden="true" />
+              {t('settings.folders.missing')}
+            </p>
+          {/if}
           <p class="mt-1.5 flex flex-wrap gap-1">
+            {#if category.pattern}
+              <span class="rounded-chip bg-sunken px-1.5 text-xs text-fg-muted">
+                {t('settings.folders.ruleChip')}
+                <span class="font-mono text-fg">{category.pattern}</span>
+              </span>
+            {/if}
             {#each category.extensions.slice(0, 10) as ext (ext)}
               <span class="rounded-chip bg-sunken px-1.5 num text-xs text-fg-muted">{ext}</span>
-            {:else}
-              <span class="text-xs text-fg-faint">{t('settings.folders.noExtensions')}</span>
             {/each}
             {#if category.extensions.length > 10}
               <span class="px-1 num text-xs text-fg-faint">+{category.extensions.length - 10}</span>
+            {/if}
+            {#if !category.pattern && !category.extensions.length}
+              <span class="text-xs text-fg-faint">
+                {category.is_default ? t('settings.folders.catchAll') : t('settings.folders.manualOnly')}
+              </span>
             {/if}
           </p>
         </div>

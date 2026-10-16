@@ -129,7 +129,7 @@ async fn execute(engine: &Engine, id: i64, live: &LiveDownload) -> Result<Outcom
         }));
     }
 
-    let dir = download_dir(engine, &download).await?;
+    let dir = download_dir(engine, &download, Some(&filename)).await?;
     create_dir(&dir).await?;
 
     let target = dir.join(&filename);
@@ -283,9 +283,15 @@ fn looks_like_web_page(probe: &Probe, filename: &str) -> bool {
     probe.is_html() && !wanted_html
 }
 
-/// Folder of a file: its package folder, or a sub-folder of it.
-pub(super) async fn download_dir(engine: &Engine, download: &DownloadRow) -> Result<PathBuf, TaskError> {
-    Ok(engine.package_dir(download.package_id).await?.join(naming::sanitize_relative_dir(&download.rel_dir)))
+/// Folder of a file: its package folder, or a sub-folder of it. `filename` is the name the file
+/// gets, when it is not stored yet.
+pub(super) async fn download_dir(
+    engine: &Engine,
+    download: &DownloadRow,
+    filename: Option<&str>,
+) -> Result<PathBuf, TaskError> {
+    let starting = filename.map(|name| (download.id, name));
+    Ok(engine.package_dir(download.package_id, starting).await?.join(naming::sanitize_relative_dir(&download.rel_dir)))
 }
 
 pub(super) async fn create_dir(dir: &Path) -> Result<(), TaskError> {

@@ -236,6 +236,13 @@ export const diagnostics: DiagnosticCheck[] = [
     detail: '/downloads',
     hint: null,
   },
+  {
+    id: 'category_folders',
+    status: 'ok',
+    title: 'Category folders',
+    detail: '2 folder(s) outside the download folder, all writable.',
+    hint: null,
+  },
   { id: 'config_dir_writable', status: 'ok', title: 'Config folder is writable', detail: '/config', hint: null },
   { id: 'disk_space', status: 'ok', title: 'Free space', detail: '1.42 TiB free of 3.64 TiB', hint: null },
   { id: 'extractor', status: 'ok', title: 'Archive extraction', detail: '7-Zip 26.02 (7zz)', hint: null },
