@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/rustload/rustload/discussions/categories/q-a
+    about: Setup, accounts, video sites… Answers there help the next person too.
+  - name: Share an idea
+    url: https://github.com/rustload/rustload/discussions/categories/ideas
+    about: Not sure it is a feature request yet? Talk it through first.
   - name: Report a security vulnerability
     url: https://github.com/rustload/rustload/security/advisories/new
     about: Privately, so it can be fixed before it is public.

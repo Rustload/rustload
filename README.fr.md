@@ -15,7 +15,7 @@
   <a href="https://github.com/rustload/rustload/releases/latest"><img src="https://img.shields.io/github/v/release/rustload/rustload?color=18212a" alt="Dernière version"></a>
   <a href="https://github.com/rustload/rustload/stargazers"><img src="https://img.shields.io/github/stars/rustload/rustload?color=c24e1b" alt="Étoiles GitHub"></a>
   <a href="https://github.com/rustload/rustload/actions/workflows/ci.yml"><img src="https://github.com/rustload/rustload/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/rustload/rustload/pkgs/container/rustload"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fipitio%2Fbackage%2Fraw%2Findex%2FRustload%2Frustload%2Frustload.json&query=%24.downloads&label=docker%20pulls&color=c24e1b" alt="Téléchargements de l’image ghcr.io/rustload/rustload"></a>
+  <a href="https://github.com/rustload/rustload/pkgs/container/rustload"><img src="https://img.shields.io/badge/docker-ghcr.io%2Frustload%2Frustload-c24e1b" alt="Image Docker ghcr.io/rustload/rustload"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-18212a" alt="Licence MIT"></a>
 </p>
 
@@ -114,6 +114,22 @@ du tableau de bord. Les images sont publiées pour `linux/amd64` et `linux/arm64
 [docs/configuration.md](docs/configuration.md) détaille toutes les options : variables
 d'environnement, catégories, planification et règles de vitesse, comptes, sites vidéo, dossier
 surveillé, Click'n'Load, bot Telegram, Prometheus, scripts et proxy inverse.
+
+## Sans Docker
+
+Chaque [version](https://github.com/rustload/rustload/releases/latest) fournit un binaire prêt à
+l'emploi pour Linux (x86-64 et ARM64, statique : toutes distributions), Windows (x86-64) et macOS
+(Apple silicon et Intel). Décompressez-le et lancez-le :
+
+```sh
+./rustload        # rustload.exe sous Windows
+```
+
+Rustload écoute sur le port 8800 et garde ses réglages dans `./config` et ses téléchargements dans
+`./downloads`, à côté de l'endroit où il est lancé ; `RUSTLOAD_PORT`, `RUSTLOAD_CONFIG_DIR` et
+`RUSTLOAD_DOWNLOAD_DIR` changent cela. Installez 7-Zip pour les archives RAR/7z et ffmpeg pour les
+sites vidéo ; Rustload installe yt-dlp lui-même depuis *Paramètres › Sites vidéo*. Le binaire macOS
+n'est pas notarié : autorisez-le une fois avec `xattr -d com.apple.quarantine rustload`.
 
 ## Compiler depuis les sources
 

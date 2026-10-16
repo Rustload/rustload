@@ -38,6 +38,9 @@ body:
       options:
         - Docker image (linux/amd64)
         - Docker image (linux/arm64)
+        - Release binary for Linux
+        - Release binary for Windows
+        - Release binary for macOS
         - Binary built from source
         - Other
     validations:

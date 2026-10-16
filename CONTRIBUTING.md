@@ -80,4 +80,5 @@ Open an issue with the Rustload version (*Settings › About*), how you run it (
 what you expected and what happened. Logs help (*Logs › Download log file*) — check them for
 anything private first.
 
+Questions and ideas are welcome in [Discussions](https://github.com/rustload/rustload/discussions).
 Security issues: please follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
