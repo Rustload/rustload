@@ -56,6 +56,36 @@ jobs:
         env:
           # The multi-arch index is what registries show: annotate it too.
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+      # Start the amd64 image before anything is published: it must answer its health check as an
+      # unprivileged user and carry its tools and license files.
+      - name: Build the image to test
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: rustload:test
+          cache-from: type=gha
+      - name: Smoke test
+        run: |
+          docker run -d --name rustload -p 8800:8800 -e PUID=1000 -e PGID=1000 \
+            -e RUSTLOAD_ADMIN_USER=admin -e RUSTLOAD_ADMIN_PASSWORD=smoke-test-password rustload:test
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8800/api/health && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8800/api/health
+          docker exec rustload sh -euc '
+            7zz i > /dev/null
+            yt-dlp --version
+            ffmpeg -hide_banner -version | head -n 1
+            ls /usr/share/doc/rustload/LICENSE /usr/share/doc/rustload/THIRD-PARTY-LICENSES.md
+            test "$(stat -c %u:%g /config)" = 1000:1000
+            ! ps -o user,comm | grep rustload | grep -q root
+          '
+      - name: Container logs
+        if: always()
+        run: docker logs rustload || true
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
