@@ -159,8 +159,9 @@ pub(super) async fn probe_with(engine: &Engine, handler: &Handler<'_>, url: &str
     Availability::Online { filename, size: probe.size, content_type: probe.content_type }
 }
 
-/// Gives packages named after a URL a better name once the first file name is known.
-async fn rename_package_from_file(engine: &Engine, package_id: i64, filename: &str) {
+/// Gives a package named after its link the name of its first file, once known (by the link check
+/// or when the file starts), unless the user named it or its folder exists.
+pub(super) async fn rename_package_from_file(engine: &Engine, package_id: i64, filename: &str) {
     let Ok(Some(package)) = db::packages::get(&engine.db, package_id).await else { return };
     if package.name_locked || package.dest_dir.is_some() {
         return;

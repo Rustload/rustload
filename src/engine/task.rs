@@ -9,7 +9,7 @@ use std::{
 use tokio_util::sync::CancellationToken;
 
 use super::{
-    Engine, lifecycle,
+    Engine, checker, lifecycle,
     live::{LiveDownload, StopReason},
     m3u::{self, Playlist},
     media, naming,
@@ -129,6 +129,9 @@ async fn execute(engine: &Engine, id: i64, live: &LiveDownload) -> Result<Outcom
         }));
     }
 
+    // A package added without a check (bookmarklet, extension, Telegram...) is still named after
+    // its link: take the file's name before its folder is created with the link's.
+    checker::rename_package_from_file(engine, download.package_id, &filename).await;
     let dir = download_dir(engine, &download, Some(&filename)).await?;
     create_dir(&dir).await?;
 
