@@ -179,12 +179,13 @@ pub fn init(filter: &str, logs_dir: &Path) -> Result<(Arc<LogBuffer>, WorkerGuar
     let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
 
     let buffer = Arc::new(LogBuffer::new());
-    tracing_subscriber::registry()
+    // Only the first server of a process logs (tests start several).
+    let _ = tracing_subscriber::registry()
         .with(filter)
         .with(tracing_subscriber::fmt::layer().with_target(false))
         .with(tracing_subscriber::fmt::layer().with_ansi(false).with_writer(file_writer))
         .with(BufferLayer(buffer.clone()))
-        .init();
+        .try_init();
 
     Ok((buffer, guard))
 }

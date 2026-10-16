@@ -6,6 +6,8 @@ export type AuthStatus = {
   auth_enabled: boolean
   setup_required: boolean
   user: User | null
+  /** Embedded in the desktop app, which opens it logged in. */
+  desktop?: boolean
 }
 
 export type System = {

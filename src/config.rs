@@ -35,6 +35,8 @@ pub struct Config {
     pub pgid: Option<u32>,
     /// File creation mask, octal (Docker `UMASK`, e.g. `022` or `002`).
     pub umask: Option<u32>,
+    /// Embedded in the desktop app (see [`Config::desktop`]).
+    pub desktop: bool,
 }
 
 impl Config {
@@ -80,7 +82,30 @@ impl Config {
             puid: parse_var("PUID")?,
             pgid: parse_var("PGID")?,
             umask,
+            desktop: false,
         })
+    }
+
+    /// The desktop app's configuration: the interface answers on this computer only, through
+    /// `port`, and opens logged in to an account named after `username` whose random password
+    /// nobody needs (see `Server::login_url`). Click'n'Load keeps its usual port.
+    pub fn desktop(config_dir: PathBuf, download_root: PathBuf, port: u16, username: &str) -> Self {
+        let localhost = IpAddr::V4(Ipv4Addr::LOCALHOST);
+        Self {
+            bind: SocketAddr::new(localhost, port),
+            cnl_bind: SocketAddr::new(localhost, 9666),
+            config_dir,
+            download_root,
+            auth_enabled: true,
+            admin_user: Some(username.to_owned()),
+            admin_password: Some(crate::util::random_token()),
+            secure_cookies: false,
+            log_filter: var("RUSTLOAD_LOG").unwrap_or_else(|| "info".into()),
+            puid: None,
+            pgid: None,
+            umask: None,
+            desktop: true,
+        }
     }
 
     pub fn database_path(&self) -> PathBuf {
@@ -132,6 +157,7 @@ impl Config {
             puid: None,
             pgid: None,
             umask: None,
+            desktop: false,
         }
     }
 }

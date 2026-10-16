@@ -721,6 +721,7 @@ mod tests {
             puid: None,
             pgid: None,
             umask: None,
+            desktop: false,
         });
         let events = Arc::new(crate::events::EventBus::new());
         let engine = Engine::new(db.clone(), config, settings, events, CancellationToken::new()).await.unwrap();

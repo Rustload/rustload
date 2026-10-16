@@ -915,6 +915,9 @@ export const en = {
       authDisabled: 'Sign-in is disabled on this server, so there is no password to change.',
       session: 'Session',
       signOutHint: 'Sign out of Rustload on this browser.',
+      desktopPassword: 'Password for browsers',
+      desktopPasswordHint:
+        'The app opens without a password. Set one to sign in to Rustload from a web browser on this computer, with the name shown at the bottom of the sidebar.',
     },
     about: {
       version: 'Version',

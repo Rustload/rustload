@@ -930,6 +930,9 @@ export const fr: Messages = {
       authDisabled: 'La connexion est désactivée sur ce serveur : il n’y a pas de mot de passe à changer.',
       session: 'Session',
       signOutHint: 'Se déconnecter de Rustload sur ce navigateur.',
+      desktopPassword: 'Mot de passe pour les navigateurs',
+      desktopPasswordHint:
+        'L’app s’ouvre sans mot de passe. Définissez-en un pour vous connecter à Rustload depuis un navigateur web sur cet ordinateur, avec le nom affiché en bas de la barre latérale.',
     },
     about: {
       version: 'Version',

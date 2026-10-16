@@ -16,6 +16,8 @@ class Auth {
 
   username = $derived(this.status?.user?.username ?? null)
   enabled = $derived(this.status?.auth_enabled ?? false)
+  /** In the desktop app: no signing out, the window always opens logged in. */
+  desktop = $derived(this.status?.desktop ?? false)
 
   constructor() {
     onUnauthorized(() => {
@@ -34,12 +36,12 @@ class Auth {
 
   async setup(username: string, password: string): Promise<void> {
     const { user } = await api.auth.setup(username, password)
-    this.status = { auth_enabled: true, setup_required: false, user }
+    this.status = { auth_enabled: true, setup_required: false, user, desktop: this.desktop }
   }
 
   async login(username: string, password: string, remember: boolean): Promise<void> {
     const { user } = await api.auth.login(username, password, remember)
-    this.status = { auth_enabled: true, setup_required: false, user }
+    this.status = { auth_enabled: true, setup_required: false, user, desktop: this.desktop }
   }
 
   async logout(): Promise<void> {

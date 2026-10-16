@@ -9,6 +9,7 @@
   import Select from '$lib/components/ui/Select.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { LOCALES, i18n, t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { desktop } from '$lib/stores/desktop.svelte'
   import { settings } from '$lib/stores/settings.svelte'
   import { theme } from '$lib/stores/theme.svelte'
@@ -54,23 +55,26 @@
   </div>
 </Panel>
 
-<Panel>
-  <!-- Recreated when the browser answers, in case the permission was refused. -->
-  {#key `${desktop.enabled}:${desktop.permission}:${answered}`}
-    <Toggle
-      checked={desktop.enabled}
-      label={t('settings.general.desktop')}
-      hint={!desktop.supported
-        ? t('settings.general.desktopUnsupported')
-        : desktop.permission === 'denied'
-          ? t('settings.general.desktopBlocked')
-          : t('settings.general.desktopHint')}
-      disabled={!desktop.supported || desktop.permission === 'denied'}
-      onchange={async (on) => {
-        if (on) await desktop.enable()
-        else desktop.disable()
-        answered++
-      }}
-    />
-  {/key}
-</Panel>
+<!-- The desktop app shows system notifications itself. -->
+{#if !auth.desktop}
+  <Panel>
+    <!-- Recreated when the browser answers, in case the permission was refused. -->
+    {#key `${desktop.enabled}:${desktop.permission}:${answered}`}
+      <Toggle
+        checked={desktop.enabled}
+        label={t('settings.general.desktop')}
+        hint={!desktop.supported
+          ? t('settings.general.desktopUnsupported')
+          : desktop.permission === 'denied'
+            ? t('settings.general.desktopBlocked')
+            : t('settings.general.desktopHint')}
+        disabled={!desktop.supported || desktop.permission === 'denied'}
+        onchange={async (on) => {
+          if (on) await desktop.enable()
+          else desktop.disable()
+          answered++
+        }}
+      />
+    {/key}
+  </Panel>
+{/if}

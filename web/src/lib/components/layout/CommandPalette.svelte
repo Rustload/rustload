@@ -140,7 +140,7 @@
         run: () => (ui.shortcutsOpen = true),
       },
     )
-    if (auth.enabled && auth.username) {
+    if (auth.enabled && auth.username && !auth.desktop) {
       list.push({ id: 'logout', group: 'actions', label: t('shell.signOut'), icon: LogOut, run: () => auth.logout() })
     }
 

@@ -18,7 +18,8 @@
   let error = $state<string | null>(null)
 
   const rules = $derived(passwordErrors(next, confirm))
-  const canSubmit = $derived(current !== '' && rules.ok)
+  // The desktop app's account starts with a random password nobody knows.
+  const canSubmit = $derived((auth.desktop || current !== '') && rules.ok)
 
   async function submit(event: SubmitEvent) {
     event.preventDefault()
@@ -45,14 +46,19 @@
     <p class="text-fg-muted">{t('settings.security.authDisabled')}</p>
   </Panel>
 {:else}
-  <Panel title={t('settings.security.changePassword')}>
+  <Panel
+    title={auth.desktop ? t('settings.security.desktopPassword') : t('settings.security.changePassword')}
+    description={auth.desktop ? t('settings.security.desktopPasswordHint') : undefined}
+  >
     <form class="max-w-sm space-y-4" onsubmit={submit} novalidate>
       <input type="text" name="username" value={auth.username ?? ''} autocomplete="username" hidden readonly />
-      <Field label={t('settings.security.current')}>
-        {#snippet children({ id })}
-          <TextInput {id} type="password" bind:value={current} autocomplete="current-password" required />
-        {/snippet}
-      </Field>
+      {#if !auth.desktop}
+        <Field label={t('settings.security.current')}>
+          {#snippet children({ id })}
+            <TextInput {id} type="password" bind:value={current} autocomplete="current-password" required />
+          {/snippet}
+        </Field>
+      {/if}
       <Field label={t('settings.security.next')} error={rules.next}>
         {#snippet children({ id, describedBy, invalid })}
           <TextInput
@@ -88,7 +94,9 @@
     </form>
   </Panel>
 
-  <Panel title={t('settings.security.session')} description={t('settings.security.signOutHint')}>
-    <Button icon={LogOut} onclick={() => auth.logout()}>{t('shell.signOut')}</Button>
-  </Panel>
+  {#if !auth.desktop}
+    <Panel title={t('settings.security.session')} description={t('settings.security.signOutHint')}>
+      <Button icon={LogOut} onclick={() => auth.logout()}>{t('shell.signOut')}</Button>
+    </Panel>
+  {/if}
 {/if}

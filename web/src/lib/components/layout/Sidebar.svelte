@@ -80,7 +80,9 @@
         >
           {auth.username}
         </span>
-        <IconButton icon={LogOut} label={t('shell.signOut')} size="sm" onclick={() => auth.logout()} />
+        {#if !auth.desktop}
+          <IconButton icon={LogOut} label={t('shell.signOut')} size="sm" onclick={() => auth.logout()} />
+        {/if}
       {:else}
         <span class="flex-1"></span>
       {/if}

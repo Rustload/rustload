@@ -25,6 +25,11 @@ pub async fn get(db: &Db, id: i64) -> Result<Option<UserRow>> {
     Ok(sqlx::query_as("SELECT id, username, password_hash FROM users WHERE id = ?").bind(id).fetch_optional(db).await?)
 }
 
+/// The administrator created first (the desktop app's only user).
+pub async fn first(db: &Db) -> Result<Option<UserRow>> {
+    Ok(sqlx::query_as("SELECT id, username, password_hash FROM users ORDER BY id LIMIT 1").fetch_optional(db).await?)
+}
+
 pub async fn insert(db: &Db, username: &str, password_hash: &str) -> Result<i64> {
     Ok(sqlx::query_scalar("INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?) RETURNING id")
         .bind(username)

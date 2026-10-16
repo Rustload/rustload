@@ -63,6 +63,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/auth/status", get(auth::status))
         .route("/api/auth/setup", post(auth::setup))
         .route("/api/auth/login", post(auth::login))
+        .route("/api/auth/handoff", get(auth::handoff))
         .route("/api/health", get(monitoring::health));
 
     let protected = Router::new()
@@ -149,15 +150,20 @@ async fn json_errors(response: Response) -> Response {
     ApiError::new(status, code, String::from_utf8_lossy(&body).trim()).into_response()
 }
 
+/// Opens the web interface's port.
+pub async fn bind(address: SocketAddr) -> anyhow::Result<tokio::net::TcpListener> {
+    tokio::net::TcpListener::bind(address).await.map_err(|e| anyhow::anyhow!("cannot listen on {address}: {e}"))
+}
+
 /// Serves the application until `shutdown` fires.
 pub async fn serve(
+    listener: tokio::net::TcpListener,
     state: AppState,
-    bind: SocketAddr,
     shutdown: tokio_util::sync::CancellationToken,
 ) -> anyhow::Result<()> {
-    let listener =
-        tokio::net::TcpListener::bind(bind).await.map_err(|e| anyhow::anyhow!("cannot listen on {bind}: {e}"))?;
-    tracing::info!("web interface on http://{bind}");
+    if let Ok(address) = listener.local_addr() {
+        tracing::info!("web interface on http://{address}");
+    }
     axum::serve(listener, router(state).into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(async move { shutdown.cancelled().await })
         .await?;

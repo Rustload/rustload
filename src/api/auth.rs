@@ -13,10 +13,10 @@ use std::{
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use axum::{
     Extension, Json,
-    extract::{ConnectInfo, Request, State},
-    http::{Method, StatusCode},
+    extract::{ConnectInfo, Query, Request, State},
+    http::{HeaderValue, Method, StatusCode},
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::{IntoResponse, Redirect, Response},
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use serde::Deserialize;
@@ -37,12 +37,36 @@ const MIN_PASSWORD_LEN: usize = 8;
 const MAX_FAILURES: u32 = 20;
 const FAILURE_WINDOW: Duration = Duration::from_secs(15 * 60);
 
+/// How long the desktop app's login addresses stay valid.
+const HANDOFF_TTL: Duration = Duration::from_secs(60);
+
 #[derive(Default)]
 pub struct AuthState {
     failures: Mutex<HashMap<IpAddr, (u32, Instant)>>,
+    /// SHA-256 of the single-use codes issued to the desktop app, with their creation time.
+    handoffs: Mutex<Vec<(String, Instant)>>,
 }
 
 impl AuthState {
+    /// A new single-use code for `/api/auth/handoff`.
+    pub fn issue_handoff(&self) -> String {
+        let code = random_token();
+        let mut handoffs = self.handoffs.lock().expect("poisoned");
+        handoffs.retain(|(_, issued)| issued.elapsed() < HANDOFF_TTL);
+        handoffs.push((sha256_hex(&code), Instant::now()));
+        code
+    }
+
+    /// Whether `code` was issued and not used yet; it cannot be used again.
+    fn take_handoff(&self, code: &str) -> bool {
+        let hash = sha256_hex(code);
+        let mut handoffs = self.handoffs.lock().expect("poisoned");
+        handoffs.retain(|(_, issued)| issued.elapsed() < HANDOFF_TTL);
+        let before = handoffs.len();
+        handoffs.retain(|(issued, _)| !constant_time_eq(issued.as_bytes(), hash.as_bytes()));
+        handoffs.len() < before
+    }
+
     fn blocked(&self, ip: IpAddr) -> bool {
         let failures = self.failures.lock().expect("poisoned");
         failures.get(&ip).is_some_and(|(count, since)| *count >= MAX_FAILURES && since.elapsed() < FAILURE_WINDOW)
@@ -150,7 +174,50 @@ pub async fn status(State(state): State<AppState>, jar: CookieJar) -> ApiResult<
             .map(|u| json!({ "username": u.username })),
         _ => None,
     };
-    Ok(Json(json!({ "auth_enabled": state.config.auth_enabled, "setup_required": setup_required, "user": user })))
+    Ok(Json(json!({
+        "auth_enabled": state.config.auth_enabled,
+        "setup_required": setup_required,
+        "user": user,
+        "desktop": state.config.desktop,
+    })))
+}
+
+#[derive(Deserialize)]
+pub struct Handoff {
+    code: String,
+    #[serde(default)]
+    next: String,
+}
+
+/// Opens the desktop app's window (or a browser it launched) logged in, with a code only the app
+/// knows. The interface answers on this computer only and the app's account has a random password.
+pub async fn handoff(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Query(query): Query<Handoff>,
+) -> ApiResult<Response> {
+    if !state.config.desktop {
+        return Err(ApiError::new(StatusCode::NOT_FOUND, "NOT_FOUND", "not found"));
+    }
+    if !state.auth.take_handoff(&query.code) {
+        return Err(ApiError::unauthorized());
+    }
+    // Only paths of this site (`//host` or `/\host` would leave it) that fit in a header.
+    let next = Some(query.next.as_str())
+        .filter(|next| next.starts_with('/') && !next.starts_with("//") && !next.starts_with("/\\"))
+        .filter(|next| HeaderValue::from_str(next).is_ok())
+        .unwrap_or("/");
+    let redirect = Redirect::to(next);
+    let logged_in = match jar.get(COOKIE) {
+        Some(cookie) => db::users::session_user(state.db(), &sha256_hex(cookie.value())).await?.is_some(),
+        None => false,
+    };
+    if logged_in {
+        return Ok(redirect.into_response());
+    }
+    let user = db::users::first(state.db()).await?.ok_or_else(ApiError::unauthorized)?;
+    let cookie = new_session_cookie(&state, user.id, true).await?;
+    Ok((jar.add(cookie), redirect).into_response())
 }
 
 #[derive(Deserialize)]
@@ -222,6 +289,11 @@ async fn open_session(
     username: &str,
     remember: bool,
 ) -> ApiResult<Response> {
+    let cookie = new_session_cookie(state, user_id, remember).await?;
+    Ok((jar.add(cookie), Json(json!({ "user": { "username": username } }))).into_response())
+}
+
+async fn new_session_cookie(state: &AppState, user_id: i64, remember: bool) -> ApiResult<Cookie<'static>> {
     let token = random_token();
     let ttl = if remember { REMEMBER_TTL } else { SESSION_TTL };
     db::users::insert_session(state.db(), &sha256_hex(&token), user_id, now() + ttl).await?;
@@ -235,7 +307,7 @@ async fn open_session(
     if remember {
         cookie = cookie.max_age(time_duration(REMEMBER_TTL));
     }
-    Ok((jar.add(cookie.build()), Json(json!({ "user": { "username": username } }))).into_response())
+    Ok(cookie.build())
 }
 
 /// Cookies use the `time` crate's duration type.
@@ -262,6 +334,8 @@ pub async fn logout(
 
 #[derive(Deserialize)]
 pub struct PasswordChange {
+    /// Not asked by the desktop app, whose account starts with a random password nobody knows.
+    #[serde(default)]
     current_password: String,
     new_password: String,
 }
@@ -275,7 +349,7 @@ pub async fn change_password(
         .user_id
         .ok_or_else(|| ApiError::bad_request("NO_USER", "log in with a user account to change the password"))?;
     let user = db::users::get(state.db(), user_id).await?.ok_or_else(ApiError::unauthorized)?;
-    if !verify_password(body.current_password, user.password_hash).await {
+    if !state.config.desktop && !verify_password(body.current_password, user.password_hash).await {
         return Err(ApiError::bad_request("INVALID_CREDENTIALS", "the current password is incorrect"));
     }
     validate_password(&body.new_password)?;
@@ -330,7 +404,7 @@ pub async fn bootstrap_admin(db: &db::Db, username: Option<&str>, password: Opti
     let hash =
         hash_password(password.to_owned()).await.map_err(|_| anyhow::anyhow!("cannot hash the admin password"))?;
     db::users::insert(db, &username, &hash).await?;
-    tracing::info!("administrator account `{username}` created from the environment");
+    tracing::info!("administrator account `{username}` created");
     Ok(())
 }
 
