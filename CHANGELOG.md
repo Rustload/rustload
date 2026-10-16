@@ -58,3 +58,5 @@ First public version.
 - Web interface in English and French, dark and light themes, phone layout, installable as an app,
   command palette and keyboard shortcuts, setup checklist on first start.
 - Docker image for `linux/amd64` and `linux/arm64` with `PUID`/`PGID`/`UMASK` support.
+
+[1.0.0]: https://github.com/rustload/rustload/releases/tag/v1.0.0

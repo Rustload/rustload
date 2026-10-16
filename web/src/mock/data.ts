@@ -261,12 +261,12 @@ export function makePackage(name: string, files: (pkgId: number) => Download[], 
 export function seedQueue(): Package[] {
   return [
     makePackage(
-      'The.Expanse.S04.1080p.WEB-DL',
+      'Blender.Open.Movies.2160p',
       (p) =>
-        Array.from({ length: 4 }, (_, i) =>
-          makeFile(p, `The.Expanse.S04E0${i + 1}.1080p.WEB-DL.mkv`, Math.round((2.1 + i * 0.13) * GiB), '1fichier.com'),
+        ['Spring.2019', 'Coffee.Run.2020', 'Sprite.Fright.2021', 'Charge.2022'].map((name, i) =>
+          makeFile(p, `${name}.2160p.mkv`, Math.round((2.1 + i * 0.13) * GiB), '1fichier.com'),
         ),
-      { category_id: 3, dest_dir: '/downloads/series/The.Expanse.S04.1080p.WEB-DL' },
+      { category_id: 2, dest_dir: '/downloads/videos/Blender.Open.Movies.2160p' },
     ),
     makePackage('ubuntu-24.04.3-desktop-amd64', (p) => [
       makeFile(p, 'ubuntu-24.04.3-desktop-amd64.iso', Math.round(5.9 * GiB), 'releases.ubuntu.com', { via: 'direct' }),
@@ -277,10 +277,10 @@ export function seedQueue(): Package[] {
       debrid: { status: 'Downloading', progress: 0.42, speed: 38 * MiB, seeders: 87, size: Math.round(8.2 * GiB) },
     }),
     makePackage(
-      'Portishead - Dummy (1994) [FLAC]',
+      'Nine Inch Nails - Ghosts I-IV (2008) [FLAC]',
       (p) => [
-        makeFile(p, 'Portishead - Dummy.part1.rar', 500 * MiB, 'rapidgator.net'),
-        makeFile(p, 'Portishead - Dummy.part2.rar', 212 * MiB, 'rapidgator.net'),
+        makeFile(p, 'Ghosts I-IV.part1.rar', 500 * MiB, 'rapidgator.net'),
+        makeFile(p, 'Ghosts I-IV.part2.rar', 212 * MiB, 'rapidgator.net'),
       ],
       { category_id: 4 },
     ),
@@ -334,12 +334,12 @@ export function seedHistory(): Package[] {
 }
 
 const LOG_LINES: [LogEntry['level'], string, string][] = [
-  ['INFO', 'rustload::engine', 'Started download of The.Expanse.S04E01.1080p.WEB-DL.mkv with 8 connections'],
+  ['INFO', 'rustload::engine', 'Started download of Spring.2019.2160p.mkv with 8 connections'],
   ['DEBUG', 'rustload::engine::segments', 'Split segment 3 at 1.2 GiB (remaining 640 MiB)'],
   ['INFO', 'rustload::debrid::alldebrid', 'Unlocked 1fichier.com link in 412 ms'],
   ['WARN', 'rustload::engine', 'Connection reset by peer, retrying segment 5 (attempt 2/5)'],
   ['ERROR', 'rustload::debrid::alldebrid', 'LINK_DOWN: uptobox.com/abc123 is offline'],
-  ['INFO', 'rustload::postprocess', 'Extracted Portishead - Dummy.part1.rar (2 volumes) in 3.1 s'],
+  ['INFO', 'rustload::postprocess', 'Extracted Ghosts I-IV.part1.rar (2 volumes) in 3.1 s'],
 ]
 
 let logId = 1

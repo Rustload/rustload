@@ -121,9 +121,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 - More premium hosters with official APIs
 - RSS and site watchers that add new releases automatically
 
+## Responsible use
+
+Rustload downloads what you ask it to, from services you have access to. Respect copyright and the
+terms of the services you use: Rustload hosts no content and gives access to nothing you could not
+download yourself. It is not affiliated with or endorsed by the debrid services, file hosts and
+video sites it works with; their names are trademarks of their respective owners.
+
 ## License
 
-[MIT](LICENSE). The name, logo and colours are described in the
-[brand guidelines](docs/brand/README.md); bundled third-party work is listed in
+[MIT](LICENSE). The license covers the code, not the Rustload name and logo, which are described in
+the [brand guidelines](docs/brand/README.md); bundled third-party work is listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Rustload is an independent project, not affiliated
-with the Rust Project or the Rust Foundation.
+with the Rust Project or the Rust Foundation. Contributors follow the
+[code of conduct](CODE_OF_CONDUCT.md).

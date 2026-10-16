@@ -127,9 +127,18 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le développement.
 - D'autres hébergeurs premium avec API officielle
 - Surveillance de flux RSS et de sites pour ajouter automatiquement les nouveautés
 
+## Usage responsable
+
+Rustload télécharge ce que vous lui demandez, depuis les services auxquels vous avez accès.
+Respectez le droit d'auteur et les conditions d'utilisation des services que vous utilisez :
+Rustload n'héberge aucun contenu et ne donne accès à rien que vous ne pourriez télécharger
+vous-même. Il n'est ni affilié aux débrideurs, hébergeurs et sites vidéo avec lesquels il
+fonctionne, ni approuvé par eux ; leurs noms sont des marques de leurs propriétaires respectifs.
+
 ## Licence
 
-[MIT](LICENSE). Le nom, le logo et les couleurs sont décrits dans la
+[MIT](LICENSE). La licence couvre le code, pas le nom ni le logo de Rustload, décrits dans la
 [charte graphique](docs/brand/README.md) (en anglais) ; les œuvres tierces incluses sont listées dans
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Rustload est un projet indépendant, sans lien avec
-le Rust Project ni la Rust Foundation.
+le Rust Project ni la Rust Foundation. Les contributions suivent le
+[code de conduite](CODE_OF_CONDUCT.md) (en anglais).

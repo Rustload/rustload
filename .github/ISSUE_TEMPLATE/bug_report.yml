@@ -1,0 +1,56 @@
+name: Bug report
+description: Something does not work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report it. Security problems must **not** be reported here:
+        use the [private reporting form](https://github.com/rustload/rustload/security/advisories/new).
+        Never paste API keys, passwords, cookies or private links: logs never contain them, but
+        screenshots and config files can.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what Rustload did instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add a link from …
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: Rustload version
+      description: Shown at the bottom of the sidebar and in Settings › About.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run it
+      options:
+        - Docker image (linux/amd64)
+        - Docker image (linux/arm64)
+        - Binary built from source
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: For problems in the web interface or the browser extension.
+      placeholder: Firefox 144, Chrome 141…
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The relevant lines from the Logs page (or `docker logs`), around the time of the problem.
+      render: text

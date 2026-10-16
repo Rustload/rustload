@@ -21,7 +21,7 @@ Rustload has two kinds of configuration:
 | `RUSTLOAD_SECURE_COOKIES` | `false` | Mark the session cookie `Secure` (set it when served over HTTPS) |
 | `RUSTLOAD_LOG` | `info` | Log filter, e.g. `debug` or `info,rustload::engine=debug` (`RUST_LOG` also works) |
 | `PUID` / `PGID` | – | User and group owning every created file (when started as root, as in Docker) |
-| `UMASK` | `022` | Permission mask of created files: `022` → 644/755, `002` → 664/775 |
+| `UMASK` | – | Permission mask of created files: `022` → 644/755, `002` → 664/775. Unset, the process keeps its own (`022` in the Docker image) |
 | `TZ` | `UTC` | Time zone used by the download schedule |
 
 ### Files and permissions

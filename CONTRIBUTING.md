@@ -38,6 +38,18 @@ pnpm build
 `cargo test` includes end-to-end tests of the transfer engine against a local HTTP server
 (multi-connection, servers without range support, connection limits, resume).
 
+When `Cargo.lock` changes (and before each release), regenerate the license texts of the
+dependencies with [cargo-about](https://github.com/EmbarkStudios/cargo-about) (`cargo install
+cargo-about --locked --features cli`):
+
+```sh
+cargo about generate --fail --locked about.hbs -o THIRD-PARTY-LICENSES.md
+```
+
+New dependencies must use one of the licenses accepted in `about.toml`; the web interface's
+bundled packages and the typeface are written in `about.hbs`. CI does not check the file, so that
+Dependabot updates are not blocked on it.
+
 ## Guidelines
 
 - Keep the binary small and the hot path allocation-free; prefer the standard library and existing

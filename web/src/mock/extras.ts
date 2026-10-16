@@ -59,20 +59,20 @@ export function checkLink(url: string, scanPages: boolean, known: Package[]): Li
   info.host = host
 
   if (/(^|\.)youtube\.com$|^youtu\.be$/.test(host)) {
-    const id = parsed.searchParams.get('v') ?? lastSegment(parsed) ?? 'jNQXAC9IVRw'
+    const id = parsed.searchParams.get('v') ?? lastSegment(parsed) ?? 'eRsGyueVLvQ'
     const list = parsed.searchParams.get('list')
     info.handler = { type: 'media', id: 'youtube', name: 'YouTube', account_id: null }
     info.media = {
-      title: list ? 'Blender Studio — Open Movies' : 'Me at the zoo',
-      uploader: list ? 'Blender Studio' : 'jawed',
-      duration_secs: list ? null : 19,
+      title: list ? 'Blender Studio — Open Movies' : 'Sintel - Open Movie by Blender Foundation',
+      uploader: list ? 'Blender Studio' : 'Blender',
+      duration_secs: list ? null : 888,
       thumbnail: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`,
       webpage_url: url,
       extractor: 'youtube',
       is_live: false,
       playlist: list ? { title: 'Blender Studio — Open Movies', count: 14 } : null,
       entries: [],
-      filesize_approx: list ? null : 793_000,
+      filesize_approx: list ? null : 412_000_000,
     }
     info.filename = info.media.title
     return info
@@ -113,9 +113,9 @@ export function checkLink(url: string, scanPages: boolean, known: Package[]): Li
 
   if (host === 'mega.nz' && parsed.pathname.startsWith('/folder')) {
     info.handler = { type: 'hoster', id: 'mega', name: 'MEGA', account_id: null }
-    const entries = ['cover.jpg', 'CD1/01 - Overture.flac', 'CD1/02 - Night Drive.flac', 'CD2/01 - Dawn.flac']
+    const entries = ['README.txt', 'Day 1/IMG_2041.jpg', 'Day 1/IMG_2042.jpg', 'Day 2/VID_2107.mp4']
     info.folder = {
-      name: 'Soundtrack (2024) [FLAC]',
+      name: 'Holiday photos 2026',
       files: 31,
       size: Math.round(1.34 * GiB),
       entries: entries.map((path) => {
@@ -141,9 +141,9 @@ export function checkLink(url: string, scanPages: boolean, known: Package[]): Li
     info.status = 'unknown'
     if (scanPages) {
       info.found = [
-        'https://1fichier.com/?a1b2c3d4e5/Night.Drive.2026.part1.rar',
-        'https://1fichier.com/?f6g7h8i9j0/Night.Drive.2026.part2.rar',
-        'https://1fichier.com/?k1l2m3n4o5/Night.Drive.2026.part3.rar',
+        'https://1fichier.com/?a1b2c3d4e5/Tears.of.Steel.2012.4K.part1.rar',
+        'https://1fichier.com/?f6g7h8i9j0/Tears.of.Steel.2012.4K.part2.rar',
+        'https://1fichier.com/?k1l2m3n4o5/Tears.of.Steel.2012.4K.part3.rar',
         `https://${host}/files/readme.txt`,
       ]
     }

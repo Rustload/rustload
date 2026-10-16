@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest something Rustload should do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to do
+      description: The situation and what gets in the way today, rather than a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How it could work
+      description: Optional. How you picture it in the interface, the API or the configuration.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead
+      description: Optional. Workarounds or other tools you use for it today.

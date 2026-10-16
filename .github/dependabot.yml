@@ -1,0 +1,42 @@
+version: 2
+
+# Weekly, with minor and patch updates grouped per ecosystem: one pull request to review instead of
+# one per dependency. Major updates and security fixes still get their own.
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      rust:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      web:
+        update-types: [minor, patch]
+
+  # Actions are pinned to commit SHAs; Dependabot updates the SHA and its version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  # Base images are pinned to digests in the Dockerfile.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      images:
+        update-types: [minor, patch]

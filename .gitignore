@@ -14,3 +14,14 @@ web/dist
 .DS_Store
 .idea
 .vscode
+Thumbs.db
+desktop.ini
+*.swp
+
+# Local secrets and runtime data that must never be committed
+.env*
+*.pem
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*

@@ -6,6 +6,7 @@ rust-version = "1.94"
 description = "Fast, lightweight, self-hosted download manager with debrid support"
 license = "MIT"
 repository = "https://github.com/rustload/rustload"
+homepage = "https://github.com/rustload/rustload"
 readme = "README.md"
 keywords = ["download-manager", "debrid", "downloader", "self-hosted"]
 categories = ["command-line-utilities", "web-programming::http-server"]

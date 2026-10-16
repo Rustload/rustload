@@ -5,6 +5,13 @@ target
 *.log
 config
 downloads
-web/node_modules
+**/node_modules
 web/dist
 **/.DS_Store
+.env*
+*.db
+*.zip
+/dist
+# Not part of the image (the Dockerfile copies the sources, the web interface and the license files).
+docs
+extension

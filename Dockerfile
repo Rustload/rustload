@@ -1,11 +1,14 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 #
 # Multi-architecture image (linux/amd64, linux/arm64). The stages that compile run on the build
 # machine's native platform and cross-compile, so arm64 images build fast; only the small runtime
 # stage (apk add) runs under emulation, which needs QEMU (docker/setup-qemu-action in CI).
+#
+# Base images are pinned to the digest of their multi-arch index (Dependabot keeps them current),
+# downloaded tools to a version and a checksum.
 
 # --- Web interface -----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM node:24-alpine AS web
+FROM --platform=$BUILDPLATFORM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS web
 WORKDIR /web
 RUN npm install --global pnpm@10.33.0
 COPY web/package.json web/pnpm-lock.yaml ./
@@ -14,11 +17,11 @@ COPY web/ ./
 RUN pnpm build
 
 # --- Static binary (musl) ----------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM rust:1-bookworm AS build
+FROM --platform=$BUILDPLATFORM rust:1-bookworm@sha256:e12566d5abc17a0da741628782cdb504b68b8961f5bfcf677936bf3e8b32de29 AS build
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3-pip \
  && rm -rf /var/lib/apt/lists/* \
- && pip3 install --break-system-packages --no-cache-dir ziglang cargo-zigbuild \
+ && pip3 install --break-system-packages --no-cache-dir ziglang==0.16.0 cargo-zigbuild==0.23.4 \
  && rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
@@ -38,7 +41,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 
 # --- 7-Zip ------------------------------------------------------------------------------------
 # Official static build: distribution packages are compiled without the RAR codec.
-FROM --platform=$BUILDPLATFORM alpine:3.22 AS sevenzip
+FROM --platform=$BUILDPLATFORM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS sevenzip
 ARG TARGETARCH
 ARG SEVENZIP_VERSION=2602
 ARG SEVENZIP_SHA256_AMD64=41aaba7b1235304ab5aa0624530c67ae829496cd29e875925271efdccc28c03e
@@ -57,7 +60,7 @@ RUN apk add --no-cache curl xz \
 # --- yt-dlp -----------------------------------------------------------------------------------
 # Official standalone musl build (needs only musl and zlib). Media sites change often: the copy
 # installed from Settings > Media into /config/bin takes precedence and is kept up to date.
-FROM --platform=$BUILDPLATFORM alpine:3.22 AS ytdlp
+FROM --platform=$BUILDPLATFORM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS ytdlp
 ARG TARGETARCH
 ARG YTDLP_VERSION=2026.08.19
 ARG YTDLP_SHA256_AMD64=f3dec9cfeaf304cec98290fe41c6ad465d4b747d302473559643e7af24929722
@@ -73,13 +76,21 @@ RUN apk add --no-cache curl \
  && install -m 755 /tmp/yt-dlp /yt-dlp
 
 # --- Runtime -----------------------------------------------------------------------------------
-FROM alpine:3.22
+FROM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+LABEL org.opencontainers.image.title="Rustload" \
+      org.opencontainers.image.description="Fast, lightweight, self-hosted download manager with debrid support" \
+      org.opencontainers.image.url="https://github.com/rustload/rustload" \
+      org.opencontainers.image.source="https://github.com/rustload/rustload" \
+      org.opencontainers.image.documentation="https://github.com/rustload/rustload#readme" \
+      org.opencontainers.image.licenses="MIT"
 # tini reaps 7-Zip, yt-dlp and hook processes and forwards signals. ffmpeg merges and converts
 # media streams; QuickJS lets yt-dlp solve YouTube's JavaScript challenges.
 RUN apk add --no-cache ca-certificates tzdata tini ffmpeg quickjs zlib
 COPY --from=sevenzip /7zz /usr/local/bin/7zz
 COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
 COPY --from=build /rustload /usr/local/bin/rustload
+# The licenses of Rustload, of what is compiled into it and of the tools above.
+COPY LICENSE THIRD-PARTY-NOTICES.md THIRD-PARTY-LICENSES.md /usr/share/doc/rustload/
 
 ENV RUSTLOAD_CONFIG_DIR=/config \
     RUSTLOAD_DOWNLOAD_DIR=/downloads \

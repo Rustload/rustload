@@ -2,6 +2,12 @@
   "name": "rustload-web",
   "private": true,
   "version": "1.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rustload/rustload.git",
+    "directory": "web"
+  },
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {

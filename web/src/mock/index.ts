@@ -3,6 +3,7 @@
 
 import { setTransport, type Package, type StatsEvent } from '$lib/api'
 import { setEventStreamFactory, type EventStream } from '$lib/stores/live.svelte'
+import { version } from '../../package.json'
 import * as seed from './data'
 import * as extras from './extras'
 
@@ -52,7 +53,7 @@ const findFile = (id: string) => {
   throw new HttpError(404, 'NOT_FOUND', 'Download not found')
 }
 const system = () => ({
-  version: '1.0.0-dev',
+  version,
   download_root: '/downloads',
   uptime_secs: 93_784,
   extractor: '7zz',

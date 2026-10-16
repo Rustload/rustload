@@ -1,0 +1,25 @@
+# cargo-about configuration: the licenses of the Rust crates compiled into the release binary.
+# Regenerate THIRD-PARTY-LICENSES.md with `cargo about generate about.hbs -o THIRD-PARTY-LICENSES.md`.
+
+# The binaries Rustload distributes (the Docker image) are built for these targets only.
+targets = ["x86_64-unknown-linux-musl", "aarch64-unknown-linux-musl"]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
+    "bzip2-1.0.6",
+    "MPL-2.0",
+    "CC0-1.0",
+    "0BSD",
+    "Unlicense",
+    "BSL-1.0",
+]
