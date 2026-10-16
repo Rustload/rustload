@@ -112,6 +112,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/system/diagnostics", get(diagnostics::get))
         .route("/api/media/status", get(media::status))
         .route("/api/media/install", post(media::install))
+        .route("/api/media/ffmpeg/install", post(media::install_ffmpeg))
+        .route("/api/extraction/7zip/install", post(system::install_seven_zip))
         .route("/api/media/probe", post(media::probe))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::require_auth));
 

@@ -52,6 +52,7 @@ export const api = {
 
   system: {
     get: () => get<System>('system'),
+    installExtractor: () => post<System>('extraction/7zip/install'),
     pause: () => post<System>('queue/pause'),
     resume: () => post<System>('queue/resume'),
   },
@@ -138,6 +139,7 @@ export const api = {
   media: {
     status: () => get<MediaStatus>('media/status'),
     install: () => post<MediaStatus>('media/install'),
+    installFfmpeg: () => post<MediaStatus>('media/ffmpeg/install'),
   },
 
   stats: {

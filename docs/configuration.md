@@ -141,7 +141,11 @@ dropped.
 
 Passwords are tried in this order: none, the package password, then the global list
 (*Settings › Extraction*). A password that works moves to the top of the list. Extraction needs
-7-Zip for everything but plain ZIP files; the Docker image includes it.
+7-Zip for everything but plain ZIP files; the Docker image includes it. Rustload looks for it in
+`<config>/bin/`, then in `PATH` (`7zz`, `7z` or `7za`) and, on Windows, in `C:\Program Files\7-Zip`.
+On Windows, **Install** in *Settings › Extraction* puts the official 7-Zip command line (2 MB, RAR
+support included, verified against pinned checksums) in `<config>/bin/` without a restart; elsewhere,
+install `7zz` or p7zip with the system's package manager.
 
 ## Accounts
 
@@ -266,7 +270,10 @@ yt-dlp is missing or when its path is set in the settings.
 embeds subtitles, metadata and covers. Without it, Rustload degrades gracefully and notes it in
 the log: only single-file formats are downloaded (often 360p on YouTube, and some videos have none:
 choose audio only), audio is kept in its original format, subtitles are saved as separate files,
-and embedding and SponsorBlock are skipped.
+and embedding and SponsorBlock are skipped. ffmpeg is looked up like yt-dlp (settings, `<config>/bin/`,
+`PATH`). On Windows, **Install** next to it in *Settings › Video sites* downloads the build yt-dlp
+recommends (about 200 MB), verifies its checksum and puts `ffmpeg.exe` and `ffprobe.exe` in
+`<config>/bin/`; elsewhere, install ffmpeg with the system's package manager (apt, dnf, Homebrew...).
 
 YouTube also needs a **JavaScript runtime** for full format support: yt-dlp uses Deno, Node.js
 (22 or newer) or QuickJS when one is installed.

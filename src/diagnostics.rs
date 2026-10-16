@@ -199,14 +199,14 @@ fn disk_outcome(free: u64, total: u64, needed: u64) -> Outcome {
 
 async fn extractor(ctx: &Context<'_>) -> Outcome {
     let Some(tool) = ctx.engine.extractor.tool_path() else {
-        return Outcome::warn(
-            "7-Zip was not found: only ZIP archives can be extracted.",
-            Some(
-                "Install 7-Zip (`7zz` or `7z` in the PATH) to extract RAR and 7z archives. The Docker image includes it.",
-            ),
-        );
+        let hint = if crate::media::tools::can_install_seven_zip() {
+            "Install it from Settings › Extraction to extract RAR and 7z archives."
+        } else {
+            "Install 7-Zip (`7zz` or `7z` in the PATH) to extract RAR and 7z archives. The Docker image includes it."
+        };
+        return Outcome::warn("7-Zip was not found: only ZIP archives can be extracted.", Some(hint));
     };
-    let banner = tokio::process::Command::new(tool)
+    let banner = tokio::process::Command::new(&tool)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())

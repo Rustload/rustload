@@ -35,6 +35,17 @@ Rustload runs these programs as separate processes; they are not linked into it.
 | [tini](https://github.com/krallin/tini), Alpine Linux package                   | MIT                                                                                                                                                                          |
 | [Alpine Linux](https://alpinelinux.org) base image and packages                 | Various, see each package; among them BusyBox (GNU GPL 2) and the libraries FFmpeg uses                                                                                      |
 
+## Installed on request on Windows
+
+Rustload ships neither of these: *Install* in the settings downloads them from their official
+releases, verifies their checksums and puts them in `<config>/bin/`, where Rustload runs them as
+separate processes.
+
+| Component                                                                                                  | License                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [FFmpeg](https://ffmpeg.org), [yt-dlp's builds](https://github.com/yt-dlp/FFmpeg-Builds) (`win64-gpl`, `winarm64-gpl`) | GNU GPL version 3 or later (GPL configuration); the source code is linked from each build's release page |
+| [7-Zip](https://www.7-zip.org) 26.04 (`7z.exe`, `7z.dll`, from the official installer)                    | GNU LGPL 2.1 or later, with parts under the BSD 3-clause license, and the unRAR license restriction         |
+
 ## Source code
 
 The programs above under the GNU GPL or LGPL come with their source code:
@@ -46,7 +57,10 @@ The programs above under the GNU GPL or LGPL come with their source code:
   and the corresponding source archives on the
   [Alpine distfiles mirror](https://distfiles.alpinelinux.org/distfiles/v3.24/).
 - **7-Zip 26.02**: [`7z2602-src.tar.xz`](https://7-zip.org/a/7z2602-src.tar.xz) from
-  <https://www.7-zip.org/download.html>.
+  <https://www.7-zip.org/download.html>; **7-Zip 26.04**:
+  [`7z2604-src.tar.xz`](https://github.com/ip7z/7zip/releases/download/26.04/7z2604-src.tar.xz).
+- **FFmpeg builds installed on Windows**: the sources and build scripts are linked from
+  <https://github.com/yt-dlp/FFmpeg-Builds>.
 - **yt-dlp**: <https://github.com/yt-dlp/yt-dlp/tree/2026.08.19>.
 
 If a link no longer works, open an issue and we will provide the source code.

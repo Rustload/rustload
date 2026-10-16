@@ -132,7 +132,7 @@ impl Engine {
         Ok(Arc::new(Self {
             limiter: RateLimiter::new(current.speed_limit_at(chrono::Local::now().naive_local()).0),
             download_http: RwLock::new(build_download_client(&current)?),
-            extractor: Extractor::detect(),
+            extractor: Extractor::detect(config.config_dir.join("bin")),
             hosters: Hosters::default(),
             media: crate::media::MediaTools::new(config.config_dir.clone(), USER_AGENT)?,
             live: LiveRegistry::default(),

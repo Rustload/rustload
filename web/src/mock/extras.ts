@@ -168,6 +168,9 @@ export function mediaStatus(installed: boolean): MediaStatus {
     ytdlp: installed ? { path: '/config/bin/yt-dlp', version: '2026.09.27', managed: true } : null,
     ffmpeg: { path: '/usr/bin/ffmpeg', version: '7.1.2' },
     updating: false,
+    // The demo stands for the Docker image, which ships ffmpeg and 7-Zip.
+    ffmpeg_installable: false,
+    installing_ffmpeg: false,
     last_update_check: Math.floor(Date.now() / 1000) - 7200,
     latest_version: '2026.09.27',
   }

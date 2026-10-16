@@ -100,7 +100,7 @@ pub struct Caller {
 
 /// Endpoints the API key cannot use: they manage credentials or run commands (hooks), which
 /// requires a logged-in user.
-const SESSION_ONLY: [&str; 8] = [
+const SESSION_ONLY: [&str; 10] = [
     "/api/settings",
     "/api/accounts",
     "/api/notifications",
@@ -109,6 +109,8 @@ const SESSION_ONLY: [&str; 8] = [
     "/api/integrations/",
     "/api/system/diagnostics",
     "/api/media/install",
+    "/api/media/ffmpeg/install",
+    "/api/extraction/",
 ];
 /// Header the web interface adds to every request. Other sites cannot set it without a CORS
 /// preflight, which is never granted: requests without it are refused (CSRF protection).

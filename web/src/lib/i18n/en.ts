@@ -667,6 +667,11 @@ export const en = {
       passwordsHint: 'One per line, tried in order when an archive is encrypted.',
       extractorMissing: 'No 7-Zip binary was found on the server: only ZIP archives can be extracted.',
       extractorFound: 'Extraction uses {tool}.',
+      extractorInstalled: '7-Zip is ready: RAR and 7z archives are extracted too',
+      extractorInstallHint:
+        'Rustload installs the official 7-Zip next to its settings (2 MB) to extract RAR and 7z archives.',
+      extractorSystemHint:
+        'Install 7-Zip (7zz or p7zip) with your system’s package manager (apt, dnf, Homebrew…) to extract RAR and 7z archives.',
       verify: 'Verify files with their checksums',
       verifyHint:
         'Uses .sfv, .md5 and .sha files of the package and hashes given by hosts. A corrupted file is downloaded again once.',
@@ -850,6 +855,11 @@ export const en = {
       managedHint:
         'This copy of yt-dlp ships with the server. With automatic updates on, Rustload installs a newer copy here as soon as one is released; you can also install it now.',
       noFfmpeg: 'Not found: videos are limited to formats that need no merging',
+      ffmpegInstalled: 'ffmpeg {version} is ready',
+      ffmpegInstallHint:
+        'Rustload installs yt-dlp’s recommended ffmpeg build next to its settings: about 200 MB to download.',
+      ffmpegSystemHint:
+        'Install ffmpeg with your system’s package manager (apt, dnf, Homebrew…) and Rustload finds it.',
       autoUpdate: 'Keep yt-dlp up to date automatically',
       lastCheck: 'Last checked {when}. Sites change often, new versions keep them working.',
       defaults: 'Default quality',

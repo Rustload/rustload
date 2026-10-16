@@ -281,6 +281,9 @@ pub struct MediaStatus {
     pub ytdlp: Option<YtdlpStatus>,
     pub ffmpeg: Option<FfmpegStatus>,
     pub updating: bool,
+    /// ffmpeg can be installed from the interface (Windows).
+    pub ffmpeg_installable: bool,
+    pub installing_ffmpeg: bool,
     pub last_update_check: Option<i64>,
     /// Latest official release seen on GitHub (`null` until checked).
     pub latest_version: Option<String>,
@@ -312,6 +315,8 @@ pub async fn status(engine: &Engine) -> anyhow::Result<MediaStatus> {
         }),
         ffmpeg: tools.ffmpeg.map(|t| FfmpegStatus { path: t.path.to_string_lossy().into_owned(), version: t.version }),
         updating: engine.media.is_updating(),
+        ffmpeg_installable: tools::can_install_ffmpeg(),
+        installing_ffmpeg: engine.media.is_installing_ffmpeg(),
         last_update_check,
         latest_version: engine.media.latest_version(),
     })

@@ -31,6 +31,7 @@
         : t('settings.media.installManaged'),
   )
   let installing = $state(false)
+  let installingFfmpeg = $state(false)
   let advanced = $state(false)
 
   async function refresh() {
@@ -47,7 +48,7 @@
 
   // An installation or an automatic update is running: check again until it's over.
   $effect(() => {
-    if (!status?.updating || installing) return
+    if (!(status?.updating || status?.installing_ffmpeg) || installing || installingFfmpeg) return
     const timer = setTimeout(refresh, 3000)
     return () => clearTimeout(timer)
   })
@@ -61,6 +62,18 @@
       toasts.error(err)
     } finally {
       installing = false
+    }
+  }
+
+  async function installFfmpeg() {
+    installingFfmpeg = true
+    try {
+      status = await api.media.installFfmpeg()
+      toasts.success(t('settings.media.ffmpegInstalled', { version: status.ffmpeg?.version ?? '' }))
+    } catch (err) {
+      toasts.error(err)
+    } finally {
+      installingFfmpeg = false
     }
   }
 </script>
@@ -93,7 +106,7 @@
           </Button>
         </dd>
       </div>
-      <div class="grid gap-1 py-2.5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center sm:gap-4">
+      <div class="grid gap-1 py-2.5 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
         <dt class="font-medium">ffmpeg</dt>
         <dd class="flex min-w-0 items-center gap-2">
           {#if status.ffmpeg}
@@ -105,8 +118,25 @@
             <span class="text-warn">{t('settings.media.noFfmpeg')}</span>
           {/if}
         </dd>
+        {#if !status.ffmpeg && status.ffmpeg_installable}
+          <dd>
+            <Button
+              size="sm"
+              icon={Download}
+              loading={installingFfmpeg || status.installing_ffmpeg}
+              onclick={installFfmpeg}
+            >
+              {t('settings.media.install')}
+            </Button>
+          </dd>
+        {/if}
       </div>
     </dl>
+    {#if !status.ffmpeg}
+      <p class="text-small text-fg-muted">
+        {status.ffmpeg_installable ? t('settings.media.ffmpegInstallHint') : t('settings.media.ffmpegSystemHint')}
+      </p>
+    {/if}
     {#if ytdlp && !ytdlp.managed}
       <p class="text-small text-fg-muted">{t('settings.media.managedHint')}</p>
     {/if}

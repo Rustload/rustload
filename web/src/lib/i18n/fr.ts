@@ -674,6 +674,11 @@ export const fr: Messages = {
       passwordsHint: 'Un par ligne, essayés dans l’ordre quand une archive est chiffrée.',
       extractorMissing: 'Aucun binaire 7-Zip trouvé sur le serveur : seules les archives ZIP peuvent être extraites.',
       extractorFound: 'L’extraction utilise {tool}.',
+      extractorInstalled: '7-Zip est prêt : les archives RAR et 7z sont aussi extraites',
+      extractorInstallHint:
+        'Rustload installe le 7-Zip officiel à côté de ses réglages (2 Mo) pour extraire les archives RAR et 7z.',
+      extractorSystemHint:
+        'Installez 7-Zip (7zz ou p7zip) avec le gestionnaire de paquets de votre système (apt, dnf, Homebrew…) pour extraire les archives RAR et 7z.',
       verify: 'Vérifier les fichiers avec leurs sommes de contrôle',
       verifyHint:
         'Utilise les fichiers .sfv, .md5 et .sha du paquet et les empreintes fournies par les hébergeurs. Un fichier corrompu est retéléchargé une fois.',
@@ -863,6 +868,11 @@ export const fr: Messages = {
       managedHint:
         'Cette copie de yt-dlp est fournie avec le serveur. Avec les mises à jour automatiques, Rustload installe ici une version plus récente dès sa sortie ; vous pouvez aussi l’installer maintenant.',
       noFfmpeg: 'Introuvable : les vidéos se limitent aux formats qui n’ont pas besoin d’être assemblés',
+      ffmpegInstalled: 'ffmpeg {version} est prêt',
+      ffmpegInstallHint:
+        'Rustload installe la version de ffmpeg recommandée par yt-dlp à côté de ses réglages : environ 200 Mo à télécharger.',
+      ffmpegSystemHint:
+        'Installez ffmpeg avec le gestionnaire de paquets de votre système (apt, dnf, Homebrew…) et Rustload le trouvera.',
       autoUpdate: 'Garder yt-dlp à jour automatiquement',
       lastCheck: 'Dernière vérification {when}. Les sites changent souvent, les nouvelles versions les suivent.',
       defaults: 'Qualité par défaut',

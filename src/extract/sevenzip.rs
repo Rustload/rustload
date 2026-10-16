@@ -12,11 +12,11 @@ use super::{ExtractError, Progress};
 
 const CANDIDATES: [&str; 3] = ["7zz", "7z", "7za"];
 
-/// Looks for a 7-Zip binary in `PATH` (and the default install folder on Windows).
-pub fn find() -> Option<PathBuf> {
-    let path_dirs: Vec<PathBuf> =
-        std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
-    let mut dirs = path_dirs;
+/// Looks for a 7-Zip binary in `bin_dir` (installed by Rustload), then in `PATH` and the default
+/// install folder on Windows.
+pub fn find(bin_dir: &Path) -> Option<PathBuf> {
+    let mut dirs = vec![bin_dir.to_path_buf()];
+    dirs.extend(std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect::<Vec<_>>()).unwrap_or_default());
     if cfg!(windows) {
         dirs.push(PathBuf::from(r"C:\Program Files\7-Zip"));
     }

@@ -13,7 +13,8 @@ Conventions:
   interface and not from another site.
 - Tools can use the `X-Api-Key` header instead of a session. The API key cannot reach
   `/api/settings*`, `/api/accounts*`, `/api/notifications*`, `/api/auth/*`, `/api/backup*`,
-  `/api/integrations/*`, `/api/system/diagnostics` and `/api/media/install` (`403 SESSION_REQUIRED`).
+  `/api/integrations/*`, `/api/system/diagnostics`, `/api/media/install`, `/api/media/ffmpeg/install`
+  and `/api/extraction/*` (`403 SESSION_REQUIRED`).
 - Authentication is a session cookie (`rustload_session`, HttpOnly, SameSite=Strict). Every `/api/*` route
   except `/api/auth/status`, `/api/auth/login`, `/api/auth/setup` and `/api/health` answers
   `401 {code:"UNAUTHORIZED"}` without a valid session (unless auth is disabled server-side).
@@ -39,6 +40,7 @@ Password rules: at least 8 characters.
 | GET | `/api/system` | – | `System` |
 | POST | `/api/queue/pause` | – | `System` (global pause: active downloads stop, nothing new starts) |
 | POST | `/api/queue/resume` | – | `System` |
+| POST | `/api/extraction/7zip/install` | – | `System` once 7-Zip 26.04 (`7z.exe` and `7z.dll`, RAR support included) is installed in `<config>/bin` (session only, Windows). The official installer and the standalone `7zr.exe` that unpacks it come from 7-Zip's GitHub releases and are checked against SHA-256 checksums pinned in Rustload. `409 UPDATE_IN_PROGRESS`, `400 UNSUPPORTED_PLATFORM` (other systems: use their package manager), `502 INSTALL_FAILED` |
 | GET | `/api/health` | – | `{ status: "ok", version }` — **public**, no authentication. `503 { status: "error", version, error, code: "UNHEALTHY" }` when the database does not answer |
 
 ```ts
@@ -47,6 +49,8 @@ type System = {
   download_root: string        // e.g. "/downloads"
   uptime_secs: number
   extractor: string | null     // "7zz" | "7z" | null (null = only .zip supported natively)
+  extractor_installable: boolean  // 7-Zip can be installed with POST /api/extraction/7zip/install (Windows)
+  installing_extractor: boolean   // that installation is running
   paused: boolean              // global pause
   schedule_open: boolean       // false = outside the allowed time window
   disk: { free: number, total: number } | null
@@ -593,7 +597,9 @@ type MediaStatus = {
   enabled: boolean                                                  // settings.media.enabled
   ytdlp: { path: string, version: string | null, managed: boolean } | null   // null = not found
   ffmpeg: { path: string, version: string | null } | null
-  updating: boolean                     // an installation/update is running
+  updating: boolean                     // a yt-dlp installation/update is running
+  ffmpeg_installable: boolean           // ffmpeg can be installed with POST /api/media/ffmpeg/install (Windows)
+  installing_ffmpeg: boolean            // that installation is running
   last_update_check: number | null      // unix seconds
   latest_version: string | null         // latest official release seen (null until checked)
 }
@@ -603,12 +609,16 @@ type MediaStatus = {
 |---|---|---|---|
 | GET | `/api/media/status` | – | `MediaStatus` |
 | POST | `/api/media/install` | – | `MediaStatus` once the latest official yt-dlp is installed in `<config>/bin` (session only). `409 UPDATE_IN_PROGRESS`, `400 UNSUPPORTED_PLATFORM`, `502 INSTALL_FAILED` (network, checksum mismatch, binary does not run) |
+| POST | `/api/media/ffmpeg/install` | – | `MediaStatus` once `ffmpeg.exe` and `ffprobe.exe` are installed in `<config>/bin` (session only, Windows; about 200 MB to download). Same errors as `/api/media/install` |
 | POST | `/api/media/probe` | `{ url }` | `MediaInfo` (about 2–10 s). `400 MEDIA_UNAVAILABLE` with yt-dlp's message (private, removed, unsupported...) or a timeout (30 s, including the wait when 4 probes already run), `409 MEDIA_DISABLED`, `503 YTDLP_MISSING` |
 
 `install` downloads the release asset for this platform from GitHub (`yt-dlp_musllinux[_aarch64]` on
 musl Linux such as the Docker image, `yt-dlp_linux[_aarch64]` on glibc, `yt-dlp.exe` on Windows,
 `yt-dlp_macos` on macOS), checks it against the release's `SHA2-256SUMS` and that it runs, then
-replaces the managed copy atomically.
+replaces the managed copy atomically. `ffmpeg/install` downloads yt-dlp's recommended FFmpeg build
+(`ffmpeg-master-latest-win64-gpl.zip` or `-winarm64-gpl.zip` from
+[yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds)), checks it against the release's
+`checksums.sha256`, and takes `ffmpeg.exe` and `ffprobe.exe` from its `bin` folder.
 
 ## Logs
 

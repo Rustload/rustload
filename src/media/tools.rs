@@ -1,4 +1,5 @@
-//! Locating yt-dlp and ffmpeg, and installing or updating the managed yt-dlp binary.
+//! Locating yt-dlp and ffmpeg, installing or updating the managed yt-dlp binary, and installing
+//! ffmpeg and 7-Zip on Windows, where no package manager provides them.
 //!
 //! Lookup order: the path set in the settings, then the managed copy in `<config>/bin/` (installed
 //! from the interface and kept up to date), then `PATH`. Detection runs the tools once (`--version`)
@@ -8,7 +9,10 @@
 //! startup: runs that were killed leave their unpacked build there.
 
 use std::{
+    env::consts::{ARCH, OS},
     ffi::OsString,
+    fs::File,
+    io::BufReader,
     path::{Path, PathBuf},
     sync::{
         Arc, RwLock,
@@ -39,6 +43,21 @@ const JS_RUNTIMES_SINCE: [u64; 3] = [2025, 11, 12];
 const MAX_PROBES: usize = 4;
 /// Prefix of a binary being installed in `<config>/bin/`.
 const PARTIAL_PREFIX: &str = ".new-";
+
+/// yt-dlp's own FFmpeg builds, the ones it recommends.
+const FFMPEG_RELEASES_API: &str = "https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/latest";
+const FFMPEG_CHECKSUMS_ASSET: &str = "checksums.sha256";
+/// The Windows archives weigh about 200 MiB.
+const MAX_FFMPEG_ARCHIVE: u64 = 400 * 1024 * 1024;
+/// Taken from the archive's `bin` folder; yt-dlp uses both.
+const FFMPEG_BINARIES: [&str; 2] = ["ffmpeg.exe", "ffprobe.exe"];
+
+/// 7-Zip's official releases, pinned like the Docker image's.
+const SEVEN_ZIP_DOWNLOADS: &str = "https://github.com/ip7z/7zip/releases/download/26.04";
+/// The standalone 7z-only tool that unpacks the installer.
+const SEVEN_ZIP_REDUCED: (&str, &str) = ("7zr.exe", "256feca8e274e5da655e2a284fabafd9f554365eb164862089dacd4e8276d282");
+/// The command line and its library, RAR support included.
+const SEVEN_ZIP_BINARIES: [&str; 2] = ["7z.dll", "7z.exe"];
 
 /// A tool found on this machine.
 #[derive(Debug, Clone, PartialEq)]
@@ -74,14 +93,20 @@ struct Detected {
 pub enum InstallError {
     #[error("an installation is already running")]
     Busy,
-    #[error("no official yt-dlp build exists for this platform ({0}); install yt-dlp yourself and set its path")]
-    Unsupported(String),
+    #[error("no official {tool} build can be installed on this platform ({platform}); install {tool} yourself")]
+    Unsupported { tool: &'static str, platform: String },
     #[error("cannot reach GitHub: {0}")]
     Network(String),
     #[error("{0}")]
     Invalid(String),
     #[error("cannot write {0}: {1}")]
     Io(String, std::io::Error),
+}
+
+impl InstallError {
+    fn unsupported(tool: &'static str) -> Self {
+        Self::Unsupported { tool, platform: format!("{OS}/{ARCH}") }
+    }
 }
 
 impl From<reqwest::Error> for InstallError {
@@ -108,7 +133,10 @@ pub struct MediaTools {
     http: reqwest::Client,
     state: RwLock<Option<Detected>>,
     refresh: tokio::sync::Mutex<()>,
+    /// yt-dlp is being installed or updated.
     updating: AtomicBool,
+    installing_ffmpeg: AtomicBool,
+    installing_seven_zip: AtomicBool,
     /// Latest release seen on GitHub.
     latest: RwLock<Option<String>>,
     probes: Arc<Semaphore>,
@@ -129,6 +157,8 @@ impl MediaTools {
             state: RwLock::new(None),
             refresh: tokio::sync::Mutex::new(()),
             updating: AtomicBool::new(false),
+            installing_ffmpeg: AtomicBool::new(false),
+            installing_seven_zip: AtomicBool::new(false),
             latest: RwLock::new(None),
             probes: Arc::new(Semaphore::new(MAX_PROBES)),
         };
@@ -156,6 +186,14 @@ impl MediaTools {
 
     pub fn is_updating(&self) -> bool {
         self.updating.load(Ordering::Acquire)
+    }
+
+    pub fn is_installing_ffmpeg(&self) -> bool {
+        self.installing_ffmpeg.load(Ordering::Acquire)
+    }
+
+    pub fn is_installing_seven_zip(&self) -> bool {
+        self.installing_seven_zip.load(Ordering::Acquire)
     }
 
     pub fn latest_version(&self) -> Option<String> {
@@ -260,7 +298,7 @@ impl MediaTools {
 
     /// Downloads the latest release into `<config>/bin/`. Returns the installed version.
     pub async fn install_latest(&self) -> Result<String, InstallError> {
-        let _installing = Installing::start(self)?;
+        let _installing = Installing::start(self, &self.updating)?;
         self.install(&self.latest_release().await?).await
     }
 
@@ -281,29 +319,20 @@ impl MediaTools {
         if !is_newer(&release.tag_name, current.version.as_deref()) {
             return Ok(None);
         }
-        let _installing = Installing::start(self)?;
+        let _installing = Installing::start(self, &self.updating)?;
         self.install(release).await.map(Some)
     }
 
     async fn install(&self, release: &Release) -> Result<String, InstallError> {
-        let platform = format!("{}/{}", std::env::consts::OS, std::env::consts::ARCH);
-        let name = asset_name(std::env::consts::OS, std::env::consts::ARCH, is_musl())
-            .ok_or_else(|| InstallError::Unsupported(platform.clone()))?;
-        let find = |wanted: &str| release.assets.iter().find(|a| a.name == wanted);
-        let asset = find(name).ok_or_else(|| InstallError::Unsupported(platform.clone()))?;
-        let sums = find(CHECKSUMS_ASSET).ok_or_else(|| {
-            InstallError::Invalid("the release has no checksum file: refusing an unverified binary".into())
-        })?;
-        let sums = self.http.get(&sums.browser_download_url).send().await?.error_for_status()?.text().await?;
-        let expected = checksum_for(&sums, name)
-            .ok_or_else(|| InstallError::Invalid(format!("no checksum published for {name}")))?;
+        let name = asset_name(OS, ARCH, is_musl()).ok_or_else(|| InstallError::unsupported("yt-dlp"))?;
+        let (url, expected) = self.verified_asset(release, name, CHECKSUMS_ASSET, "yt-dlp").await?;
 
         let dir = self.bin_dir();
-        tokio::fs::create_dir_all(&dir).await.map_err(|e| InstallError::Io(dir.display().to_string(), e))?;
+        create_dir(&dir).await?;
         let target = self.managed_path();
         let file_name = target.file_name().unwrap_or_default().to_string_lossy();
         let temp = PartialFile(dir.join(format!("{PARTIAL_PREFIX}{}-{file_name}", &crate::util::random_token()[..8])));
-        self.download_verified(&asset.browser_download_url, &temp.0, &expected).await?;
+        self.download_verified(&url, &temp.0, &expected, MAX_BINARY_SIZE).await?;
         let version = tool_version(&temp.0, "--version", &self.tmp_dir())
             .await
             .map_err(|e| InstallError::Invalid(format!("the downloaded yt-dlp does not run here: {e}")))?;
@@ -312,9 +341,114 @@ impl MediaTools {
         Ok(version)
     }
 
-    async fn download_verified(&self, url: &str, path: &Path, expected: &str) -> Result<(), InstallError> {
+    /// Downloads yt-dlp's FFmpeg build (Windows only) and installs `ffmpeg.exe` and `ffprobe.exe`
+    /// into `<config>/bin/`, where detection looks first. Returns the installed version.
+    pub async fn install_ffmpeg(&self) -> Result<String, InstallError> {
+        let _installing = Installing::start(self, &self.installing_ffmpeg)?;
+        let name = ffmpeg_asset_name(OS, ARCH).ok_or_else(|| InstallError::unsupported("ffmpeg"))?;
+        let release: Release = self.http.get(FFMPEG_RELEASES_API).send().await?.error_for_status()?.json().await?;
+        let (url, expected) = self.verified_asset(&release, name, FFMPEG_CHECKSUMS_ASSET, "ffmpeg").await?;
+
+        let (tmp_dir, bin_dir) = (self.tmp_dir(), self.bin_dir());
+        create_dir(&tmp_dir).await?;
+        create_dir(&bin_dir).await?;
+        let archive =
+            PartialFile(tmp_dir.join(format!("{PARTIAL_PREFIX}{}-{name}", &crate::util::random_token()[..8])));
+        self.download_verified(&url, &archive.0, &expected, MAX_FFMPEG_ARCHIVE).await?;
+        let (source, dir) = (archive.0.clone(), bin_dir.clone());
+        let unpacked = tokio::task::spawn_blocking(move || unpack_ffmpeg(&source, &dir))
+            .await
+            .map_err(|e| InstallError::Invalid(e.to_string()))??;
+        let (ffmpeg, _) = &unpacked[0];
+        let banner = tool_version(&ffmpeg.0, "-version", &tmp_dir)
+            .await
+            .map_err(|e| InstallError::Invalid(format!("the downloaded ffmpeg does not run here: {e}")))?;
+        for (partial, target) in &unpacked {
+            replace(&partial.0, target).await.map_err(|e| InstallError::Io(target.display().to_string(), e))?;
+        }
+        let version = ffmpeg_version(&banner).unwrap_or(banner);
+        tracing::info!("ffmpeg {version} installed in {}", bin_dir.display());
+        Ok(version)
+    }
+
+    /// Installs 7-Zip's command line (`7z.exe` and `7z.dll`, RAR support included) into
+    /// `<config>/bin/` from its official installer, unpacked by the standalone `7zr.exe` (Windows
+    /// only). Returns the installed version.
+    pub async fn install_seven_zip(&self) -> Result<String, InstallError> {
+        let _installing = Installing::start(self, &self.installing_seven_zip)?;
+        let (installer, installer_sum) =
+            seven_zip_installer(OS, ARCH).ok_or_else(|| InstallError::unsupported("7-Zip"))?;
+        let tmp_dir = self.tmp_dir();
+        let work = ScratchDir(tmp_dir.join(format!("7zip-{}", &crate::util::random_token()[..8])));
+        create_dir(&work.0).await?;
+        let (reduced, reduced_sum) = SEVEN_ZIP_REDUCED;
+        for (name, sum) in [(reduced, reduced_sum), (installer, installer_sum)] {
+            let url = format!("{SEVEN_ZIP_DOWNLOADS}/{name}");
+            self.download_verified(&url, &work.0.join(name), sum, MAX_BINARY_SIZE).await?;
+        }
+
+        let out = work.0.join("out");
+        let mut args: Vec<OsString> = ["x", "-y"].into_iter().map(OsString::from).collect();
+        args.push(format!("-o{}", out.display()).into());
+        args.push(work.0.join(installer).into());
+        args.extend(SEVEN_ZIP_BINARIES.into_iter().map(OsString::from));
+        let unpacked = process::run(&work.0.join(reduced), &args, &tmp_dir, VERSION_TIMEOUT, &CancellationToken::new())
+            .await
+            .map_err(|e| InstallError::Invalid(format!("cannot unpack the 7-Zip installer: {e}")))?;
+        if !unpacked.status.success() {
+            let reason = unpacked.error().unwrap_or_else(|| format!("exit status {}", unpacked.status));
+            return Err(InstallError::Invalid(format!("cannot unpack the 7-Zip installer: {reason}")));
+        }
+        let banner = tool_version(&out.join("7z.exe"), "i", &tmp_dir)
+            .await
+            .map_err(|e| InstallError::Invalid(format!("the downloaded 7-Zip does not run here: {e}")))?;
+
+        let bin_dir = self.bin_dir();
+        create_dir(&bin_dir).await?;
+        let token = &crate::util::random_token()[..8];
+        // The library first: the program needs it. Copied, as `tmp` may be another volume.
+        for name in SEVEN_ZIP_BINARIES {
+            let (partial, target) =
+                (PartialFile(bin_dir.join(format!("{PARTIAL_PREFIX}{token}-{name}"))), bin_dir.join(name));
+            let io_error = |e| InstallError::Io(target.display().to_string(), e);
+            tokio::fs::copy(out.join(name), &partial.0).await.map_err(io_error)?;
+            replace(&partial.0, &target).await.map_err(io_error)?;
+        }
+        // "7-Zip 26.04 (x64) : Copyright (c) 1999-2026 Igor Pavlov : 2026-10-05"
+        let version = banner.split(" : ").next().unwrap_or(&banner).to_owned();
+        tracing::info!("{version} installed in {}", bin_dir.display());
+        Ok(version)
+    }
+
+    /// The download address of asset `name` of `release` and its SHA-256, from the release's
+    /// `sums` file: unverified binaries are refused.
+    async fn verified_asset(
+        &self,
+        release: &Release,
+        name: &str,
+        sums: &str,
+        tool: &'static str,
+    ) -> Result<(String, String), InstallError> {
+        let find = |wanted: &str| release.assets.iter().find(|a| a.name == wanted);
+        let asset = find(name).ok_or_else(|| InstallError::unsupported(tool))?;
+        let sums = find(sums).ok_or_else(|| {
+            InstallError::Invalid("the release has no checksum file: refusing an unverified binary".into())
+        })?;
+        let sums = self.http.get(&sums.browser_download_url).send().await?.error_for_status()?.text().await?;
+        let expected = checksum_for(&sums, name)
+            .ok_or_else(|| InstallError::Invalid(format!("no checksum published for {name}")))?;
+        Ok((asset.browser_download_url.clone(), expected))
+    }
+
+    async fn download_verified(
+        &self,
+        url: &str,
+        path: &Path,
+        expected: &str,
+        max_size: u64,
+    ) -> Result<(), InstallError> {
         let response = self.http.get(url).send().await?.error_for_status()?;
-        if response.content_length().is_some_and(|len| len > MAX_BINARY_SIZE) {
+        if response.content_length().is_some_and(|len| len > max_size) {
             return Err(InstallError::Invalid("the release asset is unexpectedly large".into()));
         }
         let io_error = |e| InstallError::Io(path.display().to_string(), e);
@@ -325,7 +459,7 @@ impl MediaTools {
         while let Some(chunk) = body.next().await {
             let chunk = chunk?;
             size += chunk.len() as u64;
-            if size > MAX_BINARY_SIZE {
+            if size > max_size {
                 return Err(InstallError::Invalid("the release asset is unexpectedly large".into()));
             }
             hasher.update(&chunk);
@@ -346,23 +480,26 @@ impl MediaTools {
     }
 }
 
-/// The `updating` flag of an installation, cleared when it ends however it ends: also when its
-/// future is dropped midway (client gone, proxy timeout).
-struct Installing<'a>(&'a MediaTools);
+/// The flag of an installation (one per tool), cleared when it ends however it ends: also when
+/// its future is dropped midway (client gone, proxy timeout).
+struct Installing<'a> {
+    tools: &'a MediaTools,
+    flag: &'a AtomicBool,
+}
 
 impl<'a> Installing<'a> {
-    fn start(tools: &'a MediaTools) -> Result<Self, InstallError> {
-        if tools.updating.swap(true, Ordering::AcqRel) {
+    fn start(tools: &'a MediaTools, flag: &'a AtomicBool) -> Result<Self, InstallError> {
+        if flag.swap(true, Ordering::AcqRel) {
             return Err(InstallError::Busy);
         }
-        Ok(Self(tools))
+        Ok(Self { tools, flag })
     }
 }
 
 impl Drop for Installing<'_> {
     fn drop(&mut self) {
-        self.0.invalidate();
-        self.0.updating.store(false, Ordering::Release);
+        self.tools.invalidate();
+        self.flag.store(false, Ordering::Release);
     }
 }
 
@@ -378,6 +515,50 @@ impl Drop for PartialFile {
             tracing::warn!("cannot remove {}: {error}", self.0.display());
         }
     }
+}
+
+/// A working folder of an installation, removed when it ends.
+struct ScratchDir(PathBuf);
+
+impl Drop for ScratchDir {
+    fn drop(&mut self) {
+        if let Err(error) = std::fs::remove_dir_all(&self.0)
+            && error.kind() != std::io::ErrorKind::NotFound
+        {
+            tracing::warn!("cannot remove {}: {error}", self.0.display());
+        }
+    }
+}
+
+async fn create_dir(dir: &Path) -> Result<(), InstallError> {
+    tokio::fs::create_dir_all(dir).await.map_err(|e| InstallError::Io(dir.display().to_string(), e))
+}
+
+/// Copies the binaries of an FFmpeg build out of the `bin` folder of its archive into `dir`, under
+/// temporary names. Returns them, `ffmpeg.exe` first, with the name each must take.
+fn unpack_ffmpeg(archive: &Path, dir: &Path) -> Result<Vec<(PartialFile, PathBuf)>, InstallError> {
+    let io_error = |path: &Path| {
+        let path = path.display().to_string();
+        move |e| InstallError::Io(path, e)
+    };
+    let unreadable = |e: zip::result::ZipError| InstallError::Invalid(format!("the FFmpeg archive is unreadable: {e}"));
+    let file = File::open(archive).map_err(io_error(archive))?;
+    let mut zip = zip::ZipArchive::new(BufReader::new(file)).map_err(unreadable)?;
+    let token = &crate::util::random_token()[..8];
+    let mut unpacked = Vec::new();
+    for binary in FFMPEG_BINARIES {
+        let suffix = format!("/bin/{binary}");
+        let index = (0..zip.len())
+            .find(|&index| zip.name_for_index(index).is_some_and(|name| name.is_ok_and(|name| name.ends_with(&suffix))))
+            .ok_or_else(|| InstallError::Invalid(format!("the FFmpeg archive has no {binary}")))?;
+        let partial = PartialFile(dir.join(format!("{PARTIAL_PREFIX}{token}-{binary}")));
+        let mut entry = zip.by_index(index).map_err(unreadable)?;
+        let mut output = File::create(&partial.0).map_err(io_error(&partial.0))?;
+        std::io::copy(&mut entry, &mut output).map_err(io_error(&partial.0))?;
+        output.sync_all().map_err(io_error(&partial.0))?;
+        unpacked.push((partial, dir.join(binary)));
+    }
+    Ok(unpacked)
 }
 
 /// Empties the temporary folder of the tools and removes binaries whose installation was
@@ -402,10 +583,10 @@ fn clean_leftovers(tmp_dir: &Path, bin_dir: &Path) {
     }
 }
 
-/// Moves the new binary into place. A running Windows executable cannot be overwritten but can
-/// be renamed, so the old one is moved aside first.
+/// Moves the new binary into place. A running Windows executable (or a loaded library) cannot be
+/// overwritten but can be renamed, so the old one is moved aside first.
 async fn replace(new: &Path, target: &Path) -> std::io::Result<()> {
-    let old = target.with_extension("old");
+    let old = target.with_file_name(format!("{}.old", target.file_name().unwrap_or_default().to_string_lossy()));
     if cfg!(windows) && target.exists() {
         let _ = tokio::fs::remove_file(&old).await;
         tokio::fs::rename(target, &old).await?;
@@ -467,6 +648,39 @@ pub fn asset_name(os: &str, arch: &str, musl: bool) -> Option<&'static str> {
         ("linux", "aarch64") => Some(if musl { "yt-dlp_musllinux_aarch64" } else { "yt-dlp_linux_aarch64" }),
         _ => None,
     }
+}
+
+/// yt-dlp's FFmpeg build for a platform: only Windows, as package managers provide ffmpeg elsewhere.
+fn ffmpeg_asset_name(os: &str, arch: &str) -> Option<&'static str> {
+    match (os, arch) {
+        ("windows", "x86_64") => Some("ffmpeg-master-latest-win64-gpl.zip"),
+        ("windows", "aarch64") => Some("ffmpeg-master-latest-winarm64-gpl.zip"),
+        _ => None,
+    }
+}
+
+/// Whether [`MediaTools::install_ffmpeg`] works on this platform.
+pub fn can_install_ffmpeg() -> bool {
+    ffmpeg_asset_name(OS, ARCH).is_some()
+}
+
+/// 7-Zip's installer for a platform and its SHA-256: only Windows, as package managers provide
+/// 7-Zip elsewhere.
+fn seven_zip_installer(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
+    match (os, arch) {
+        ("windows", "x86_64") => {
+            Some(("7z2604-x64.exe", "d54bf805f9f3704d1e8db2fa3498ae7ef2df0312b40b558e7c71c734430a665d"))
+        }
+        ("windows", "aarch64") => {
+            Some(("7z2604-arm64.exe", "d4117b95495b0e925334ae7b5bddf2853513274603de15dee6acf03999fbc09c"))
+        }
+        _ => None,
+    }
+}
+
+/// Whether [`MediaTools::install_seven_zip`] works on this platform.
+pub fn can_install_seven_zip() -> bool {
+    seven_zip_installer(OS, ARCH).is_some()
 }
 
 /// The SHA-256 of `asset` in a `sha256sum`-style listing.
@@ -573,18 +787,78 @@ mod tests {
         let partial = config.path().join(".new-test");
         // An installation whose request is abandoned during the download.
         let install = async {
-            let _installing = Installing::start(&tools)?;
+            let _installing = Installing::start(&tools, &tools.updating)?;
             let _partial = PartialFile(partial.clone());
             std::fs::write(&partial, b"x").unwrap();
             assert!(tools.is_updating());
-            assert!(matches!(Installing::start(&tools), Err(InstallError::Busy)));
+            assert!(matches!(Installing::start(&tools, &tools.updating), Err(InstallError::Busy)));
+            // Other tools install independently.
+            assert!(Installing::start(&tools, &tools.installing_ffmpeg).is_ok());
             std::future::pending::<()>().await;
             Ok::<_, InstallError>(())
         };
         assert!(tokio::time::timeout(Duration::from_millis(50), install).await.is_err());
         assert!(!tools.is_updating());
         assert!(!partial.exists());
-        assert!(Installing::start(&tools).is_ok());
+        assert!(Installing::start(&tools, &tools.updating).is_ok());
+    }
+
+    #[test]
+    fn picks_windows_only_ffmpeg_and_seven_zip_builds() {
+        assert_eq!(ffmpeg_asset_name("windows", "x86_64"), Some("ffmpeg-master-latest-win64-gpl.zip"));
+        assert_eq!(ffmpeg_asset_name("windows", "aarch64"), Some("ffmpeg-master-latest-winarm64-gpl.zip"));
+        assert_eq!(ffmpeg_asset_name("linux", "x86_64"), None);
+        assert_eq!(ffmpeg_asset_name("macos", "aarch64"), None);
+        assert_eq!(seven_zip_installer("windows", "x86_64").map(|i| i.0), Some("7z2604-x64.exe"));
+        assert_eq!(seven_zip_installer("windows", "aarch64").map(|i| i.0), Some("7z2604-arm64.exe"));
+        assert_eq!(seven_zip_installer("linux", "x86_64"), None);
+        for sum in [SEVEN_ZIP_REDUCED.1, seven_zip_installer("windows", "x86_64").unwrap().1] {
+            assert!(sum.len() == 64 && sum.bytes().all(|b| b.is_ascii_hexdigit()));
+        }
+        // yt-dlp's FFmpeg checksums list the archives by name.
+        let sums = "a20f67d27f375cde0a5dc763a83d5b80448a934ef814556ea3f6e353b70c4036  ffmpeg-master-latest-win64-gpl.zip\n\
+                    39f861edeed015975257849570d1846281e0e0e4d8ccb0e94726b754cad26510  ffmpeg-master-latest-win64-gpl-shared.zip\n";
+        assert_eq!(
+            checksum_for(sums, "ffmpeg-master-latest-win64-gpl.zip").as_deref(),
+            Some("a20f67d27f375cde0a5dc763a83d5b80448a934ef814556ea3f6e353b70c4036")
+        );
+    }
+
+    #[test]
+    fn unpacks_ffmpeg_from_its_archive() {
+        use std::io::Write;
+
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("ffmpeg.zip");
+        {
+            let mut writer = zip::ZipWriter::new(File::create(&archive).unwrap());
+            let options = zip::write::SimpleFileOptions::default();
+            for (name, content) in [
+                ("ffmpeg-master-latest-win64-gpl/LICENSE.txt", "GPL"),
+                ("ffmpeg-master-latest-win64-gpl/bin/ffplay.exe", "player"),
+                ("ffmpeg-master-latest-win64-gpl/bin/ffprobe.exe", "probe"),
+                ("ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe", "converter"),
+            ] {
+                writer.start_file(name, options).unwrap();
+                writer.write_all(content.as_bytes()).unwrap();
+            }
+            writer.finish().unwrap();
+        }
+        let bin = dir.path().join("bin");
+        std::fs::create_dir(&bin).unwrap();
+
+        let unpacked = unpack_ffmpeg(&archive, &bin).unwrap();
+        let targets: Vec<&Path> = unpacked.iter().map(|(_, target)| target.as_path()).collect();
+        assert_eq!(targets, [bin.join("ffmpeg.exe"), bin.join("ffprobe.exe")]);
+        assert_eq!(std::fs::read_to_string(&unpacked[0].0.0).unwrap(), "converter");
+        assert_eq!(std::fs::read_to_string(&unpacked[1].0.0).unwrap(), "probe");
+        // Not moved into place: the temporary copies go away.
+        drop(unpacked);
+        assert_eq!(std::fs::read_dir(&bin).unwrap().count(), 0);
+
+        let empty = dir.path().join("empty.zip");
+        zip::ZipWriter::new(File::create(&empty).unwrap()).finish().unwrap();
+        assert!(matches!(unpack_ffmpeg(&empty, &bin), Err(InstallError::Invalid(_))));
     }
 
     #[test]

@@ -3,8 +3,9 @@
 //! Archives are grouped into *sets* (all volumes of one multi-part archive) from the package's own
 //! files — never by listing the folder, so volumes of another package are never touched. Each set
 //! is extracted into a private temporary folder, sanitised (no symlinks, normal permissions), then
-//! moved next to the archive. RAR/7z/split archives use the 7-Zip CLI (`7zz`, `7z` or `7za`);
-//! plain ZIP files fall back to a built-in extractor when 7-Zip is not installed.
+//! moved next to the archive. RAR/7z/split archives use the 7-Zip CLI (`7zz`, `7z` or `7za`): the
+//! copy installed from the interface in `<config>/bin/` (Windows), else the one in `PATH`. Plain ZIP
+//! files fall back to a built-in extractor when 7-Zip is not installed.
 
 mod sevenzip;
 mod volumes;
@@ -12,7 +13,7 @@ mod zip;
 
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use tokio_util::sync::CancellationToken;
@@ -51,24 +52,32 @@ pub struct Extracted {
 /// Progress callback, `0.0..=1.0`.
 pub type Progress = Arc<dyn Fn(f64) + Send + Sync>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Extractor {
-    seven_zip: Option<PathBuf>,
+    /// Where Rustload installs 7-Zip, searched before `PATH`.
+    bin_dir: PathBuf,
+    seven_zip: RwLock<Option<PathBuf>>,
 }
 
 impl Extractor {
-    pub fn detect() -> Self {
-        Self { seven_zip: sevenzip::find() }
+    pub fn detect(bin_dir: PathBuf) -> Self {
+        let seven_zip = sevenzip::find(&bin_dir);
+        Self { bin_dir, seven_zip: RwLock::new(seven_zip) }
+    }
+
+    /// Looks for 7-Zip again, e.g. once it was installed.
+    pub fn refresh(&self) {
+        *self.seven_zip.write().expect("poisoned") = sevenzip::find(&self.bin_dir);
     }
 
     /// Name of the external tool, shown in the UI.
     pub fn tool_name(&self) -> Option<String> {
-        self.seven_zip.as_ref().and_then(|p| p.file_stem()).map(|s| s.to_string_lossy().into_owned())
+        self.tool_path().and_then(|p| p.file_stem().map(|s| s.to_string_lossy().into_owned()))
     }
 
     /// Path of the external tool.
-    pub fn tool_path(&self) -> Option<&Path> {
-        self.seven_zip.as_deref()
+    pub fn tool_path(&self) -> Option<PathBuf> {
+        self.seven_zip.read().expect("poisoned").clone()
     }
 
     /// Extracts `set` next to its first volume, trying `passwords` in order (no password first).
@@ -89,10 +98,11 @@ impl Extractor {
         let mut candidates: Vec<Option<&str>> = vec![None];
         candidates.extend(passwords.iter().map(|p| Some(p.as_str())));
 
+        let seven_zip = self.tool_path();
         let mut result = Err(ExtractError::WrongPassword);
         for password in candidates {
             reset_dir(&staging).await?;
-            result = match &self.seven_zip {
+            result = match &seven_zip {
                 Some(tool) => sevenzip::extract(tool, &set.first, &staging, password, progress.clone(), cancel).await,
                 None if set.kind == ArchiveKind::Zip => {
                     zip::extract(&set.first, &staging, password, progress.clone()).await
@@ -187,7 +197,7 @@ mod tests {
 
         let sets = find_archives(std::slice::from_ref(&archive));
         assert_eq!(sets.len(), 1);
-        let extractor = Extractor { seven_zip: None };
+        let extractor = Extractor::with_tool(None);
         let result = extractor.extract(&sets[0], &[], Arc::new(|_| {}), &CancellationToken::new()).await.unwrap();
         assert_eq!(result.entries, vec![dir.path().join("folder (1)")]);
         assert_eq!(std::fs::read_to_string(dir.path().join("folder (1)/hello.txt")).unwrap(), "hello");
@@ -197,7 +207,7 @@ mod tests {
     /// Runs only when a 7-Zip binary is installed.
     #[tokio::test]
     async fn extracts_split_encrypted_7z_with_7zip() {
-        let Some(tool) = sevenzip::find() else { return };
+        let Some(tool) = sevenzip::find(&std::env::temp_dir()) else { return };
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("source");
         std::fs::create_dir(&source).unwrap();
@@ -218,7 +228,7 @@ mod tests {
         assert_eq!(sets.len(), 1);
         assert!(sets[0].volumes.len() >= 3, "expected several volumes");
 
-        let extractor = Extractor { seven_zip: Some(tool) };
+        let extractor = Extractor::with_tool(Some(tool));
         let result = extractor
             .extract(&sets[0], &["wrong".into(), "secret".into()], Arc::new(|_| {}), &CancellationToken::new())
             .await
@@ -226,6 +236,12 @@ mod tests {
         assert_eq!(result.password.as_deref(), Some("secret"));
         assert_eq!(std::fs::read(dir.path().join("movie.mkv")).unwrap(), payload);
         assert_staging_removed(dir.path());
+    }
+
+    impl Extractor {
+        fn with_tool(seven_zip: Option<PathBuf>) -> Self {
+            Self { bin_dir: PathBuf::new(), seven_zip: RwLock::new(seven_zip) }
+        }
     }
 
     fn assert_staging_removed(dir: &Path) {

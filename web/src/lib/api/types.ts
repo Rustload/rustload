@@ -15,6 +15,9 @@ export type System = {
   download_root: string
   uptime_secs: number
   extractor: string | null
+  /** 7-Zip can be installed from the interface (Windows). */
+  extractor_installable: boolean
+  installing_extractor: boolean
   paused: boolean
   schedule_open: boolean
   disk: { free: number; total: number } | null
@@ -318,6 +321,9 @@ export type MediaStatus = {
   ytdlp: { path: string; version: string | null; managed: boolean } | null
   ffmpeg: { path: string; version: string | null } | null
   updating: boolean
+  /** ffmpeg can be installed from the interface (Windows). */
+  ffmpeg_installable: boolean
+  installing_ffmpeg: boolean
   last_update_check: number | null
   /** Latest official yt-dlp release seen, null until checked. */
   latest_version: string | null

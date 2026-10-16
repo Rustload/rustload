@@ -13,6 +13,9 @@ All notable changes to this project are documented here. The format follows
   downloading once the window is closed. It can start with the computer, open magnet links and
   turns finished and failed packages into system notifications. The installers are not signed
   yet.
+- On Windows, ffmpeg (yt-dlp's recommended build) and 7-Zip install in one click from *Settings ›
+  Video sites* and *Settings › Extraction*, checked against their checksums and used without a
+  restart.
 
 ## [1.0.0] - 2026-10-16
 

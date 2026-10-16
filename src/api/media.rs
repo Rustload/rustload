@@ -23,16 +23,28 @@ pub async fn install(State(state): State<AppState>) -> ApiResult<Json<MediaStatu
             // The latest release was just fetched: that counts as an update check.
             db::kv_set(state.db(), media::UPDATE_CHECK_KEY, &now().to_string()).await?;
         }
-        Err(error) => {
-            tracing::warn!("yt-dlp installation failed: {error}");
-            return Err(match error {
-                InstallError::Busy => ApiError::conflict("UPDATE_IN_PROGRESS", error.to_string()),
-                InstallError::Unsupported(_) => ApiError::bad_request("UNSUPPORTED_PLATFORM", error.to_string()),
-                _ => ApiError::new(StatusCode::BAD_GATEWAY, "INSTALL_FAILED", error.to_string()),
-            });
-        }
+        Err(error) => return Err(install_error("yt-dlp", error)),
     }
     Ok(Json(media::status(&state.engine).await?))
+}
+
+/// Downloads yt-dlp's FFmpeg build into the config folder, on Windows (session only).
+pub async fn install_ffmpeg(State(state): State<AppState>) -> ApiResult<Json<MediaStatus>> {
+    match state.engine.media.install_ffmpeg().await {
+        Ok(version) => tracing::info!("ffmpeg {version} installed from the interface"),
+        Err(error) => return Err(install_error("ffmpeg", error)),
+    }
+    Ok(Json(media::status(&state.engine).await?))
+}
+
+/// The API error of a failed tool installation.
+pub(super) fn install_error(tool: &str, error: InstallError) -> ApiError {
+    tracing::warn!("{tool} installation failed: {error}");
+    match error {
+        InstallError::Busy => ApiError::conflict("UPDATE_IN_PROGRESS", error.to_string()),
+        InstallError::Unsupported { .. } => ApiError::bad_request("UNSUPPORTED_PLATFORM", error.to_string()),
+        _ => ApiError::new(StatusCode::BAD_GATEWAY, "INSTALL_FAILED", error.to_string()),
+    }
 }
 
 #[derive(Deserialize)]
