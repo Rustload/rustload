@@ -43,7 +43,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rustload-cargo-regist
 
 # --- 7-Zip ------------------------------------------------------------------------------------
 # Official static build: distribution packages are compiled without the RAR codec.
-FROM --platform=$BUILDPLATFORM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS sevenzip
+FROM --platform=$BUILDPLATFORM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS sevenzip
 ARG TARGETARCH
 ARG SEVENZIP_VERSION=2602
 ARG SEVENZIP_SHA256_AMD64=41aaba7b1235304ab5aa0624530c67ae829496cd29e875925271efdccc28c03e
@@ -63,7 +63,7 @@ RUN apk add --no-cache curl xz \
 # --- yt-dlp -----------------------------------------------------------------------------------
 # Official standalone musl build (needs only musl and zlib). Media sites change often: the copy
 # installed from Settings > Media into /config/bin takes precedence and is kept up to date.
-FROM --platform=$BUILDPLATFORM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS ytdlp
+FROM --platform=$BUILDPLATFORM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS ytdlp
 ARG TARGETARCH
 ARG YTDLP_VERSION=2026.08.19
 ARG YTDLP_SHA256_AMD64=f3dec9cfeaf304cec98290fe41c6ad465d4b747d302473559643e7af24929722
@@ -79,7 +79,7 @@ RUN apk add --no-cache curl \
  && install -m 755 /tmp/yt-dlp /yt-dlp
 
 # --- Runtime -----------------------------------------------------------------------------------
-FROM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 LABEL org.opencontainers.image.title="Rustload" \
       org.opencontainers.image.description="Fast, lightweight, self-hosted download manager with debrid support" \
       org.opencontainers.image.url="https://github.com/rustload/rustload" \

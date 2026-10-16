@@ -40,11 +40,11 @@ Rustload runs these programs as separate processes; they are not linked into it.
 The programs above under the GNU GPL or LGPL come with their source code:
 
 - **Alpine Linux packages** (FFmpeg, BusyBox, the codec libraries...): the image is based on Alpine
-  Linux 3.22. The build recipes are in the
-  [aports repository, branch `3.22-stable`](https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.22-stable)
-  (for example [`community/ffmpeg/APKBUILD`](https://gitlab.alpinelinux.org/alpine/aports/-/blob/3.22-stable/community/ffmpeg/APKBUILD)),
+  Linux 3.24. The build recipes are in the
+  [aports repository, branch `3.24-stable`](https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.24-stable)
+  (for example [`community/ffmpeg/APKBUILD`](https://gitlab.alpinelinux.org/alpine/aports/-/blob/3.24-stable/community/ffmpeg/APKBUILD)),
   and the corresponding source archives on the
-  [Alpine distfiles mirror](https://distfiles.alpinelinux.org/distfiles/v3.22/).
+  [Alpine distfiles mirror](https://distfiles.alpinelinux.org/distfiles/v3.24/).
 - **7-Zip 26.02**: [`7z2602-src.tar.xz`](https://7-zip.org/a/7z2602-src.tar.xz) from
   <https://www.7-zip.org/download.html>.
 - **yt-dlp**: <https://github.com/yt-dlp/yt-dlp/tree/2026.08.19>.
