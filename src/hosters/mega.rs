@@ -11,11 +11,11 @@ use std::sync::{
 
 use aes::{
     Aes128,
-    cipher::{BlockDecrypt, KeyInit, generic_array::GenericArray},
+    cipher::{Array, BlockCipherDecrypt, KeyInit},
 };
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
-use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
+use cbc::cipher::{BlockModeDecrypt, KeyIvInit, block_padding::NoPadding};
 use ctr::cipher::{StreamCipher, StreamCipherSeek};
 use serde_json::{Value, json};
 use url::Url;
@@ -96,7 +96,7 @@ fn decrypt_node_key(encrypted: &[u8], folder_key: &[u8]) -> Option<Vec<u8>> {
     }
     let mut out = encrypted.to_vec();
     for block in out.chunks_mut(16) {
-        cipher.decrypt_block(GenericArray::from_mut_slice(block));
+        cipher.decrypt_block(Array::slice_as_mut_array(block)?);
     }
     Some(out)
 }
@@ -108,7 +108,7 @@ fn decrypt_name(attributes: &str, key: &[u8; 16]) -> Option<String> {
         return None;
     }
     let plain =
-        cbc::Decryptor::<Aes128>::new(key.into(), &[0u8; 16].into()).decrypt_padded_mut::<NoPadding>(&mut data).ok()?;
+        cbc::Decryptor::<Aes128>::new(key.into(), &[0u8; 16].into()).decrypt_padded::<NoPadding>(&mut data).ok()?;
     let text = std::str::from_utf8(plain).ok()?.trim_end_matches('\0');
     let json: Value = serde_json::from_str(text.strip_prefix("MEGA")?).ok()?;
     json["n"].as_str().map(str::to_owned)
@@ -286,7 +286,7 @@ impl Hoster for Mega {
 
 #[cfg(test)]
 mod tests {
-    use cbc::cipher::{BlockEncryptMut, block_padding::ZeroPadding};
+    use cbc::cipher::{BlockModeEncrypt, block_padding::ZeroPadding};
 
     use super::*;
 
@@ -322,6 +322,31 @@ mod tests {
         assert_eq!(whole, plain);
     }
 
+    /// Known answers computed with another AES implementation (pyca/cryptography).
+    #[test]
+    fn matches_known_vectors() {
+        // Content: AES-128-CTR, the nonce followed by a 64-bit block counter, from any offset.
+        let decryptor = CtrDecryptor { key: std::array::from_fn(|i| i as u8), nonce: [9, 8, 7, 6, 5, 4, 3, 2] };
+        let mut data: Vec<u8> = (0..40).collect();
+        decryptor.apply(0, &mut data);
+        assert_eq!(
+            hex::encode(&data),
+            "fd5e05b0cd34f425574117021da88076838cf0d4848233558cf47459ac3749115a7f65511be8d5f8"
+        );
+        let mut tail: Vec<u8> = (21..40).collect();
+        decryptor.apply(21, &mut tail);
+        assert_eq!(tail, data[21..]);
+
+        // Node keys: AES-128-ECB with the folder key.
+        let encrypted = hex::decode("b06d7a15c3833e71e9376380a45138359245e136f70ac16343f28e348002f4bb").unwrap();
+        assert_eq!(decrypt_node_key(&encrypted, &[0x11; 16]), Some((100..132).collect()));
+
+        // Attributes: AES-128-CBC with a zero IV.
+        let key: [u8; 16] = std::array::from_fn(|i| 16 + i as u8);
+        let name = decrypt_name("qjYw3t7WFTlOxlJBGY5WEFGNuLFNfWkJw5v5hUEBbXQ", &key);
+        assert_eq!(name.as_deref(), Some("Sintel.2010.mkv"));
+    }
+
     #[test]
     fn decrypts_attributes_and_keys() {
         let full_key: Vec<u8> = (0..32).collect();
@@ -332,7 +357,7 @@ mod tests {
         let attributes = br#"MEGA{"n":"Movie.mkv"}"#;
         let mut buffer = vec![0u8; attributes.len().div_ceil(16) * 16];
         let encrypted = cbc::Encryptor::<Aes128>::new(&aes_key.into(), &[0u8; 16].into())
-            .encrypt_padded_b2b_mut::<ZeroPadding>(attributes, &mut buffer)
+            .encrypt_padded_b2b::<ZeroPadding>(attributes, &mut buffer)
             .unwrap();
         assert_eq!(decrypt_name(&URL_SAFE_NO_PAD.encode(encrypted), &aes_key).as_deref(), Some("Movie.mkv"));
     }

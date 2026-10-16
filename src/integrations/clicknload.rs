@@ -16,7 +16,7 @@ use axum::{
     routing::{get, post},
 };
 use base64::Engine as _;
-use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
+use cbc::cipher::{BlockModeDecrypt, KeyIvInit, block_padding::NoPadding};
 use regex::Regex;
 use serde::Deserialize;
 use tokio_util::sync::CancellationToken;
@@ -193,7 +193,7 @@ pub fn decrypt(crypted: &str, jk: &str) -> Result<String, String> {
     let attempt = |iv: &[u8; 16], ciphertext: &[u8]| -> Option<String> {
         let mut buffer = ciphertext.to_vec();
         let plain =
-            cbc::Decryptor::<Aes128>::new(&key.into(), iv.into()).decrypt_padded_mut::<NoPadding>(&mut buffer).ok()?;
+            cbc::Decryptor::<Aes128>::new(&key.into(), iv.into()).decrypt_padded::<NoPadding>(&mut buffer).ok()?;
         let plain = strip_padding(plain);
         String::from_utf8(plain.iter().copied().filter(|b| *b != 0).collect()).ok()
     };
@@ -223,14 +223,14 @@ fn strip_padding(data: &[u8]) -> &[u8] {
 
 #[cfg(test)]
 mod tests {
-    use cbc::cipher::{BlockEncryptMut, block_padding::ZeroPadding};
+    use cbc::cipher::{BlockModeEncrypt, block_padding::ZeroPadding};
 
     use super::*;
 
     fn encrypt(plain: &str, key: &[u8; 16]) -> String {
         let mut buffer = vec![0u8; plain.len().div_ceil(16) * 16];
         let encrypted = cbc::Encryptor::<Aes128>::new(key.into(), key.into())
-            .encrypt_padded_b2b_mut::<ZeroPadding>(plain.as_bytes(), &mut buffer)
+            .encrypt_padded_b2b::<ZeroPadding>(plain.as_bytes(), &mut buffer)
             .unwrap()
             .to_vec();
         base64::engine::general_purpose::STANDARD.encode(encrypted)
@@ -244,6 +244,14 @@ mod tests {
         // Browsers send `+` as spaces in form data.
         let crypted = crypted.replace('+', " ");
         assert_eq!(decrypt(&crypted, &jk).unwrap(), "https://a.com/1\nhttps://b.com/2");
+    }
+
+    /// A payload encrypted with another AES implementation (pyca/cryptography).
+    #[test]
+    fn decrypts_a_known_payload() {
+        let jk = format!("function f(){{ return '{}';}}", hex::encode(b"1234567890123456"));
+        let links = decrypt("Ce7HOMz/NWeK+mfBziWFi/yKwbN8M7juLD+HICbHjRY=", &jk).unwrap();
+        assert_eq!(links, "https://a.com/1\nhttps://b.com/2");
     }
 
     #[test]
