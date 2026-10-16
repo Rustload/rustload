@@ -26,6 +26,9 @@ updates:
         patterns: [tauri, tauri-*]
       desktop:
         update-types: [minor, patch]
+    ignore:
+      # tauri-plugin-deep-link 2.6 builds rust-ini's ParseOption field by field; 0.21.2 added fields.
+      - dependency-name: rust-ini
 
   - package-ecosystem: npm
     directory: /web
