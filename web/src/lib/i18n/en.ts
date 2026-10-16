@@ -339,7 +339,7 @@ export const en = {
     removeFile: 'Remove {name}',
     name: 'Package name',
     destination: 'Destination',
-    automatic: 'Automatic, by file extension',
+    automatic: 'Automatic (rules, then file types)',
     subfolder: 'Create a folder for this package',
     extract: 'Extract archives when done',
     deleteArchives: 'Delete archives after extraction',
@@ -399,6 +399,7 @@ export const en = {
     singlePackage: 'Everything in one package',
     torrentFile: 'Torrent file',
     options: 'Options',
+    optionsFiles: 'Destination and archives',
     summary: {
       automatic: 'automatic destination',
       subfolder: 'a folder per package',

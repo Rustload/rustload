@@ -18,6 +18,13 @@ pub struct CheckRequest {
     urls: Vec<String>,
     #[serde(default)]
     scan_pages: bool,
+    /// `false`: only say who would download each link, without contacting its site.
+    #[serde(default = "default_true")]
+    probe: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 pub async fn check(State(state): State<AppState>, Json(body): Json<CheckRequest>) -> ApiResult<Json<Value>> {
@@ -39,6 +46,10 @@ pub async fn check(State(state): State<AppState>, Json(body): Json<CheckRequest>
             })
         })
         .collect::<ApiResult<Vec<_>>>()?;
-    let results = grabber::check_links(&state.engine, links, body.scan_pages).await?;
+    let results = if body.probe {
+        grabber::check_links(&state.engine, links, body.scan_pages).await?
+    } else {
+        grabber::route_links(&state.engine, links).await?
+    };
     Ok(Json(json!({ "results": results })))
 }

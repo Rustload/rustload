@@ -59,18 +59,19 @@
     />
   </button>
   {#if open}
-    <div
-      {id}
-      class="grid gap-x-8 gap-y-6 px-5 pt-1 pb-5 sm:min-h-0 sm:flex-1 sm:overflow-y-auto {hasMedia
-        ? 'sm:grid-cols-2'
-        : 'max-w-md'}"
-    >
-      <PackageOptionsFields bind:options />
+    <!-- One section under the other, each using the whole width. -->
+    <div {id} class="space-y-5 px-5 pt-1 pb-5 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
       {#if hasMedia}
-        <section aria-labelledby="{id}-media" class="space-y-3">
+        <section aria-labelledby="{id}-files" class="space-y-3">
+          <h3 id="{id}-files" class="heading font-semibold">{t('grabber.optionsFiles')}</h3>
+          <PackageOptionsFields bind:options />
+        </section>
+        <section aria-labelledby="{id}-media" class="space-y-3 border-t border-line pt-5">
           <h3 id="{id}-media" class="heading font-semibold">{t('media.title')}</h3>
           <MediaOptionsFields bind:options={media} />
         </section>
+      {:else}
+        <PackageOptionsFields bind:options />
       {/if}
     </div>
   {/if}

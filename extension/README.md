@@ -10,7 +10,11 @@ Plain ES modules, HTML and CSS: no build step, no dependencies.
 
 - **Toolbar popup**: the total download speed as a live readout with the last minute of
   activity, what is in progress (one row per transfer that fills up as it goes), a paste box for
-  links and magnets, *Pause all* / *Resume all*, and a link to open Rustload. Updates come live
+  links and magnets, *Pause all* / *Resume all*, and a link to open Rustload.
+- **This page**, in the popup: on a file host's page, a video or a file, *Download this page* in
+  one click, with the server's check (online or not, real name, size, which account or site will
+  download it). Rustload recognises the hosts its accounts support, mirrors included, without
+  fetching the page. On any other page, *Pick links…* comes first, *Send the address* second. Updates come live
   from the server (Server-Sent Events); if a proxy blocks streaming, the popup falls back to
   refreshing every 2 seconds.
 - **Right-click menus**
@@ -19,7 +23,9 @@ Plain ES modules, HTML and CSS: no build step, no dependencies.
     the selected text.
   - *Send all links on this page…*: opens a picker with every link of the page, pre-selects
     the ones that look like downloads (archives, videos, known hosters and media sites such as
-    YouTube, magnets), and lets you filter by name, extension or host before sending.
+    YouTube, magnets), and lets you filter by name, extension or host before sending. The server
+    checks them as soon as the picker opens: online or not, real name and size, which account
+    downloads them, already in the queue or downloaded; dead links are unticked.
   - *Send this page to Rustload*: sends the page address itself (useful for media pages).
 - **Badge**: the number of unfinished downloads, refreshed every minute and after each send.
   It is neutral grey, and turns orange only while something is actually downloading. `+3`
@@ -75,7 +81,7 @@ access that server address. Nothing works without it, and no other site is ever 
 | Permission | Why |
 |---|---|
 | Access to your server (optional host permission, asked at runtime for that one address) | Send links and read the queue through the Rustload API. The manifest declares `optional_host_permissions: ["*://*/*"]` only so that any address can be *requested*; nothing is granted until you approve your server. |
-| `activeTab` + `scripting` | Read the links of the current page, only when you choose *Send all links on this page…*, *Page links* in the popup, or *Send selected links*. No content script runs on pages otherwise. |
+| `activeTab` + `scripting` | Read the links of the current page, only when you choose *Send all links on this page…*, *Pick links…* in the popup, or *Send selected links*. No content script runs on pages otherwise. When you open the popup on a web page, its address (not its content) goes to your server, which says whether one of your accounts or sites handles it without fetching the page; a page it recognises is then checked like any link. |
 | `contextMenus` | The right-click entries. |
 | `storage` | Keep the settings in `storage.local` (on this device, never synced) and hand the page links to the picker window (`storage.session`, memory only). |
 | `alarms` | Refresh the badge once a minute. |

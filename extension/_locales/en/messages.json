@@ -103,7 +103,7 @@
     "message": "Close"
   },
   "categoryAuto": {
-    "message": "Automatic (by file type)"
+    "message": "Automatic"
   },
   "addPausedShort": {
     "message": "Paused"
@@ -313,9 +313,6 @@
   },
   "detectedNone": {
     "message": "No link recognised yet"
-  },
-  "pageLinks": {
-    "message": "Page links"
   },
   "pageLinksTitle": {
     "message": "Choose links from the current page"
@@ -711,5 +708,82 @@
   },
   "magnetClosing": {
     "message": "This tab closes in a moment."
+  },
+  "thisPage": {
+    "message": "This page"
+  },
+  "addThisPage": {
+    "message": "Download this page"
+  },
+  "addThisPageTitle": {
+    "message": "Send this page to Rustload: the account or site that handles it downloads the file"
+  },
+  "addPageAddress": {
+    "message": "Send the address"
+  },
+  "addPageAddressTitle": {
+    "message": "Send the address of this page to Rustload as it is"
+  },
+  "pickPageLinks": {
+    "message": "Pick links…"
+  },
+  "checkChecking": {
+    "message": "Checking…"
+  },
+  "checkOnline": {
+    "message": "Online"
+  },
+  "checkOffline": {
+    "message": "Offline"
+  },
+  "checkOfflineWhy": {
+    "message": "Offline: $REASON$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkUnsupported": {
+    "message": "Not downloadable"
+  },
+  "checkVia": {
+    "message": "via $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkDirect": {
+    "message": "direct download"
+  },
+  "checkInQueue": {
+    "message": "already in the queue"
+  },
+  "checkInHistory": {
+    "message": "already downloaded"
+  },
+  "pickerChecking": {
+    "message": "Checking the links…"
+  },
+  "pickerCheckFailed": {
+    "message": "Links not checked"
+  },
+  "pickerUnticked_one": {
+    "message": "$COUNT$ dead link unticked",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerUnticked_other": {
+    "message": "$COUNT$ dead links unticked",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   }
 }

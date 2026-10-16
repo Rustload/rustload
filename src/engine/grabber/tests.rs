@@ -149,6 +149,24 @@ async fn selects_handlers_in_resolution_order() {
 }
 
 #[tokio::test]
+async fn routes_links_without_contacting_them() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = engine(dir.path()).await;
+    // Nothing listens on port 9: a probe would report the link unreachable.
+    let links = ["https://mega.nz/file/AbC#k3y", "http://127.0.0.1:9/report.pdf"].map(|u| Link::parse(u).unwrap());
+    let routed = route_links(&engine, links.into()).await.unwrap();
+    let summary: Vec<_> =
+        routed.iter().map(|info| (info.handler.kind, info.status, info.error.is_none(), info.host.clone())).collect();
+    assert_eq!(
+        summary,
+        [
+            (HandlerKind::Hoster, LinkStatus::Unknown, true, Some("mega.nz".into())),
+            (HandlerKind::Direct, LinkStatus::Unknown, true, Some("127.0.0.1".into())),
+        ]
+    );
+}
+
+#[tokio::test]
 async fn checks_playlists() {
     let dir = tempfile::tempdir().unwrap();
     let engine = engine(dir.path()).await;

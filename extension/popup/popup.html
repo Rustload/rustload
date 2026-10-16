@@ -66,13 +66,30 @@
         </div>
       </section>
 
+      <!-- The tab the popup was opened on: its own download, or the links it lists. -->
+      <section class="here" id="here" hidden>
+        <h2 class="section-title"><span class="heading" data-i18n="thisPage"></span></h2>
+        <p class="here-name">
+          <span class="check-dot" id="here-dot" hidden></span>
+          <span class="truncate" id="here-name"></span>
+        </p>
+        <p class="here-meta truncate" id="here-meta"></p>
+        <div class="here-actions" id="here-actions">
+          <button type="button" class="btn btn-sm" id="here-send">
+            <span data-icon="download" data-size="14"></span>
+            <span id="here-send-label"></span>
+          </button>
+          <button type="button" class="btn btn-sm" id="here-pick" data-i18n-title="pageLinksTitle">
+            <span data-icon="list-checks" data-size="14"></span>
+            <span data-i18n="pickPageLinks"></span>
+          </button>
+        </div>
+        <p class="feedback" id="here-feedback" role="status" hidden></p>
+      </section>
+
       <form class="add" id="add-form" autocomplete="off">
         <div class="add-head">
           <label class="add-title" for="links" data-i18n="pasteLabel"></label>
-          <button type="button" class="btn btn-ghost btn-sm page-links" id="page-links" data-i18n-title="pageLinksTitle">
-            <span data-icon="list-checks" data-size="14"></span>
-            <span data-i18n="pageLinks"></span>
-          </button>
         </div>
         <textarea
           class="textarea"

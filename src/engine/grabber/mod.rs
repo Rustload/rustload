@@ -283,6 +283,34 @@ pub async fn check_links(engine: &Engine, links: Vec<Link>, scan_pages: bool) ->
         .collect())
 }
 
+/// Who would download each link, without contacting its site: media sites, the hosts the accounts
+/// list and the plugins are known locally. The status stays `unknown`. For the browser extension,
+/// which asks about the page being viewed without having Rustload fetch it.
+pub async fn route_links(engine: &Engine, links: Vec<Link>) -> anyhow::Result<Vec<LinkInfo>> {
+    let duplicates = find_duplicates(engine, &links).await?;
+    let mut routed = Vec::with_capacity(links.len());
+    for link in &links {
+        let mut info = match link.kind {
+            LinkKind::Magnet => check_magnet(engine, link).await,
+            LinkKind::Http => {
+                let url = link.url.as_str();
+                let handler = match media::detect_str(url) {
+                    Some(site)
+                        if engine.settings.get().media.enabled && super::media::takes_site_link(engine, url).await =>
+                    {
+                        HandlerInfo::media(site)
+                    }
+                    _ => HandlerInfo::of(&Handler::select(engine, url).await),
+                };
+                LinkInfo { host: url_host(url), ..LinkInfo::new(link, handler) }
+            }
+        };
+        info.duplicate = duplicates.get(&info.url).cloned();
+        routed.push(info);
+    }
+    Ok(routed)
+}
+
 /// Magnets are processed by the first account able to: nothing to probe.
 async fn check_magnet(engine: &Engine, link: &Link) -> LinkInfo {
     let parsed = magnet::parse(&link.url).unwrap_or_default();

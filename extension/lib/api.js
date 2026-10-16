@@ -9,6 +9,10 @@ const TIMEOUT_MS = 8000
  * magnets: give it much more time.
  */
 const ADD_TIMEOUT_MS = 180000
+/** The server answers a link check within 30 s, whatever is still unknown by then. */
+const CHECK_TIMEOUT_MS = 35000
+/** Most links the server checks in one request. */
+export const CHECK_BATCH = 50
 
 /**
  * kind: `unconfigured` | `permission` | `unreachable` | `timeout` | `auth` | `refused` (401 that
@@ -182,6 +186,15 @@ export function createClient({ serverUrl, apiKey }) {
         if (error.kind === 'timeout') throw new ApiError('timeout', { seconds: error.seconds, maybeAdded: true })
         throw error
       }
+    },
+    /**
+     * What the server makes of links (`POST /api/links/check`, at most `CHECK_BATCH` at once):
+     * status, real name, size, who downloads them, duplicates. With `probe: false` the links are
+     * not contacted: only who would download them is known.
+     */
+    check: async (urls, { probe = true } = {}) => {
+      const body = { urls, probe }
+      return (await request('/api/links/check', { method: 'POST', body, timeout: CHECK_TIMEOUT_MS }))?.results ?? []
     },
     pause: () => request('/api/queue/pause', { method: 'POST' }),
     resume: () => request('/api/queue/resume', { method: 'POST' }),

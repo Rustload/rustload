@@ -1,7 +1,9 @@
 import { createClient } from '../lib/api.js'
+import { checkInBatches, checkSummary, checkTone } from '../lib/check.js'
 import { ext } from '../lib/browser.js'
 import { $, categoryOptions, el, iconSlot, showFeedback, withSpinner } from '../lib/dom.js'
 import { errorText, needsSettings } from '../lib/errors.js'
+import { formatBytes } from '../lib/format.js'
 import { localize, t, tn } from '../lib/i18n.js'
 import { hydrateIcons, icon } from '../lib/icons.js'
 import { describeLink } from '../lib/links.js'
@@ -25,6 +27,12 @@ const state = {
   categoriesReady: false,
   /** Set while sending, and for good once sent (the window is closing). */
   sending: false,
+  /** Links checked by the server: url → result (lib/check.js); `checking` holds those asked. */
+  checks: new Map(),
+  checking: new Set(),
+  /** Dead links taken out of the selection by the check. */
+  unticked: 0,
+  checkError: '',
 }
 
 const isFileLike = (item) => item.kind !== 'page'
@@ -128,16 +136,34 @@ function buildRow(item) {
     else state.selected.delete(item.url)
     renderSelection()
   })
+  const result = state.checks.get(item.url)
+  const asked = state.checking.has(item.url) || Boolean(result)
   const main = el('span', 'pick-main')
-  main.append(el('span', 'pick-name', item.name))
+  const name = el('span', 'pick-name')
+  if (asked) {
+    const dot = el('span', 'check-dot')
+    dot.dataset.tone = checkTone(result)
+    name.append(dot)
+  }
+  // The host's name for the file (a file host's link rarely tells it).
+  name.append(el('span', '', result?.media?.title || result?.filename || item.name))
+  main.append(name)
   const meta = el('span', 'pick-meta')
   if (item.host) meta.append(el('span', 'host', item.host))
+  if (asked) {
+    const dead = checkTone(result) === 'bad'
+    meta.append(el('span', dead ? 'pick-check is-dead' : 'pick-check', checkSummary(result, { size: false })))
+  }
   const text = item.text && item.text !== item.name ? item.text : ''
   if (text) meta.append(el('span', '', text))
-  if (!item.host && !text) meta.append(document.createTextNode(item.url.slice(0, 120)))
+  if (!item.host && !text && !asked) meta.append(document.createTextNode(item.url.slice(0, 120)))
   main.append(meta)
   const kind = el('span', 'pick-kind num')
-  if (item.kind === 'magnet') kind.append(iconSlot('magnet', { size: 13 }))
+  if (result?.size) {
+    kind.classList.add('is-size')
+    kind.textContent = formatBytes(result.size)
+  }
+  else if (item.kind === 'magnet') kind.append(iconSlot('magnet', { size: 13 }))
   else if (item.ext && item.ext !== 'split') kind.textContent = item.ext
   label.append(box, main, kind)
   li.append(label)
@@ -178,7 +204,57 @@ function render() {
   if (!visible.length) {
     showListState({ iconName: 'search', title: t('pickerNoMatch') })
   }
+  renderCheckState()
   renderSelection()
+}
+
+// ---- Checking ------------------------------------------------------------------------------
+
+function renderCheckState() {
+  const box = $('check-state')
+  box.className = 'check-state truncate'
+  box.title = ''
+  const pending = [...state.checking].some((url) => !state.checks.has(url))
+  if (pending) {
+    box.replaceChildren(el('span', 'spinner'), el('span', '', t('pickerChecking')))
+  } else if (state.checkError) {
+    box.classList.add('faint')
+    box.textContent = t('pickerCheckFailed')
+    box.title = state.checkError
+  } else if (state.unticked) {
+    box.classList.add('tone-bad')
+    box.textContent = tn('pickerUnticked', state.unticked)
+  } else {
+    box.hidden = true
+    return
+  }
+  box.hidden = false
+}
+
+/**
+ * Has the server check the links that look like downloads: whether they are online, their real
+ * name and size, and who will download them. Dead links leave the selection.
+ */
+async function checkLinks() {
+  const urls = state.items.filter(isFileLike).map((item) => item.url)
+  if (!urls.length) return
+  for (const url of urls) state.checking.add(url)
+  render()
+  try {
+    await checkInBatches(createClient(state.settings), urls, (results) => {
+      for (const result of results) {
+        state.checks.set(result.url, result)
+        const dead = result.status === 'offline' || result.status === 'unsupported'
+        if (dead && !state.sending && state.selected.delete(result.url)) state.unticked += 1
+      }
+      if (!state.sending) render()
+    })
+  } catch (error) {
+    state.checkError = errorText(error, state.settings.serverUrl)
+    // Links left unchecked show no status rather than a check that never ends.
+    for (const url of state.checking) if (!state.checks.has(url)) state.checking.delete(url)
+    if (!state.sending) render()
+  }
 }
 
 // ---- Sending -------------------------------------------------------------------------------
@@ -365,7 +441,7 @@ async function main() {
   if (!state.settings.serverUrl) showError(t('errUnconfigured'), { withSettings: true })
   else if (!(await hasHostPermission(state.settings.serverUrl))) {
     showError(errorText({ kind: 'permission' }, state.settings.serverUrl), { withSettings: true })
-  }
+  } else checkLinks()
   renderCategories()
 }
 

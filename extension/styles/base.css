@@ -542,6 +542,36 @@ kbd {
   background: var(--warn);
 }
 
+/* Result of a link check (lib/check.js): online, offline, unknown, or still checking. */
+.check-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--fg-faint);
+}
+
+.check-dot[data-tone='ok'] {
+  background: var(--ok);
+}
+
+.check-dot[data-tone='bad'] {
+  background: var(--bad);
+}
+
+.check-dot[data-tone='checking'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--fg-faint);
+  animation: check-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes check-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .spinner {
   display: inline-block;
   width: 1rem;

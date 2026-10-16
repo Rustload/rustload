@@ -265,13 +265,16 @@ when added).
 
 | Method | Path | Body | Response |
 |---|---|---|---|
-| POST | `/api/links/check` | `{ urls: string[], scan_pages?: boolean }` | `{ results: LinkInfo[] }` |
+| POST | `/api/links/check` | `{ urls: string[], scan_pages?: boolean, probe?: boolean }` | `{ results: LinkInfo[] }` |
 
 `urls`: 1 to 50 http(s) URLs or magnet URIs (`400 NO_LINKS`, `400 TOO_MANY_LINKS`, `400 INVALID_LINK`
 for anything else). Results come in the same order. Links are checked 8 at a time, each for at most
 20 s, the whole request for at most 30 s: links not checked in time come back `unknown` with
 `error: "the check took too long"`. With `scan_pages: true`, web pages are fetched (5 MiB at most)
-and their downloadable links returned in `found`.
+and their downloadable links returned in `found`. With `probe: false`, nothing is contacted: each
+result only tells who would download the link (`handler`, from the media sites, the hosts listed by
+the accounts and the plugins) and `duplicate`, with `status: "unknown"`; the browser extension asks
+this about the page being viewed.
 
 ```ts
 type LinkInfo = {

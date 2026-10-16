@@ -14,7 +14,8 @@ import {
 } from '../lib/format.js'
 import { localize, t, tn } from '../lib/i18n.js'
 import { hydrateIcons, icon } from '../lib/icons.js'
-import { parseLinks } from '../lib/links.js'
+import { checkSummary, checkTone, hasDownloader } from '../lib/check.js'
+import { describeLink, parseLinks } from '../lib/links.js'
 import { sendLinks } from '../lib/send.js'
 import { displayHost, hasHostPermission, loadSettings } from '../lib/settings.js'
 
@@ -493,7 +494,7 @@ let feedbackTimer
 function showFeedback(tone, text) {
   fillFeedback($('add-feedback'), tone, text)
   clearTimeout(feedbackTimer)
-  if (tone === 'ok') feedbackTimer = setTimeout(() => (box.hidden = true), 4000)
+  if (tone === 'ok') feedbackTimer = setTimeout(() => ($('add-feedback').hidden = true), 4000)
 }
 
 function parsedInput() {
@@ -542,16 +543,95 @@ async function submitLinks(event) {
   }
 }
 
-async function scanPage() {
-  const button = $('page-links')
+// ---- This page -----------------------------------------------------------------------------
+
+/** The tab the popup was opened on, while it is a web page. */
+const here = { url: '', host: '', sending: false }
+
+/**
+ * The page's own download comes first when it is one (a file host's page, a video), its links
+ * otherwise. The extension's own lists give a first guess; the server, which knows the hosts its
+ * accounts support (mirrors included), confirms it without fetching the page, then checks it.
+ */
+async function renderHere() {
+  let tab
+  try {
+    ;[tab] = await ext.tabs.query({ active: true, currentWindow: true })
+  } catch {
+    return
+  }
+  const url = tab?.url ?? ''
+  if (!/^https?:\/\//i.test(url)) return
+  const described = describeLink(url)
+  here.url = url
+  here.host = described.host
+  $('here-name').textContent = tab.title || described.name
+  $('here-meta').textContent = described.host
+  setHereMode(described.kind !== 'page')
+  $('here').hidden = false
+  try {
+    const [route] = await state.client.check([url], { probe: false })
+    const downloadable = described.kind === 'file' || hasDownloader(route)
+    setHereMode(downloadable)
+    if (!downloadable) return
+    showHereCheck(null)
+    const [result] = await state.client.check([url])
+    showHereCheck(result)
+  } catch {
+    // Unreachable or too slow: the first guess stays, sending still works.
+  }
+}
+
+function setHereMode(downloadable) {
+  const send = $('here-send')
+  const pick = $('here-pick')
+  // The likely action first, as the one outlined button.
+  send.className = `btn btn-sm ${downloadable ? 'btn-secondary' : 'btn-ghost'}`
+  pick.className = `btn btn-sm ${downloadable ? 'btn-ghost' : 'btn-secondary'}`
+  $('here-actions').prepend(downloadable ? send : pick)
+  $('here-send-label').textContent = t(downloadable ? 'addThisPage' : 'addPageAddress')
+  send.title = t(downloadable ? 'addThisPageTitle' : 'addPageAddressTitle')
+}
+
+/** `result` null while the check runs. */
+function showHereCheck(result) {
+  const dot = $('here-dot')
+  dot.dataset.tone = checkTone(result)
+  dot.hidden = false
+  $('here').classList.add('has-dot')
+  const name = result?.media?.title || result?.filename
+  if (name) $('here-name').textContent = name
+  $('here-meta').textContent = [here.host, checkSummary(result)].filter(Boolean).join(' · ')
+}
+
+async function sendHere() {
+  if (!here.url || here.sending) return
+  here.sending = true
+  const box = $('here-feedback')
+  try {
+    const { packages, notice } = await withSpinner($('here-send'), () =>
+      sendLinks([here.url], { paused: $('add-paused').checked }),
+    )
+    fillFeedback(box, notice ? 'warn' : 'ok', notice || tn('sentPackages', packages.length || 1))
+    ext.runtime.sendMessage({ type: 'sent', count: 1 }).catch(() => {})
+    scheduleRefetch()
+  } catch (error) {
+    fillFeedback(box, error?.maybeAdded ? 'warn' : 'bad', errorText(error, state.settings.serverUrl))
+  } finally {
+    here.sending = false
+  }
+}
+
+async function pickPageLinks() {
+  const button = $('here-pick')
   button.disabled = true
   try {
     const [tab] = await ext.tabs.query({ active: true, currentWindow: true })
     const result = tab?.id != null ? await ext.runtime.sendMessage({ type: 'open-picker', tabId: tab.id }) : null
     if (result?.ok) window.close()
-    else showFeedback('bad', t('pageLinksUnavailable'))
+    else fillFeedback($('here-feedback'), 'bad', t('pageLinksUnavailable'))
   } catch {
-    showFeedback('bad', t('pageLinksUnavailable'))
+    fillFeedback($('here-feedback'), 'bad', t('pageLinksUnavailable'))
   } finally {
     button.disabled = false
   }
@@ -604,6 +684,7 @@ async function start() {
   renderAll()
   state.mode = 'connecting'
   startStream()
+  renderHere()
 }
 
 localize()
@@ -615,7 +696,8 @@ $('open-app').addEventListener('click', (event) => {
   window.close()
 })
 $('toggle-pause').addEventListener('click', togglePause)
-$('page-links').addEventListener('click', scanPage)
+$('here-send').addEventListener('click', sendHere)
+$('here-pick').addEventListener('click', pickPageLinks)
 $('add-form').addEventListener('submit', submitLinks)
 $('links').addEventListener('input', renderDetected)
 $('links').addEventListener('keydown', (event) => {

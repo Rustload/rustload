@@ -29,60 +29,63 @@
   )
 </script>
 
-<div class="space-y-4">
-  <Field label={t('media.qualityLabel')}>
-    {#snippet children({ id })}
-      <Select {id} bind:value={options.quality} options={qualityOptions} />
-    {/snippet}
-  </Field>
-
-  {#if options.quality === 'audio'}
-    <Field label={t('media.audioFormat')}>
+<!-- Stacked in narrow places; two by two across a wide one (the add dialog, the settings). -->
+<div class="@container">
+  <div class="grid gap-x-8 gap-y-4 @2xl:grid-cols-2">
+    <Field label={t('media.qualityLabel')}>
       {#snippet children({ id })}
-        <Select {id} bind:value={options.audio_format} options={audioOptions} />
+        <Select {id} bind:value={options.quality} options={qualityOptions} />
       {/snippet}
     </Field>
-  {:else}
-    <div>
-      <p class="mb-1.5 font-medium">{t('media.container')}</p>
-      <Segmented
-        label={t('media.container')}
-        bind:value={options.container}
-        options={[
-          { value: 'auto', label: t('media.containerAuto') },
-          { value: 'mp4', label: 'MP4' },
-          { value: 'mkv', label: 'MKV' },
-        ]}
-      />
-    </div>
-  {/if}
 
-  <div class="space-y-3.5 rounded-control border border-line px-4 py-3.5">
-    <Toggle bind:checked={options.subtitles} label={t('media.subtitles')} />
-    {#if options.subtitles}
-      <Field label={t('media.subtitleLangs')} hint={t('media.subtitleLangsHint')}>
-        {#snippet children({ id, describedBy })}
-          <TextInput {id} aria-describedby={describedBy} bind:value={options.subtitle_langs} spellcheck={false} />
+    {#if options.quality === 'audio'}
+      <Field label={t('media.audioFormat')}>
+        {#snippet children({ id })}
+          <Select {id} bind:value={options.audio_format} options={audioOptions} />
         {/snippet}
       </Field>
+    {:else}
+      <div>
+        <p class="mb-1.5 font-medium">{t('media.container')}</p>
+        <Segmented
+          label={t('media.container')}
+          bind:value={options.container}
+          options={[
+            { value: 'auto', label: t('media.containerAuto') },
+            { value: 'mp4', label: 'MP4' },
+            { value: 'mkv', label: 'MKV' },
+          ]}
+        />
+      </div>
     {/if}
-    {#if full}
-      <Toggle bind:checked={options.embed_metadata} label={t('media.embedMetadata')} />
-      <Toggle bind:checked={options.embed_thumbnail} label={t('media.embedThumbnail')} />
-    {/if}
-  </div>
 
-  <div>
-    <p class="mb-1.5 font-medium">{t('media.sponsorblock')}</p>
-    <Segmented
-      label={t('media.sponsorblock')}
-      bind:value={options.sponsorblock}
-      options={[
-        { value: 'off', label: t('media.sponsorOff') },
-        { value: 'mark', label: t('media.sponsorMark') },
-        { value: 'remove', label: t('media.sponsorRemove') },
-      ]}
-    />
-    <p class="mt-1.5 text-small text-fg-muted">{t('media.sponsorblockHint')}</p>
+    <div class="space-y-3.5 self-start rounded-control border border-line px-4 py-3.5">
+      <Toggle bind:checked={options.subtitles} label={t('media.subtitles')} />
+      {#if options.subtitles}
+        <Field label={t('media.subtitleLangs')} hint={t('media.subtitleLangsHint')}>
+          {#snippet children({ id, describedBy })}
+            <TextInput {id} aria-describedby={describedBy} bind:value={options.subtitle_langs} spellcheck={false} />
+          {/snippet}
+        </Field>
+      {/if}
+      {#if full}
+        <Toggle bind:checked={options.embed_metadata} label={t('media.embedMetadata')} />
+        <Toggle bind:checked={options.embed_thumbnail} label={t('media.embedThumbnail')} />
+      {/if}
+    </div>
+
+    <div>
+      <p class="mb-1.5 font-medium">{t('media.sponsorblock')}</p>
+      <Segmented
+        label={t('media.sponsorblock')}
+        bind:value={options.sponsorblock}
+        options={[
+          { value: 'off', label: t('media.sponsorOff') },
+          { value: 'mark', label: t('media.sponsorMark') },
+          { value: 'remove', label: t('media.sponsorRemove') },
+        ]}
+      />
+      <p class="mt-1.5 text-small text-fg-muted">{t('media.sponsorblockHint')}</p>
+    </div>
   </div>
 </div>

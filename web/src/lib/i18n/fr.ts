@@ -342,7 +342,7 @@ export const fr: Messages = {
     removeFile: 'Retirer {name}',
     name: 'Nom du paquet',
     destination: 'Destination',
-    automatic: 'Automatique, selon l’extension',
+    automatic: 'Automatique (règles, puis types de fichiers)',
     subfolder: 'Créer un dossier pour ce paquet',
     extract: 'Extraire les archives à la fin',
     deleteArchives: 'Supprimer les archives après extraction',
@@ -403,6 +403,7 @@ export const fr: Messages = {
     singlePackage: 'Tout dans un seul paquet',
     torrentFile: 'Fichier torrent',
     options: 'Options',
+    optionsFiles: 'Destination et archives',
     summary: {
       automatic: 'destination automatique',
       subfolder: 'un dossier par paquet',

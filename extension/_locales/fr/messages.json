@@ -103,7 +103,7 @@
     "message": "Fermer"
   },
   "categoryAuto": {
-    "message": "Automatique (par extension)"
+    "message": "Automatique"
   },
   "addPausedShort": {
     "message": "En pause"
@@ -313,9 +313,6 @@
   },
   "detectedNone": {
     "message": "Aucun lien reconnu pour l’instant"
-  },
-  "pageLinks": {
-    "message": "Liens de la page"
   },
   "pageLinksTitle": {
     "message": "Choisir des liens dans la page actuelle"
@@ -711,5 +708,82 @@
   },
   "magnetClosing": {
     "message": "Cet onglet va se fermer."
+  },
+  "thisPage": {
+    "message": "Cette page"
+  },
+  "addThisPage": {
+    "message": "Télécharger cette page"
+  },
+  "addThisPageTitle": {
+    "message": "Envoyer cette page à Rustload : le compte ou le site qui la prend en charge télécharge le fichier"
+  },
+  "addPageAddress": {
+    "message": "Envoyer l’adresse"
+  },
+  "addPageAddressTitle": {
+    "message": "Envoyer l’adresse de cette page telle quelle à Rustload"
+  },
+  "pickPageLinks": {
+    "message": "Choisir des liens…"
+  },
+  "checkChecking": {
+    "message": "Vérification…"
+  },
+  "checkOnline": {
+    "message": "En ligne"
+  },
+  "checkOffline": {
+    "message": "Hors ligne"
+  },
+  "checkOfflineWhy": {
+    "message": "Hors ligne : $REASON$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkUnsupported": {
+    "message": "Non téléchargeable"
+  },
+  "checkVia": {
+    "message": "via $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "checkDirect": {
+    "message": "téléchargement direct"
+  },
+  "checkInQueue": {
+    "message": "déjà dans la file"
+  },
+  "checkInHistory": {
+    "message": "déjà téléchargé"
+  },
+  "pickerChecking": {
+    "message": "Vérification des liens…"
+  },
+  "pickerCheckFailed": {
+    "message": "Liens non vérifiés"
+  },
+  "pickerUnticked_one": {
+    "message": "$COUNT$ lien mort décoché",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pickerUnticked_other": {
+    "message": "$COUNT$ liens morts décochés",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   }
 }

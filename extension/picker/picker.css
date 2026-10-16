@@ -252,6 +252,11 @@ body {
   font-weight: 500;
 }
 
+.pick-name .check-dot {
+  margin-right: 0.4375rem;
+  vertical-align: 0.0625rem;
+}
+
 .pick-meta {
   display: block;
   overflow: hidden;
@@ -268,6 +273,30 @@ body {
 
 .pick-meta .host {
   color: var(--fg-muted);
+}
+
+.pick-kind.is-size {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pick-check.is-dead {
+  color: var(--bad);
+}
+
+.check-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+}
+
+.check-state .spinner {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .pick-kind {

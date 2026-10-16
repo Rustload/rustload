@@ -25,7 +25,8 @@ First public version.
   packages (archive sets, folders, playlists, similar names) and web pages can be scanned for
   downloadable links.
 - Browser extension for Chrome, Edge, Brave and Firefox: context menus, a picker for all the links
-  of a page, a popup with live speed and a paste box.
+  of a page that checks them as it opens, a popup with live speed, a paste box and *Download this
+  page* when the page is one your accounts or sites handle.
 - Bookmarklet, share target for the installed web app (send links from a phone's share sheet),
   Telegram bot (links, `.torrent` files, `/status`, `/queue`, `/pause`, `/resume`), watch folder,
   Click'n'Load and a REST API with an API key, including a batch endpoint.
