@@ -29,7 +29,9 @@ COPY src ./src
 COPY migrations ./migrations
 COPY --from=web /web/dist ./web/dist
 ARG TARGETARCH
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
+# The amd64 and arm64 builds run at the same time on the build machine: each gets its own caches,
+# or both unpack the same crates into a shared registry and fail.
+RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rustload-cargo-registry-${TARGETARCH} \
     --mount=type=cache,target=/src/target,id=rustload-target-${TARGETARCH} \
     case "$TARGETARCH" in \
       amd64) triple=x86_64-unknown-linux-musl ;; \
