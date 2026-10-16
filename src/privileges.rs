@@ -35,10 +35,14 @@ pub fn normalize_permissions(path: &Path, is_dir: bool) -> std::io::Result<()> {
 mod imp {
     use std::{fs, os::unix::fs::PermissionsExt, path::Path};
 
-    use anyhow::{Context, Result};
+    #[cfg(not(target_vendor = "apple"))]
+    use anyhow::Context;
+    use anyhow::Result;
+    #[cfg(not(target_vendor = "apple"))]
+    use nix::unistd::{chown, setgid, setgroups, setuid};
     use nix::{
         sys::stat::{Mode, umask},
-        unistd::{Gid, Uid, chown, getuid, setgid, setgroups, setuid},
+        unistd::{Gid, Uid, getuid},
     };
 
     use super::UMASK;
@@ -70,7 +74,13 @@ mod imp {
         };
         let gid = config.pgid.unwrap_or(uid);
         let (uid, gid) = (Uid::from_raw(uid), Gid::from_raw(gid));
+        drop_privileges(config, uid, gid)?;
+        notes.push(format!("dropped privileges to uid={uid} gid={gid}"));
+        Ok(notes)
+    }
 
+    #[cfg(not(target_vendor = "apple"))]
+    fn drop_privileges(config: &Config, uid: Uid, gid: Gid) -> Result<()> {
         for dir in [&config.config_dir, &config.download_root] {
             fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
         }
@@ -83,10 +93,17 @@ mod imp {
         setgroups(&[gid]).context("setgroups failed")?;
         setgid(gid).context("setgid failed")?;
         setuid(uid).context("setuid failed")?;
-        notes.push(format!("dropped privileges to uid={uid} gid={gid}"));
-        Ok(notes)
+        Ok(())
     }
 
+    /// macOS offers no safe way to clear root's supplementary groups, and `PUID`/`PGID` are meant
+    /// for Linux containers: refuse rather than run with root's groups.
+    #[cfg(target_vendor = "apple")]
+    fn drop_privileges(_: &Config, _: Uid, _: Gid) -> Result<()> {
+        anyhow::bail!("PUID/PGID are supported on Linux only: start Rustload as the user who should own the files")
+    }
+
+    #[cfg(not(target_vendor = "apple"))]
     fn chown_recursive(path: &Path, uid: Uid, gid: Gid) -> Result<()> {
         chown(path, Some(uid), Some(gid)).with_context(|| format!("cannot chown {}", path.display()))?;
         if path.is_dir() {
