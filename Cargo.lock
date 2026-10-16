@@ -1769,7 +1769,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
- "base64 0.22.1",
+ "base64 0.23.1",
  "bytes",
  "cbc",
  "chrono",
