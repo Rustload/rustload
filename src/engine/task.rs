@@ -118,7 +118,7 @@ async fn execute(engine: &Engine, id: i64, live: &LiveDownload) -> Result<Outcom
         tracing::info!("{} is an HLS stream: yt-dlp downloads it", download.url);
         return media::download(engine, &download, live, media::Origin::Stream).await;
     }
-    if looks_like_web_page(&probe, &filename) {
+    if looks_like_web_page(&probe, &resolved) {
         if resolved.is_direct() && media::tries_web_pages(engine).await {
             return media::download(engine, &download, live, media::Origin::WebPage).await;
         }
@@ -278,9 +278,17 @@ fn choose_filename(download: &DownloadRow, resolved: &Resolved, probe: &Probe) -
         .unwrap_or_else(|| format!("download-{}", download.id))
 }
 
-fn looks_like_web_page(probe: &Probe, filename: &str) -> bool {
-    let wanted_html = matches!(naming::extension(filename).as_deref(), Some("html" | "htm" | "xhtml"));
-    probe.is_html() && !wanted_html
+/// A web page where a file was expected. A page is kept only when the server or the debrid service
+/// names it `.html` (a saved page, an export): a link that merely ends in `.html` is the download
+/// page of many file hosts.
+fn looks_like_web_page(probe: &Probe, resolved: &Resolved) -> bool {
+    let named_html = resolved
+        .filename
+        .as_deref()
+        .or(probe.filename.as_deref())
+        .and_then(naming::extension)
+        .is_some_and(|ext| matches!(ext.as_str(), "html" | "htm" | "xhtml"));
+    probe.is_html() && !named_html
 }
 
 /// Folder of a file: its package folder, or a sub-folder of it. `filename` is the name the file

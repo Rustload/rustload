@@ -155,25 +155,7 @@ impl DebridService for AllDebrid {
 
     async fn supported_hosts(&self) -> Result<HostMatcher, DebridError> {
         let data: Value = self.call(Method::GET, "/v4/hosts", &[]).await?;
-        let mut matcher = HostMatcher::default();
-        for group in ["hosts", "streams", "redirectors"] {
-            let Some(hosts) = data[group].as_object() else { continue };
-            for host in hosts.values() {
-                if host["status"] == false {
-                    continue;
-                }
-                for domain in host["domains"].as_array().into_iter().flatten() {
-                    matcher.add_domain(domain.as_str().unwrap_or_default());
-                }
-                // Older responses use `regexps` (array), newer ones `regexp` (string).
-                for pattern in host["regexps"].as_array().into_iter().flatten().chain(host.get("regexp")) {
-                    if let Some(pattern) = pattern.as_str() {
-                        matcher.add_pattern(pattern);
-                    }
-                }
-            }
-        }
-        Ok(matcher)
+        Ok(host_matcher(&data))
     }
 
     async fn unlock(&self, link: &str, password: Option<&str>) -> Result<Unlocked, DebridError> {
@@ -370,9 +352,52 @@ pub async fn device_poll(http: &reqwest::Client, state: &Value) -> Result<Device
     }
 }
 
+/// Hosts, streaming sites and redirectors of a `/v4/hosts` answer.
+fn host_matcher(data: &Value) -> HostMatcher {
+    let mut matcher = HostMatcher::default();
+    for group in ["hosts", "streams", "redirectors"] {
+        let Some(hosts) = data[group].as_object() else { continue };
+        // `status` only says whether AllDebrid's own test of the host passed in the last minutes
+        // (and only some hosts are tested): a host marked down is still tried, the unlock
+        // answers whether it works.
+        for host in hosts.values() {
+            for domain in host["domains"].as_array().into_iter().flatten() {
+                matcher.add_domain(domain.as_str().unwrap_or_default());
+            }
+            // Older responses use `regexps` (array), newer ones `regexp` (string).
+            for pattern in host["regexps"].as_array().into_iter().flatten().chain(host.get("regexp")) {
+                if let Some(pattern) = pattern.as_str() {
+                    matcher.add_pattern(pattern);
+                }
+            }
+        }
+    }
+    matcher
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn keeps_hosts_marked_down() {
+        // Extract of /v4/hosts: TurboBit was `false` while AllDebrid unlocked its links fine.
+        let data = serde_json::json!({
+            "hosts": {
+                "turbobit": {
+                    "name": "turbobit",
+                    "status": false,
+                    "domains": ["turbobit.net", "trbt.cc"],
+                    "regexp": r"((trbbt|tourbobit|torbobit|tbit|turbobita|trbt)\.(net|cc|com|to)/([a-z0-9]{12}))",
+                },
+            },
+            "redirectors": { "tb": { "status": null, "domains": ["turbobit.net"] } },
+        });
+        let matcher = host_matcher(&data);
+        assert!(matcher.matches("https://torbobit.net/abcdef123456.html?short_domain=trbt.cc"));
+        assert!(matcher.matches("https://www.trbt.cc/abcdef123456.html"));
+        assert!(!matcher.matches("https://example.com/file.zip"));
+    }
 
     #[test]
     fn flattens_nested_magnet_files() {
