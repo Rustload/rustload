@@ -11,6 +11,7 @@ mod magnets;
 mod prefs;
 mod text;
 mod tray;
+mod updater;
 
 use std::{
     net::{Ipv4Addr, TcpListener},
@@ -60,6 +61,7 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![chooser::current, chooser::use_local, chooser::use_server])
         .setup(|app| {
             if let Err(error) = start(app.handle()) {

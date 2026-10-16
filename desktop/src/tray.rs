@@ -19,12 +19,16 @@ use crate::{
     backend::{Backend, OFFLINE},
     chooser, magnets, open_window,
     text::text,
+    updater,
 };
 
 const TRAY: &str = "main";
 
 pub fn create(app: &AppHandle, backend: &Arc<Backend>) -> tauri::Result<()> {
     let t = text();
+    // The version, and the install action once an update is downloaded.
+    let version = format!("Rustload {}", app.package_info().version);
+    let update = MenuItem::with_id(app, "update", version, false, None::<&str>)?;
     let open = MenuItem::with_id(app, "open", t.open, true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause", t.pause, true, None::<&str>)?;
     let folder = MenuItem::with_id(app, "folder", t.folder, true, None::<&str>)?;
@@ -34,7 +38,7 @@ pub fn create(app: &AppHandle, backend: &Arc<Backend>) -> tauri::Result<()> {
     let mode = MenuItem::with_id(app, "mode", t.change_mode, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", t.quit, true, None::<&str>)?;
     let separator = || PredefinedMenuItem::separator(app);
-    let menu = Menu::with_items(app, &[&open, &pause, &separator()?])?;
+    let menu = Menu::with_items(app, &[&update, &separator()?, &open, &pause, &separator()?])?;
     // A remote server's downloads folder is on the server.
     if backend.download_root().is_some() {
         menu.append(&folder)?;
@@ -47,6 +51,7 @@ pub fn create(app: &AppHandle, backend: &Arc<Backend>) -> tauri::Result<()> {
     menu.append_items(&[&mode, &separator()?, &quit])?;
 
     let paused = Arc::new(AtomicBool::new(false));
+    let busy = Arc::new(AtomicBool::new(false));
     let on_menu = {
         let (backend, paused, autostart, magnet) = (backend.clone(), paused.clone(), autostart.clone(), magnet.clone());
         move |app: &AppHandle, event: MenuEvent| match event.id().as_ref() {
@@ -70,6 +75,10 @@ pub fn create(app: &AppHandle, backend: &Arc<Backend>) -> tauri::Result<()> {
                 let _ = magnet.set_checked(magnets::is_handled(app));
             }
             "mode" => chooser::open(app),
+            "update" => {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move { updater::install(&app).await });
+            }
             "quit" => app.exit(0),
             _ => {}
         }
@@ -88,14 +97,23 @@ pub fn create(app: &AppHandle, backend: &Arc<Backend>) -> tauri::Result<()> {
         })
         .build(app)?;
 
-    tauri::async_runtime::spawn(follow(app.clone(), backend.clone(), pause, paused));
+    updater::spawn(app, update, busy.clone());
+    tauri::async_runtime::spawn(follow(app.clone(), backend.clone(), pause, paused, busy));
     Ok(())
 }
 
 /// Keeps the tooltip and the pause item current and turns finished or failed packages into system
 /// notifications, unless the window is in front (the interface shows them then).
-async fn follow(app: AppHandle, backend: Arc<Backend>, pause: MenuItem<Wry>, paused: Arc<AtomicBool>) {
+async fn follow(
+    app: AppHandle,
+    backend: Arc<Backend>,
+    pause: MenuItem<Wry>,
+    paused: Arc<AtomicBool>,
+    busy: Arc<AtomicBool>,
+) {
     let server = backend.label();
+    // Only a server running in the app downloads on this computer.
+    let local = backend.download_root().is_some();
     let tooltip = |text: String| {
         if let Some(tray) = app.tray_by_id(TRAY) {
             let _ = tray.set_tooltip(Some(text));
@@ -106,6 +124,7 @@ async fn follow(app: AppHandle, backend: Arc<Backend>, pause: MenuItem<Wry>, pau
         match update.name.as_str() {
             "stats" => {
                 tooltip(text().status(Some(&update.data), server.as_deref()));
+                busy.store(local && update.data["active"].as_u64().unwrap_or(0) > 0, Ordering::Relaxed);
                 let now_paused = update.data["paused"].as_bool().unwrap_or(false);
                 if paused.swap(now_paused, Ordering::Relaxed) != now_paused {
                     let _ = pause.set_text(if now_paused { text().resume } else { text().pause });

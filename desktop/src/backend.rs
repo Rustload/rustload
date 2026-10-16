@@ -109,13 +109,18 @@ impl Backend {
     }
 
     /// Stops downloading cleanly, for the local server.
-    pub fn stop(&self) {
+    pub async fn shutdown(&self) {
         if let Self::Local { server, .. } = self {
             let server = server.lock().expect("poisoned").take();
             if let Some(server) = server {
-                let _ = tauri::async_runtime::block_on(server.stop());
+                let _ = server.stop().await;
             }
         }
+    }
+
+    /// [`Backend::shutdown`] from the main thread, as the app ends.
+    pub fn stop(&self) {
+        tauri::async_runtime::block_on(self.shutdown());
     }
 }
 

@@ -15,6 +15,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -26,6 +27,10 @@
     "copyright": "Copyright (c) 2026 Rustload contributors",
     "license": "MIT",
     "homepage": "https://github.com/rustload/rustload",
+    "resources": {
+      "../LICENSE": "LICENSE",
+      "THIRD-PARTY-LICENSES.md": "THIRD-PARTY-LICENSES.md"
+    },
     "category": "Utility",
     "shortDescription": "Download manager",
     "longDescription": "Paste anything: Rustload checks it, sorts it and pulls it in at full speed. Debrid accounts, file hosts and video sites.",
@@ -39,5 +44,13 @@
       "minimumSystemVersion": "11.0"
     }
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI5Rjc2ODM0REI0RDg3REEKUldUYWgwM2JOR2ozdWFQYnhCOFlnaXlaRk5XbnFsRDBzWWNzVXVDT0xtYVN4bDQ4bG5OZlRjc0IK",
+      "endpoints": ["https://github.com/rustload/rustload/releases/latest/download/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
 }

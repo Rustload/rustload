@@ -95,18 +95,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: Windows, os: windows-latest, args: --bundles nsis, bundles: "nsis/*.exe" }
-          # One app for Apple silicon and Intel Macs.
+          # The installer is also the update; `.sig` files are the updater's signatures.
+          - name: Windows
+            os: windows-latest
+            args: --bundles nsis
+            bundles: "nsis/*.exe nsis/*.exe.sig"
+          # One app for Apple silicon and Intel Macs; the updater replaces the .app from its archive.
           - name: macOS
             os: macos-latest
             targets: aarch64-apple-darwin,x86_64-apple-darwin
-            args: --target universal-apple-darwin --bundles dmg
-            bundles: "dmg/*.dmg"
-          # The oldest supported Ubuntu, so the AppImage runs on older distributions too.
+            args: --target universal-apple-darwin --bundles app,dmg
+            bundles: "dmg/*.dmg macos/*.app.tar.gz macos/*.app.tar.gz.sig"
+          # The oldest supported Ubuntu, so the AppImage runs on older distributions too. The .deb is
+          # updated by its package manager, the AppImage by the app.
           - name: Linux
             os: ubuntu-22.04
             args: --bundles appimage,deb
-            bundles: "appimage/*.AppImage deb/*.deb"
+            bundles: "appimage/*.AppImage appimage/*.AppImage.sig deb/*.deb"
     defaults:
       run:
         shell: bash
@@ -136,6 +141,9 @@ jobs:
             librsvg2-dev libxdo-dev patchelf
       - name: Build
         working-directory: desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx --yes @tauri-apps/cli@2.12.3 build --ci ${{ matrix.args }}
       - name: Collect
         run: |
@@ -143,6 +151,11 @@ jobs:
           target=desktop/target/release
           [ -n "${{ matrix.targets }}" ] && target=desktop/target/universal-apple-darwin/release
           for pattern in ${{ matrix.bundles }}; do cp $target/bundle/$pattern dist/; done
+          # The macOS update archive is named after the app only: give it its version like the rest.
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/Cargo.toml | head -n 1)"
+          for file in dist/Rustload.app.tar.gz*; do
+            [ -e "$file" ] && mv "$file" "dist/Rustload_${version}_universal.app.tar.gz${file#dist/Rustload.app.tar.gz}"
+          done
           ls -l dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -170,10 +183,32 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  # Every version number must be the tag's: the desktop app compares its own with the update's.
+  versions:
+    name: Versions
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          tag="${GITHUB_REF_NAME#v}"
+          status=0
+          for file in Cargo.toml desktop/Cargo.toml; do
+            version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$file" | head -n 1)"
+            [ "$version" = "$tag" ] || { echo "::error file=$file::version $version, tag $tag"; status=1; }
+          done
+          for file in web/package.json extension/manifest.json; do
+            version="$(jq -r .version "$file")"
+            [ "$version" = "$tag" ] || { echo "::error file=$file::version $version, tag $tag"; status=1; }
+          done
+          exit $status
+
   publish:
     name: Publish
     if: github.ref_type == 'tag'
-    needs: [binary, desktop, extension]
+    needs: [versions, binary, desktop, extension]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -188,6 +223,8 @@ jobs:
           pattern: release-*
           path: dist
           merge-multiple: true
+      # The manifest the desktop app checks for updates (releases/latest/download/latest.json).
+      - run: python3 .github/scripts/update_manifest.py dist "${GITHUB_REF_NAME#v}" "$GITHUB_REPOSITORY"
       - run: cd dist && sha256sum -- * > SHA256SUMS
       # Anyone can check a download came from this workflow: `gh attestation verify <file> -R rustload/rustload`.
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -211,6 +248,7 @@ jobs:
             echo
             echo "- **Docker** (\`linux/amd64\`, \`linux/arm64\`): \`ghcr.io/rustload/rustload:$version\` — see the [quick start](https://github.com/rustload/rustload#quick-start-docker)."
             echo "- **Binary**: download the archive for your system below, extract it and run \`rustload\` — see [running without Docker](https://github.com/rustload/rustload#without-docker)."
+            echo "- **Desktop app**: \`Rustload_${version}_x64-setup.exe\` (Windows), \`Rustload_${version}_universal.dmg\` (macOS), \`Rustload_${version}_amd64.AppImage\` or \`.deb\` (Linux) — see [the desktop app](https://github.com/rustload/rustload#desktop-app). Installed apps update themselves."
             echo "- **Browser extension**: \`rustload-extension-$version.zip\` — see [its guide](https://github.com/rustload/rustload/blob/main/extension/README.md)."
             echo
             echo "\`SHA256SUMS\` lists the checksum of every file; \`gh attestation verify <file> -R rustload/rustload\` proves it was built here."
