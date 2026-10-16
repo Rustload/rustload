@@ -1,5 +1,6 @@
-//! Who will download an http(s) link, in the order `resolve.rs` tries: debrid accounts supporting
-//! the host, then a built-in hoster plugin, then the link itself. Shared by the availability
+//! Who will download an http(s) link, in the order `resolve.rs` tries: accounts supporting the host
+//! (its own premium account first, then debrid services), then a built-in hoster plugin, then the
+//! link itself. Shared by the availability
 //! checker and the link grabber. Media sites never get here: yt-dlp takes them first
 //! (`engine::media::routes`).
 
@@ -7,7 +8,7 @@ use super::Engine;
 use crate::{debrid::AccountHandle, hosters::Hoster};
 
 pub enum Handler<'a> {
-    /// The first debrid account supporting the host (the next ones are tried if it fails).
+    /// The best account supporting the host (the next ones are tried if it fails).
     Debrid(AccountHandle),
     /// A built-in hoster plugin.
     Hoster(&'a dyn Hoster),

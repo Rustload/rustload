@@ -679,7 +679,7 @@ export const fr: Messages = {
     },
     accounts: {
       intro:
-        'Les débrideurs débloquent les liens de nombreux hébergeurs et traitent magnets et torrents ; un compte premium d’hébergeur débloque cet hébergeur. Les comptes sont essayés de haut en bas.',
+        'Les débrideurs débloquent les liens de nombreux hébergeurs et traitent magnets et torrents ; un compte premium d’hébergeur débloque cet hébergeur. Pour chaque lien, votre compte premium de l’hébergeur passe en premier, puis les débrideurs de haut en bas.',
       add: 'Ajouter un compte',
       empty: 'Aucun compte pour l’instant. Sans compte, les liens sont téléchargés directement depuis leur hébergeur.',
       premium: 'Premium',

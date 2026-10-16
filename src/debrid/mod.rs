@@ -340,7 +340,11 @@ pub trait DebridService: Send + Sync {
     }
 }
 
-/// Decides locally whether a URL belongs to a host supported by a provider.
+/// Decides locally whether a URL belongs to a host supported by a provider. Every host a provider
+/// lists counts, whatever the health it reports: that is a snapshot, while the list is cached for
+/// hours, and a host wrongly left out would be downloaded directly (its web page) instead. The
+/// unlock tells whether the host works, and the next account or the built-in plugin is tried if
+/// not.
 #[derive(Debug, Default)]
 pub struct HostMatcher {
     domains: HashSet<String>,

@@ -409,9 +409,11 @@ installation.
 ## Accounts (debrid services and premium hosters)
 
 Several debrid providers are supported, as well as the premium accounts of some hosters (through
-their official APIs). Accounts are tried in `position` order (lowest first); if an account cannot
-unlock a link (host unsupported, quota reached, ...) the next one is tried, then the built-in
-plugins and the direct download. A hoster account only handles links of its own site.
+their official APIs). For a link, the accounts supporting its host are tried in this order: the
+host's own premium account, debrid services in `position` order (lowest first), the host's own
+account without premium; accounts put aside after a quota or temporary error come last. If none
+can unlock it, the built-in plugins and the direct download follow. A hoster account only handles
+links of its own site.
 
 ```ts
 type Provider = {

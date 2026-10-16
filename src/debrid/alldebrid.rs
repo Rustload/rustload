@@ -357,9 +357,8 @@ fn host_matcher(data: &Value) -> HostMatcher {
     let mut matcher = HostMatcher::default();
     for group in ["hosts", "streams", "redirectors"] {
         let Some(hosts) = data[group].as_object() else { continue };
-        // `status` only says whether AllDebrid's own test of the host passed in the last minutes
-        // (and only some hosts are tested): a host marked down is still tried, the unlock
-        // answers whether it works.
+        // `status` only says whether AllDebrid's own test of the host passed in the last minutes,
+        // and only some hosts are tested (see `HostMatcher`).
         for host in hosts.values() {
             for domain in host["domains"].as_array().into_iter().flatten() {
                 matcher.add_domain(domain.as_str().unwrap_or_default());

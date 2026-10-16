@@ -181,11 +181,22 @@ premium download.
 
 ### Order and fallback
 
-Accounts are used from top to bottom (drag to reorder). For each link, the first account whose
-provider supports the host unlocks it; if it fails because of a quota or a temporary problem, the
-next one is tried and the failing account is put aside for a while. Links that no account supports
-go to the built-in hoster plugins (MEGA, Google Drive, Dropbox, MediaFire, Pixeldrain, Gofile), then
-are downloaded directly. Links of media sites (YouTube...) go to yt-dlp first, see below.
+Rustload picks the best way to download each link with the accounts you have:
+
+1. **Media sites** (YouTube...) go to yt-dlp, see below.
+2. **Your premium account of the host itself**: a 1fichier link goes to your 1fichier account while
+   it is premium, rather than to a debrid service.
+3. **Debrid services listing the host**, from top to bottom of the account list (drag to reorder).
+   Each service's list of supported hosts comes from its API and is refreshed every 6 hours; a host
+   counts even when the service reports it as down at that moment, the unlock tells.
+4. The host's own account without premium (free or expired).
+5. **Built-in hoster plugins** (MEGA, Google Drive, Dropbox, MediaFire, Pixeldrain, Gofile), also
+   when every account above failed for that link.
+6. The link itself, downloaded directly.
+
+An account that fails because of a quota or a temporary problem is put aside for a while and the
+next one is tried; an offline file stops there. The link check (and the add dialog) shows which
+account or plugin will download each link.
 
 Magnets and `.torrent` files are sent to the first account able to handle them; the package shows
 the remote progress until the files are ready, then downloads them like any other file.

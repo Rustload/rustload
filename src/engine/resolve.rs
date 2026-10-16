@@ -1,5 +1,6 @@
-//! Turns a user link into a direct download URL: pinned debrid account, then debrid accounts in
-//! priority order, then a built-in hoster plugin, then the link itself.
+//! Turns a user link into a direct download URL: pinned debrid account, then the accounts
+//! supporting the host (the host's own premium account, debrid services, see
+//! `DebridManager::candidates`), then a built-in hoster plugin, then the link itself.
 
 use std::sync::Arc;
 
@@ -52,15 +53,20 @@ pub async fn resolve(engine: &Engine, download: &DownloadRow) -> Result<Resolved
         return Ok(Resolved::unlocked(unlocked, account.provider));
     }
 
+    let hoster = engine.hosters.find(&download.url);
     if engine.settings.get().debrid.enabled {
         match engine.debrid.unlock(&download.url, None).await {
             Ok(Some((unlocked, account))) => return Ok(Resolved::unlocked(unlocked, account.provider)),
             Ok(None) => {}
+            // No account could serve it (quota, host down...): the built-in plugin may.
+            Err(error) if hoster.is_some() && !matches!(error, DebridError::LinkDown(_)) => {
+                tracing::info!("{}: {error}, trying the built-in plugin", download.url);
+            }
             Err(error) => return Err(into_task_error(error)),
         }
     }
 
-    if let Some(hoster) = engine.hosters.find(&download.url) {
+    if let Some(hoster) = hoster {
         let url = url::Url::parse(&download.url).map_err(|e| TaskError::Fatal(e.to_string()))?;
         let link = hoster.resolve(&engine.download_client(), &url).await.map_err(hoster_error)?;
         return Ok(Resolved {

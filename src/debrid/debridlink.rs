@@ -103,7 +103,9 @@ impl DebridService for DebridLink {
     async fn supported_hosts(&self) -> Result<HostMatcher, DebridError> {
         let hosts: Vec<Value> = self.get("/downloader/hosts", &[("keys", "name,type,status,domains,regexs")]).await?;
         let mut matcher = HostMatcher::default();
-        for host in hosts.iter().filter(|h| h["status"].as_i64().unwrap_or(1) >= 1) {
+        // Hosts are kept whatever their `status`: the unlock says whether one works today (see
+        // `HostMatcher`).
+        for host in &hosts {
             for domain in host["domains"].as_array().into_iter().flatten().filter_map(Value::as_str) {
                 matcher.add_domain(domain);
             }

@@ -9,10 +9,14 @@ use std::{
 use anyhow::Result;
 use tokio::sync::{Mutex, RwLock};
 
-use super::{AccountStatus, DebridError, DebridService, HostMatcher, LinkInfo, RemoteFile, TransferStatus, Unlocked};
+use super::{
+    AccountStatus, DebridError, DebridService, HostMatcher, LinkInfo, ProviderKind, RemoteFile, TransferStatus,
+    Unlocked,
+};
 use crate::{
     db::{self, Db},
     models::AccountRow,
+    util::now,
 };
 
 /// How long a provider's supported-host list is trusted.
@@ -36,6 +40,8 @@ pub struct AccountHandle {
     pub label: String,
     pub provider: &'static str,
     pub magnets: bool,
+    /// A debrid service, or the account of a single hoster.
+    pub kind: ProviderKind,
     service: Arc<dyn DebridService>,
     db: Db,
 }
@@ -133,6 +139,7 @@ impl DebridManager {
             label: row.label.clone(),
             provider: info.id,
             magnets: info.magnets,
+            kind: info.kind,
             service,
             db: self.db.clone(),
         })
@@ -151,8 +158,9 @@ impl DebridManager {
         self.accounts.read().await.iter().find(|a| a.magnets).cloned()
     }
 
-    /// Accounts whose provider supports the host of `url`, in priority order. Accounts in
-    /// cooldown come last, so they are only used when nothing else can serve the link.
+    /// Accounts whose provider supports the host of `url`, best first (see [`Rank`]), in the order
+    /// of the account list within each rank. Accounts in cooldown come last, so they are only used
+    /// when nothing else can serve the link.
     pub async fn candidates(&self, url: &str) -> Vec<AccountHandle> {
         let mut result = Vec::new();
         for account in self.enabled().await {
@@ -162,9 +170,18 @@ impl DebridManager {
                 result.push(account);
             }
         }
+        let premium = match db::accounts::list(&self.db).await {
+            Ok(rows) => rows.into_iter().filter(|row| is_premium(row, now())).map(|row| row.id).collect(),
+            Err(error) => {
+                tracing::warn!("cannot read the premium status of the accounts: {error:#}");
+                Vec::new()
+            }
+        };
         let cooldowns = self.cooldowns.lock().expect("poisoned");
         let now = Instant::now();
-        result.sort_by_key(|a| cooldowns.get(&a.id).is_some_and(|until| *until > now));
+        result.sort_by_key(|a| {
+            (cooldowns.get(&a.id).is_some_and(|until| *until > now), Rank::of(a.kind, premium.contains(&a.id)))
+        });
         result
     }
 
@@ -266,12 +283,106 @@ impl DebridManager {
     }
 }
 
+/// How well an account suits a link of a host it supports.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Rank {
+    /// The user's premium account of the host itself: its own speed, no debrid quota.
+    OwnPremium,
+    /// A debrid service listing the host.
+    Debrid,
+    /// The host's own account without premium (free or expired): tried last.
+    OwnFree,
+}
+
+impl Rank {
+    fn of(kind: ProviderKind, premium: bool) -> Self {
+        match (kind, premium) {
+            (ProviderKind::Hoster, true) => Self::OwnPremium,
+            (ProviderKind::Debrid, _) => Self::Debrid,
+            (ProviderKind::Hoster, false) => Self::OwnFree,
+        }
+    }
+}
+
+/// Premium at `now`, as of the last check of the account.
+fn is_premium(row: &AccountRow, now: i64) -> bool {
+    row.premium && row.premium_until.is_none_or(|until| until > now)
+}
+
 #[cfg(test)]
 mod tests {
     use async_trait::async_trait;
 
     use super::*;
     use crate::debrid::ProviderInfo;
+
+    /// A provider supporting 1fichier: a debrid service, or 1fichier itself.
+    struct Supports1fichier(&'static str);
+
+    #[async_trait]
+    impl DebridService for Supports1fichier {
+        fn info(&self) -> ProviderInfo {
+            crate::debrid::provider(self.0).unwrap()
+        }
+
+        async fn account_status(&self) -> Result<AccountStatus, DebridError> {
+            Err(DebridError::Unsupported)
+        }
+
+        async fn supported_hosts(&self) -> Result<HostMatcher, DebridError> {
+            Ok(HostMatcher::from_domains(&["1fichier.com"]))
+        }
+
+        async fn unlock(&self, _link: &str, _password: Option<&str>) -> Result<Unlocked, DebridError> {
+            Err(DebridError::Unsupported)
+        }
+
+        async fn transfer_status(&self, _id: &str) -> Result<TransferStatus, DebridError> {
+            Err(DebridError::Unsupported)
+        }
+    }
+
+    async fn candidate_ids(manager: &DebridManager) -> Vec<i64> {
+        manager.candidates("https://1fichier.com/?abc123").await.iter().map(|a| a.id).collect()
+    }
+
+    #[tokio::test]
+    async fn prefers_the_hosts_own_premium_account() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = db::open(&dir.path().join("rustload.db")).await.unwrap();
+        let manager = DebridManager::new(db.clone(), reqwest::Client::new()).await.unwrap();
+        // In the account list: the debrid service first, then the 1fichier account.
+        let debrid = db::accounts::insert(&db, "alldebrid", "AllDebrid", "{}", true).await.unwrap();
+        let own = db::accounts::insert(&db, "1fichier", "1fichier", "{}", true).await.unwrap();
+        let handle = |id, provider: &'static str| AccountHandle {
+            id,
+            label: provider.into(),
+            provider,
+            magnets: false,
+            kind: crate::debrid::provider(provider).unwrap().kind,
+            service: Arc::new(Supports1fichier(provider)),
+            db: db.clone(),
+        };
+        *manager.accounts.write().await = vec![handle(debrid, "alldebrid"), handle(own, "1fichier")];
+
+        // A free 1fichier account comes after the debrid service.
+        assert_eq!(candidate_ids(&manager).await, [debrid, own]);
+
+        // Premium: it goes first, whatever the list order.
+        let premium = |until| AccountStatus { username: None, premium: true, premium_until: until, traffic_left: None };
+        db::accounts::record_check(&db, own, Ok(&premium(Some(now() + 3600)))).await.unwrap();
+        assert_eq!(candidate_ids(&manager).await, [own, debrid]);
+
+        // Out of quota for a while: the debrid service serves the link meanwhile.
+        manager.cooldowns.lock().unwrap().insert(own, Instant::now() + Duration::from_secs(60));
+        assert_eq!(candidate_ids(&manager).await, [debrid, own]);
+        manager.cooldowns.lock().unwrap().clear();
+
+        // Premium expired.
+        db::accounts::record_check(&db, own, Ok(&premium(Some(now() - 1)))).await.unwrap();
+        assert_eq!(candidate_ids(&manager).await, [debrid, own]);
+        db.close().await;
+    }
 
     /// A service whose access token is renewed by any call.
     #[derive(Default)]
@@ -317,6 +428,7 @@ mod tests {
             label: "RD".into(),
             provider: "realdebrid",
             magnets: true,
+            kind: ProviderKind::Debrid,
             service: Arc::new(Refreshing::default()),
             db: db.clone(),
         };

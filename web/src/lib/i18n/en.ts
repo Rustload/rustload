@@ -672,7 +672,7 @@ export const en = {
     },
     accounts: {
       intro:
-        'Debrid services unlock links from many file hosts and handle magnets and torrents; premium accounts of a file host unlock that host. Accounts are tried from top to bottom.',
+        'Debrid services unlock links from many file hosts and handle magnets and torrents; premium accounts of a file host unlock that host. For each link, your premium account of its host comes first, then the debrid services from top to bottom.',
       add: 'Add account',
       empty: 'No account yet. Without one, links are downloaded directly from their host.',
       premium: 'Premium',
