@@ -16,7 +16,7 @@ Conventions:
   `/api/integrations/*`, `/api/system/diagnostics`, `/api/media/install`, `/api/media/ffmpeg/install`
   and `/api/extraction/*` (`403 SESSION_REQUIRED`).
 - Authentication is a session cookie (`rustload_session`, HttpOnly, SameSite=Strict). Every `/api/*` route
-  except `/api/auth/status`, `/api/auth/login`, `/api/auth/setup` and `/api/health` answers
+  except `/api/auth/status`, `/api/auth/login`, `/api/auth/setup`, `/api/auth/handoff` and `/api/health` answers
   `401 {code:"UNAUTHORIZED"}` without a valid session (unless auth is disabled server-side).
 
 ---
@@ -25,13 +25,20 @@ Conventions:
 
 | Method | Path | Body | Response |
 |---|---|---|---|
-| GET | `/api/auth/status` | – | `{ auth_enabled: bool, setup_required: bool, user: { username } \| null }` |
+| GET | `/api/auth/status` | – | `{ auth_enabled: bool, setup_required: bool, user: { username } \| null, desktop: bool }` |
 | POST | `/api/auth/setup` | `{ username, password }` | `{ user: { username } }` + cookie. `409 ALREADY_SETUP` if a user exists |
 | POST | `/api/auth/login` | `{ username, password, remember?: bool }` | `{ user: { username } }` + cookie. `401 INVALID_CREDENTIALS` |
 | POST | `/api/auth/logout` | – | `204` |
 | PUT | `/api/auth/password` | `{ current_password, new_password }` | `204`. `400 INVALID_CREDENTIALS` |
+| GET | `/api/auth/handoff?code=…&next=…` | – | Desktop app only: `303` to `next` + cookie. `401` for an unknown or used code, `404` on a server |
 
 Password rules: at least 8 characters.
+
+`desktop` is `true` when Rustload runs inside the desktop app on this computer. Its interface only
+answers on `127.0.0.1`, its account has a random password, and the app opens the window through
+`/api/auth/handoff` with a single-use code valid for one minute; `next` must be a path of the
+interface (anything else redirects to `/`). There, `current_password` may be left out of
+`PUT /api/auth/password`: setting a password lets a browser on the same computer sign in.
 
 ## System / queue control
 

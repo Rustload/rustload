@@ -1,8 +1,17 @@
 # cargo-about configuration: the licenses of the Rust crates compiled into the release binary.
 # Regenerate THIRD-PARTY-LICENSES.md with `cargo about generate about.hbs -o THIRD-PARTY-LICENSES.md`.
 
-# The binaries Rustload distributes (the Docker image) are built for these targets only.
-targets = ["x86_64-unknown-linux-musl", "aarch64-unknown-linux-musl"]
+# The binaries Rustload distributes (Docker image, release archives, desktop app) are built for
+# these targets. The desktop app has its own list: `cd desktop && cargo about generate --fail --locked -c ../about.toml
+# ../about.hbs -o THIRD-PARTY-LICENSES.md`.
+targets = [
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+]
 ignore-build-dependencies = true
 ignore-dev-dependencies = true
 

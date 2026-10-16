@@ -68,6 +68,30 @@ Dependabot updates are not blocked on it.
 It talks to the API with the API key and follows the same design rules as the web interface. CI
 runs `npx web-ext lint --source-dir extension`. See [extension/README.md](extension/README.md).
 
+## Desktop app
+
+`desktop/` is a [Tauri](https://tauri.app) app in a Cargo workspace of its own: run its checks
+there (`cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`). It embeds
+the interface from `web/dist`, so build that first. On Linux it needs the WebKitGTK headers
+(`libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev`).
+
+```sh
+cd web && pnpm build && cd ../desktop
+cargo run                                         # the app, with a console for its logs
+npx @tauri-apps/cli@2.12.3 build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":false}}'
+```
+
+The release workflow signs the update files with the updater key (`TAURI_SIGNING_PRIVATE_KEY`
+secret); local installers skip them as above. To try an update, point a debug build at a local
+`latest.json` with `RUSTLOAD_UPDATE_URL=http://127.0.0.1:…/latest.json` (built by
+`.github/scripts/update_manifest.py` from signed files).
+
+Its data lives in the system's app data folder (`%LOCALAPPDATA%\io.github.rustload`,
+`~/Library/Application Support/io.github.rustload`, `~/.local/share/io.github.rustload`): delete
+`desktop.json` there to see the first-start page again. Its dependencies' licenses go to
+`desktop/THIRD-PARTY-LICENSES.md`, with the same cargo-about command run in `desktop/`:
+`cargo about generate --fail --locked -c ../about.toml ../about.hbs -o THIRD-PARTY-LICENSES.md`.
+
 ## Adding providers and plugins
 
 See [docs/architecture.md](docs/architecture.md#adding-a-debrid-provider) for debrid providers and

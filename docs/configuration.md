@@ -531,3 +531,32 @@ statistics are not part of it.
 
 For a complete copy, back up the config folder: `rustload.db` (SQLite, safe to copy while
 Rustload is stopped) holds the queue, history, statistics, settings and accounts.
+
+## Desktop app
+
+The desktop app needs no environment variable. On first start it asks how it is used; *Change
+mode…* in the menu of its icon in the notification area asks again (the app restarts).
+
+- **On this computer**: the interface answers on this computer only, on port 8800 (or the next free
+  one when another Rustload already uses it: point the browser extension there), and opens without
+  a login. Downloads go to *Downloads/Rustload*; categories can send them anywhere else. The
+  settings, queue and history live in the app's data folder (`%LOCALAPPDATA%\io.github.rustload`
+  on Windows, `~/Library/Application Support/io.github.rustload` on macOS,
+  `~/.local/share/io.github.rustload` on Linux), backed up like a server's config folder. *Settings
+  › Security* sets a password to sign in from a browser on the same computer.
+- **With a Rustload server**: give the server's address (`http://nas.local:8800`, or the address
+  of its reverse proxy) and its API key (*Settings › Integrations*). The window shows the server's
+  interface and signs in once; the icon follows the server's speed and notifications with the key.
+  The key is kept in `desktop.json` in the data folder above.
+
+The icon's menu pauses or resumes everything, starts the app with the computer (in the
+notification area only) and, on Windows and Linux, makes it open `magnet:` links: off by default,
+as it takes them from a torrent client. Closing the window keeps the app running; *Quit Rustload*
+stops it, letting transfers stop cleanly.
+
+The app updates itself from the GitHub releases: it checks a minute after starting and every six
+hours, downloads a new version in the background and only accepts it if it is signed with the
+project's key. It installs it once nothing is downloading and its window is not in front (Windows
+shows a small progress window), or right away from the first line of the icon's menu. The `.deb`
+package is updated by downloading the new one; the AppImage, the Windows and the macOS apps update
+themselves.

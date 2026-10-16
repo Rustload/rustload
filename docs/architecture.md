@@ -27,7 +27,8 @@ page explains how the pieces fit together, for contributors.
 
 | Path | Role |
 |---|---|
-| `src/main.rs` | Startup: configuration, privilege drop, logging, database, engine, HTTP server, shutdown |
+| `src/lib.rs` | `Server::start`: privilege drop, logging, database, engine, HTTP server; `Server::stop`; the `Handle` the desktop app drives it with |
+| `src/main.rs` | The server binary: configuration from the environment, stop on Ctrl+C or SIGTERM |
 | `src/config.rs` | Environment variables |
 | `src/settings.rs` | User settings: JSON document in the database, validated, broadcast through a `watch` channel |
 | `src/db/` | One module per table; plain SQL with `sqlx` |
@@ -47,6 +48,7 @@ page explains how the pieces fit together, for contributors.
 | `src/logging.rs` | stdout + rotating file + in-memory buffer streamed to the UI |
 | `src/privileges.rs` | `PUID`/`PGID`/`UMASK` handling |
 | `web/` | Svelte 5 + Tailwind interface (see `web/DESIGN.md`) |
+| `desktop/` | The desktop app (Tauri), a Cargo workspace of its own (below) |
 
 ## Data model
 
@@ -182,3 +184,27 @@ in `Hosters::default`. Plugins never touch files; the engine downloads what they
 any reverse-proxy sub-path). It is built into `web/dist` and embedded in the binary by `rust-embed`
 (read from disk in debug builds). One `EventSource` connection keeps the stores up to date;
 everything else is plain `fetch` through `src/lib/api`.
+
+## Desktop app
+
+`desktop/` wraps the same engine and interface in a Tauri app. It is a separate Cargo workspace with
+its own lock file, so the server, its Docker image and its checks never build it; it depends on the
+`rustload` library by path. On first start `desktop/ui/index.html` (the only page bundled in the
+app, the one allowed to call its commands) asks how it is used, and the choice is kept in
+`desktop.json` in the app's data folder:
+
+- **On this computer** (`backend::Backend::Local`): `Config::desktop` starts the server on
+  `127.0.0.1` (port 8800 unless taken), with an account named after the user and a random password.
+  The window opens the interface through `Handle::login_url`, a single-use `/api/auth/handoff`
+  address, so there is no login screen.
+- **Gateway to a server** (`Backend::Remote`): no engine runs; the window shows the server's own
+  interface (its login screen once, then its session cookie), and the app follows
+  `/api/events` with the server's API key.
+
+Either way `tray.rs` turns the `stats` and `notice` events into the tray tooltip, the pause item and
+system notifications, and magnet links handed over by the system (command line on Windows and Linux,
+an event on macOS) open the add dialog at `/?add=…`. A second launch passes its arguments to the
+running instance (single-instance plugin). `updater.rs` checks the release's `latest.json`
+(written by `.github/scripts/update_manifest.py`), downloads signed updates and installs them in a
+quiet moment. The interface window loads an `http://` address, so it
+has no access to the app's commands.

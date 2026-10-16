@@ -4,7 +4,13 @@ Rustload itself is released under the [MIT license](LICENSE). It ships with the 
 third-party work, under their own licenses. The full license texts of everything compiled into the
 binary, the web interface and the browser extension are in
 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md); the Docker image carries both files in
-`/usr/share/doc/rustload/`.
+`/usr/share/doc/rustload/` and the release archives next to the binary. The desktop app also
+compiles in [Tauri](https://tauri.app) and its dependencies (permissive licenses, plus the Mozilla
+Public License 2.0 for five crates used unmodified: cssparser, cssparser-macros, selectors,
+dtoa-short and option-ext): they are listed in
+[desktop/THIRD-PARTY-LICENSES.md](desktop/THIRD-PARTY-LICENSES.md), installed with the app. On
+Windows it uses the system's Microsoft Edge WebView2 runtime, which its installer downloads from
+Microsoft when it is missing.
 
 ## Compiled into the binary, the web interface and the browser extension
 

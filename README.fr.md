@@ -8,7 +8,8 @@
 <p align="center">
   Le gestionnaire de téléchargements de votre serveur. Collez n'importe quoi : Rustload vérifie, range
   et télécharge à pleine vitesse.<br>
-  Un seul petit binaire, une image Docker, une interface web qui marche aussi sur téléphone.
+  Un seul petit binaire, une image Docker, une app de bureau et une interface web qui marche aussi
+  sur téléphone.
 </p>
 
 <p align="center">
@@ -115,6 +116,25 @@ du tableau de bord. Les images sont publiées pour `linux/amd64` et `linux/arm64
 d'environnement, catégories, planification et règles de vitesse, comptes, sites vidéo, dossier
 surveillé, Click'n'Load, bot Telegram, Prometheus, scripts et proxy inverse.
 
+## App de bureau
+
+Rustload existe aussi en app pour Windows, macOS et Linux (AppImage, .deb), dans la
+[dernière version](https://github.com/rustload/rustload/releases/latest) : une fenêtre à part et une
+icône dans la zone de notification qui affiche la vitesse, met tout en pause et continue une fois la
+fenêtre fermée. Au premier lancement, elle demande comment vous voulez l'utiliser :
+
+- **Sur cet ordinateur** : Rustload télécharge dans *Téléchargements › Rustload*, s'ouvre sans
+  connexion et peut se lancer au démarrage. Sous Windows, 7-Zip et ffmpeg s'installent en un clic
+  depuis les paramètres.
+- **Avec votre serveur Rustload** : l'app pilote le Rustload de votre NAS ou de votre serveur Docker
+  avec son adresse et sa clé d'API (*Paramètres › Intégrations*), sans ouvrir de navigateur.
+
+Dans les deux cas, elle ouvre les liens magnet, signale les paquets terminés ou en échec par des
+notifications système et se met à jour toute seule (mises à jour signées, installées quand vous ne
+l'utilisez pas). Les installeurs ne sont pas encore signés : Windows SmartScreen demande une
+confirmation (*Informations complémentaires › Exécuter quand même*) et macOS veut que l'app soit
+ouverte depuis son menu contextuel la première fois.
+
 ## Sans Docker
 
 Chaque [version](https://github.com/rustload/rustload/releases/latest) fournit un binaire prêt à
@@ -127,8 +147,9 @@ l'emploi pour Linux (x86-64 et ARM64, statique : toutes distributions), Windows 
 
 Rustload écoute sur le port 8800 et garde ses réglages dans `./config` et ses téléchargements dans
 `./downloads`, à côté de l'endroit où il est lancé ; `RUSTLOAD_PORT`, `RUSTLOAD_CONFIG_DIR` et
-`RUSTLOAD_DOWNLOAD_DIR` changent cela. Installez 7-Zip pour les archives RAR/7z et ffmpeg pour les
-sites vidéo ; Rustload installe yt-dlp lui-même depuis *Paramètres › Sites vidéo*. Le binaire macOS
+`RUSTLOAD_DOWNLOAD_DIR` changent cela. Rustload installe yt-dlp lui-même depuis *Paramètres › Sites
+vidéo* ; sous Windows, il installe de la même façon 7-Zip (archives RAR/7z) et ffmpeg (sites vidéo),
+ailleurs ils viennent de votre gestionnaire de paquets. Le binaire macOS
 n'est pas notarié : autorisez-le une fois avec `xattr -d com.apple.quarantine rustload`.
 
 ## Compiler depuis les sources

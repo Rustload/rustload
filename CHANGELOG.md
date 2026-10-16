@@ -11,8 +11,10 @@ All notable changes to this project are documented here. The format follows
 - Desktop app for Windows, macOS and Linux: Rustload in a window of its own that opens without a
   login, with an icon in the notification area that shows the speed, pauses everything and keeps
   downloading once the window is closed. It can start with the computer, open magnet links and
-  turns finished and failed packages into system notifications. The installers are not signed
-  yet.
+  turns finished and failed packages into system notifications. On first start it asks whether to
+  download on this computer or to drive a Rustload server (gateway mode, with the server's API key).
+  It updates itself with signed updates, installed when nothing is downloading. The installers are
+  not signed yet.
 - On Windows, ffmpeg (yt-dlp's recommended build) and 7-Zip install in one click from *Settings ›
   Video sites* and *Settings › Extraction*, checked against their checksums and used without a
   restart.
