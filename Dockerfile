@@ -46,6 +46,7 @@ ARG TARGETARCH
 ARG SEVENZIP_VERSION=2602
 ARG SEVENZIP_SHA256_AMD64=41aaba7b1235304ab5aa0624530c67ae829496cd29e875925271efdccc28c03e
 ARG SEVENZIP_SHA256_ARM64=70ea6cc737ae1495ea2d7eb20ef3120fe579bd3f1a83a9d2362b62ec5bde2bba
+# The archives use xz's x86/ARM64 filters, which BusyBox's built-in unxz cannot decode: xz-utils does.
 RUN apk add --no-cache curl xz \
  && case "$TARGETARCH" in \
       amd64) arch=x64; sum="$SEVENZIP_SHA256_AMD64" ;; \
@@ -54,7 +55,7 @@ RUN apk add --no-cache curl xz \
     esac \
  && curl -fsSL -o /tmp/7z.tar.xz "https://7-zip.org/a/7z${SEVENZIP_VERSION}-linux-${arch}.tar.xz" \
  && echo "$sum  /tmp/7z.tar.xz" | sha256sum -c - \
- && tar -xJf /tmp/7z.tar.xz -C /tmp 7zzs \
+ && xz -dc /tmp/7z.tar.xz | tar -x -C /tmp 7zzs \
  && install -m 755 /tmp/7zzs /7zz
 
 # --- yt-dlp -----------------------------------------------------------------------------------
