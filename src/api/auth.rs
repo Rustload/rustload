@@ -251,7 +251,12 @@ pub async fn logout(
     if let Some(token_hash) = &caller.token_hash {
         db::users::delete_session(state.db(), token_hash).await?;
     }
-    let removal = Cookie::build((COOKIE, "")).path("/").build();
+    let removal = Cookie::build((COOKIE, ""))
+        .path("/")
+        .http_only(true)
+        .same_site(SameSite::Strict)
+        .secure(state.config.secure_cookies)
+        .build();
     Ok((jar.remove(removal), StatusCode::NO_CONTENT).into_response())
 }
 

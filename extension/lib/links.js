@@ -127,11 +127,11 @@ function isSingleMedia(parsed, segments) {
   const host = parsed.hostname.replace(/^(www|m|mobile)\./, '')
   const path = parsed.pathname
   if (host === 'youtu.be') return segments.length === 1
-  if (host.endsWith('youtube.com')) return (path === '/watch' && parsed.searchParams.has('v')) || segments[0] === 'shorts'
-  if (host.endsWith('vimeo.com')) return /^\d+$/.test(segments.at(-1) ?? '')
-  if (host.endsWith('soundcloud.com')) return segments.length === 2 && segments[1] !== 'sets'
-  if (host.endsWith('bandcamp.com')) return segments[0] === 'track'
-  if (host.endsWith('reddit.com')) return segments.includes('comments')
+  if (onSite(host, ['youtube.com'])) return (path === '/watch' && parsed.searchParams.has('v')) || segments[0] === 'shorts'
+  if (onSite(host, ['vimeo.com'])) return /^\d+$/.test(segments.at(-1) ?? '')
+  if (onSite(host, ['soundcloud.com'])) return segments.length === 2 && segments[1] !== 'sets'
+  if (onSite(host, ['bandcamp.com'])) return segments[0] === 'track'
+  if (onSite(host, ['reddit.com'])) return segments.includes('comments')
   return /\/(video|videos|status|reel|p|clip|comments)\//.test(`${path}/`)
 }
 
