@@ -1,0 +1,40 @@
+[package]
+name = "rustload-desktop"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.94"
+description = "Rustload in a window of its own, with an icon in the notification area"
+license = "MIT"
+repository = "https://github.com/rustload/rustload"
+publish = false
+
+# A workspace of its own: the server, its Docker image and its checks never build the desktop app.
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+anyhow = "1"
+futures-util = "0.3"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "http2", "stream", "json"] }
+rustload = { path = ".." }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sys-locale = "0.3"
+tauri = { version = "2.12", features = ["tray-icon"] }
+tauri-plugin-autostart = "2.7"
+tauri-plugin-deep-link = "2.6"
+tauri-plugin-dialog = "2.8"
+tauri-plugin-notification = "2.7"
+tauri-plugin-opener = "2.7"
+tauri-plugin-single-instance = "2.5"
+tauri-plugin-window-state = "2"
+tokio = { version = "1", features = ["sync"] }
+url = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

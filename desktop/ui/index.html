@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rustload</title>
+    <style>
+      :root {
+        --bg: #e8ecef;
+        --panel: #f5f7f8;
+        --raised: #ffffff;
+        --line: #cdd5dc;
+        --line-strong: #b3bec7;
+        --fg: #18212a;
+        --fg-muted: #56636f;
+        --signal: #c24e1b;
+        --signal-ink: #a6420f;
+        --signal-fg: #ffffff;
+        --signal-wash: color-mix(in oklab, #c24e1b 13%, transparent);
+        --bad: #c22f55;
+        --bad-wash: color-mix(in oklab, #c22f55 12%, transparent);
+        --focus: #2f6db5;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c242c;
+          --panel: #222c35;
+          --raised: #2a3540;
+          --line: #34414d;
+          --line-strong: #465563;
+          --fg: #e4e9ed;
+          --fg-muted: #93a1ad;
+          --signal: #f27318;
+          --signal-ink: #ff9150;
+          --signal-fg: #1f0f04;
+          --signal-wash: color-mix(in oklab, #f27318 12%, transparent);
+          --bad: #f2738a;
+          --bad-wash: color-mix(in oklab, #f2738a 12%, transparent);
+          --focus: #79aee9;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--fg);
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        display: flex;
+        flex-direction: column;
+        padding: 32px 36px 28px;
+        user-select: none;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+      header svg {
+        width: 26px;
+        height: 26px;
+      }
+      header svg path {
+        fill: var(--signal);
+      }
+      header span {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.25;
+        font-weight: 650;
+        margin: 0 0 18px;
+      }
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 12px;
+      }
+      .choice {
+        padding: 14px 16px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .choice:hover {
+        border-color: var(--line-strong);
+      }
+      .choice:has(input[type='radio']:checked) {
+        border-color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .pick {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 12px;
+        cursor: pointer;
+      }
+      .pick input {
+        margin: 4px 0 0;
+        accent-color: var(--signal);
+        width: 16px;
+        height: 16px;
+      }
+      .title {
+        font-weight: 600;
+      }
+      .hint {
+        grid-column: 2;
+        color: var(--fg-muted);
+        font-size: 13.5px;
+      }
+      .server {
+        display: none;
+        gap: 10px;
+        margin: 12px 0 0 28px;
+      }
+      .choice:has(input[type='radio']:checked) .server {
+        display: grid;
+      }
+      .server label {
+        display: grid;
+        gap: 4px;
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .server small {
+        font-weight: 400;
+        color: var(--fg-muted);
+      }
+      input[type='text'],
+      input[type='password'] {
+        font: inherit;
+        color: var(--fg);
+        background: var(--raised);
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        padding: 7px 10px;
+        width: 100%;
+        user-select: text;
+      }
+      input:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .error {
+        margin: 14px 0 0;
+        padding: 9px 12px;
+        border-radius: 8px;
+        background: var(--bad-wash);
+        color: var(--bad);
+        font-size: 13.5px;
+      }
+      .error[hidden] {
+        display: none;
+      }
+      footer {
+        margin-top: auto;
+        padding-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        border: 0;
+        border-radius: 8px;
+        padding: 9px 20px;
+        background: var(--signal);
+        color: var(--signal-fg);
+        cursor: pointer;
+      }
+      button:hover {
+        background: var(--signal-ink);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <svg viewBox="2 2 28 28" aria-hidden="true">
+        <path d="M9 2H12.2L14.6 24L14.4 2H17.6L17.4 24L19.8 2H23V15H30L16 30L2 15H9Z" />
+      </svg>
+      <span>rustload</span>
+    </header>
+    <form id="form" novalidate>
+      <h1 data-text="question"></h1>
+      <fieldset>
+        <div class="choice">
+          <label class="pick">
+            <input type="radio" name="mode" value="local" checked />
+            <span class="title" data-text="localTitle"></span>
+            <span class="hint" data-text="localHint"></span>
+          </label>
+        </div>
+        <div class="choice">
+          <label class="pick">
+            <input type="radio" name="mode" value="server" />
+            <span class="title" data-text="serverTitle"></span>
+            <span class="hint" data-text="serverHint"></span>
+          </label>
+          <div class="server">
+            <label>
+              <span data-text="address"></span>
+              <input id="url" type="text" placeholder="http://nas.local:8800" spellcheck="false" autocomplete="off" />
+            </label>
+            <label>
+              <span><span data-text="key"></span> <small data-text="keyHint"></small></span>
+              <input id="key" type="password" spellcheck="false" autocomplete="off" />
+            </label>
+          </div>
+        </div>
+      </fieldset>
+      <p id="error" class="error" role="alert" hidden></p>
+    </form>
+    <footer>
+      <button id="go" type="submit" form="form" data-text="continue"></button>
+    </footer>
+    <script>
+      const TEXT = {
+        en: {
+          question: 'How do you want to use Rustload?',
+          localTitle: 'On this computer',
+          localHint: 'Rustload downloads here, into Downloads › Rustload.',
+          serverTitle: 'With my Rustload server',
+          serverHint:
+            'The app drives the Rustload of your NAS or Docker server: notifications, magnet links and pause from the notification area.',
+          address: 'Server address',
+          key: 'API key',
+          keyHint: '(the server’s Settings › Integrations)',
+          continue: 'Continue',
+          checking: 'Connecting…',
+          missing: 'Enter the server’s address and its API key.',
+          unreachable: 'Nothing answers at this address. Check it and that the server is running.',
+          notRustload: 'This address does not lead to Rustload.',
+          badKey: 'The server refuses this API key.',
+        },
+        fr: {
+          question: 'Comment voulez-vous utiliser Rustload ?',
+          localTitle: 'Sur cet ordinateur',
+          localHint: 'Rustload télécharge ici, dans Téléchargements › Rustload.',
+          serverTitle: 'Avec mon serveur Rustload',
+          serverHint:
+            'L’app pilote le Rustload de votre NAS ou de votre serveur Docker : notifications, liens magnet et pause depuis la zone de notification.',
+          address: 'Adresse du serveur',
+          key: 'Clé d’API',
+          keyHint: '(Paramètres › Intégrations du serveur)',
+          continue: 'Continuer',
+          checking: 'Connexion…',
+          missing: 'Indiquez l’adresse du serveur et sa clé d’API.',
+          unreachable: 'Rien ne répond à cette adresse. Vérifiez-la et que le serveur fonctionne.',
+          notRustload: 'Cette adresse ne mène pas à Rustload.',
+          badKey: 'Le serveur refuse cette clé d’API.',
+        },
+      }
+      const lang = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en'
+      const t = TEXT[lang]
+      document.documentElement.lang = lang
+      for (const el of document.querySelectorAll('[data-text]')) el.textContent = t[el.dataset.text]
+
+      const { invoke } = window.__TAURI__.core
+      const form = document.getElementById('form')
+      const go = document.getElementById('go')
+      const url = document.getElementById('url')
+      const key = document.getElementById('key')
+      const error = document.getElementById('error')
+      const mode = () => form.elements.mode.value
+
+      function fail(code) {
+        error.textContent = t[code] ?? code
+        error.hidden = false
+        go.disabled = false
+        go.textContent = t.continue
+      }
+
+      invoke('current').then((current) => {
+        if (current.mode === 'server') {
+          form.elements.mode.value = 'server'
+          url.value = current.url
+        }
+      })
+      form.addEventListener('change', () => {
+        error.hidden = true
+        if (mode() === 'server' && !url.value) url.focus()
+      })
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        error.hidden = true
+        if (mode() === 'local') {
+          go.disabled = true
+          await invoke('use_local')
+          return
+        }
+        if (!url.value.trim() || !key.value.trim()) return fail('missing')
+        go.disabled = true
+        go.textContent = t.checking
+        try {
+          await invoke('use_server', { url: url.value, apiKey: key.value })
+        } catch (code) {
+          fail(String(code))
+        }
+      })
+    </script>
+  </body>
+</html>

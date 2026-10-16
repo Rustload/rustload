@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Desktop app for Windows, macOS and Linux: Rustload in a window of its own that opens without a
+  login, with an icon in the notification area that shows the speed, pauses everything and keeps
+  downloading once the window is closed. It can start with the computer, open magnet links and
+  turns finished and failed packages into system notifications. The installers are not signed
+  yet.
+
 ## [1.0.0] - 2026-10-16
 
 First public version.
@@ -64,4 +74,5 @@ First public version.
 - Ready-to-run binaries for Linux (static, x86-64 and ARM64), Windows and macOS, published with
   their checksums and a build provenance attestation.
 
+[Unreleased]: https://github.com/rustload/rustload/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/rustload/rustload/releases/tag/v1.0.0

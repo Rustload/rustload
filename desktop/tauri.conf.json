@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Rustload",
+  "identifier": "io.github.rustload",
+  "build": {
+    "frontendDist": "ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "Rustload",
+    "copyright": "Copyright (c) 2026 Rustload contributors",
+    "license": "MIT",
+    "homepage": "https://github.com/rustload/rustload",
+    "category": "Utility",
+    "shortDescription": "Download manager",
+    "longDescription": "Paste anything: Rustload checks it, sorts it and pulls it in at full speed. Debrid accounts, file hosts and video sites.",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["English", "French"]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  },
+  "plugins": {}
+}

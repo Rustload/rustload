@@ -15,3 +15,4 @@ web/dist
 # Not part of the image (the Dockerfile copies the sources, the web interface and the license files).
 docs
 extension
+desktop
