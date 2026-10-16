@@ -350,6 +350,7 @@ mod tests {
     async fn prefers_the_hosts_own_premium_account() {
         let dir = tempfile::tempdir().unwrap();
         let db = db::open(&dir.path().join("rustload.db")).await.unwrap();
+        let _ = rustls::crypto::ring::default_provider().install_default();
         let manager = DebridManager::new(db.clone(), reqwest::Client::new()).await.unwrap();
         // In the account list: the debrid service first, then the 1fichier account.
         let debrid = db::accounts::insert(&db, "alldebrid", "AllDebrid", "{}", true).await.unwrap();
