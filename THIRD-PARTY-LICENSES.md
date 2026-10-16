@@ -2873,7 +2873,7 @@ THE SOFTWARE.
 
 ### MIT License
 
-Used by [md-5 0.11.0](https://crates.io/crates/md-5/0.11.0), [sha1 0.11.0](https://crates.io/crates/sha1/0.11.0), [sha2 0.11.0](https://crates.io/crates/sha2/0.11.0).
+Used by [md-5 0.11.0](https://crates.io/crates/md-5/0.11.0), [sha1 0.11.0](https://crates.io/crates/sha1/0.11.0), [sha2 0.11.1](https://crates.io/crates/sha2/0.11.1).
 
 ```text
 Copyright (c) 2016-2026 The RustCrypto Project Developers
