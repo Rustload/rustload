@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-17
+
 ### Added
 
 - Desktop app for Windows, macOS and Linux: Rustload in a window of its own that opens without a
@@ -27,7 +29,8 @@ All notable changes to this project are documented here. The format follows
 
 - Releases carry the browser extension as `rustload-extension.zip`, always at the same address
   (`releases/latest/download/rustload-extension.zip`), and *Get the extension* in the settings
-  opens its install guide.
+  opens its install guide. For Firefox they also carry `rustload-firefox.xpi`, signed by Mozilla,
+  which installs in one click and updates itself.
 
 ## [1.0.0] - 2026-10-16
 
@@ -89,5 +92,6 @@ First public version.
 - Ready-to-run binaries for Linux (static, x86-64 and ARM64), Windows and macOS, published with
   their checksums and a build provenance attestation.
 
-[Unreleased]: https://github.com/rustload/rustload/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/rustload/rustload/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rustload/rustload/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rustload/rustload/releases/tag/v1.0.0
