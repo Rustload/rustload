@@ -24,7 +24,8 @@ use anyhow::Context;
 use rustload::{Config, Server};
 use tauri::{
     AppHandle, Manager, PhysicalPosition, PhysicalSize, RunEvent, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-    WindowEvent, webview::NewWindowResponse,
+    WindowEvent,
+    webview::{DownloadEvent, NewWindowResponse},
 };
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_notification::NotificationExt;
@@ -184,7 +185,9 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
     }
     let Some(url) = backend.page(path.unwrap_or("/")) else { return };
     let data_dir = app.state::<Desktop>().data_dir.join("webview");
-    let (navigating, opening) = ((app.clone(), backend.clone()), app.clone());
+    let (navigating, opening, downloading) = ((app.clone(), backend.clone()), app.clone(), app.clone());
+    // Tells the interface it is in the app's window, showing Rustload running here or a server.
+    let marker = if backend.download_root().is_some() { "local" } else { "gateway" };
     let remembered = app.state::<Desktop>().prefs.lock().expect("poisoned").window;
     let size = remembered.unwrap_or(WindowSize { width: 1280.0, height: 820.0, maximized: false });
     let built = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::External(url))
@@ -195,7 +198,9 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
         .data_directory(data_dir)
         // The interface takes dropped .torrent files itself.
         .disable_drag_drop_handler()
-        .initialization_script(OPEN_LINKS_IN_BROWSER)
+        .initialization_script(format!("window.rustloadApp = '{marker}';\n{OPEN_LINKS_IN_BROWSER}"))
+        // Backups and log files the interface downloads.
+        .on_download(move |_, event| save_download(&downloading, event))
         // Links to other sites (documentation, debrid services) open in the browser.
         .on_navigation(move |url| navigating.1.is_interface(url) || open_in_browser(&navigating.0, url))
         .on_new_window(move |url, _| {
@@ -264,6 +269,35 @@ document.addEventListener('click', (event) => {
   window.open(link.href)
 })
 "#;
+
+/// Saves what the interface downloads (a backup, the log file) in the Downloads folder, under a
+/// name no other file there has, and says where it went.
+fn save_download(app: &AppHandle, event: DownloadEvent<'_>) -> bool {
+    match event {
+        DownloadEvent::Requested { destination, .. } => {
+            let name = destination.file_name().map(ToOwned::to_owned);
+            if let (Ok(dir), Some(name)) = (app.path().download_dir(), name) {
+                *destination = unused_path(&dir, Path::new(&name));
+            }
+        }
+        DownloadEvent::Finished { path, success: true, .. } => {
+            let name = path.as_deref().and_then(Path::file_name).map(|name| name.to_string_lossy().into_owned());
+            let _ = app.notification().builder().title("Rustload").body(text().download_saved(name.as_deref())).show();
+        }
+        _ => {}
+    }
+    true
+}
+
+/// `dir/name`, or `dir/name (2).ext`, `(3)`… when it exists.
+fn unused_path(dir: &Path, name: &Path) -> PathBuf {
+    let stem = name.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    let extension = name.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    std::iter::once(dir.join(name))
+        .chain((2..).map(|n| dir.join(format!("{stem} ({n}){extension}"))))
+        .find(|path| !path.exists())
+        .expect("an unused name exists")
+}
 
 /// Always `false`: the window stays on the interface.
 fn open_in_browser(app: &AppHandle, url: &Url) -> bool {

@@ -48,7 +48,9 @@
 {:else}
   <Panel
     title={auth.desktop ? t('settings.security.desktopPassword') : t('settings.security.changePassword')}
-    description={auth.desktop ? t('settings.security.desktopPasswordHint') : undefined}
+    description={auth.desktop
+      ? t('settings.security.desktopPasswordHint', { address: window.location.origin, user: auth.username ?? '' })
+      : undefined}
   >
     <form class="max-w-sm space-y-4" onsubmit={submit} novalidate>
       <input type="text" name="username" value={auth.username ?? ''} autocomplete="username" hidden readonly />

@@ -34,6 +34,7 @@ export const fr: Messages = {
 
   errors: {
     network: 'Impossible de joindre Rustload. Vérifiez que le serveur est démarré.',
+    networkApp: 'Rustload ne répond pas. Si cela dure, quittez-le depuis son icône dans la {place} et rouvrez-le.',
     generic: 'La requête a échoué : {message}',
     passwordTooShort: 'Utilisez au moins {min} caractères.',
     passwordMismatch: 'Les mots de passe ne correspondent pas.',
@@ -136,7 +137,7 @@ export const fr: Messages = {
     limitToggle: 'Limite de vitesse',
     scheduleClosed: 'Hors de la plage horaire, reprise à {time}',
     scheduleClosedShort: 'Reprise à {time}',
-    reconnecting: 'Reconnexion au serveur…',
+    reconnecting: 'Reconnexion à Rustload…',
     diskLow: 'Disque presque plein',
     ruleActive: 'Ralenti à {speed}',
     ruleActiveHint: 'Une règle de vitesse de Paramètres › Planification s’applique en ce moment',
@@ -160,6 +161,13 @@ export const fr: Messages = {
     remember: 'Rester connecté sur cet appareil',
     invalid: 'Nom d’utilisateur ou mot de passe incorrect.',
     alreadySetup: 'Un compte administrateur existe déjà. Connectez-vous.',
+    desktopNote:
+      'Rustload fonctionne comme une app sur cet ordinateur et s’ouvre sans connexion depuis son icône dans la {place}. Pour l’utiliser dans un navigateur, définissez un mot de passe dans Paramètres › Sécurité de l’app.',
+  },
+
+  app: {
+    place: 'zone de notification',
+    placeMac: 'barre des menus',
   },
 
   status: {
@@ -286,6 +294,7 @@ export const fr: Messages = {
     accountAction: 'Ajouter un compte',
     browser: 'Envoyer des liens depuis le navigateur',
     browserBody: 'L’extension ou le favori ajoute des liens et des pages entières en un clic.',
+    browserBodyApp: 'L’extension de navigateur ajoute des liens et des pages entières en un clic.',
     browserAction: 'Configurer',
     first: 'Ajouter un premier téléchargement',
     firstBody: 'Collez des liens, des magnets ou une page : Rustload les vérifie avant de démarrer.',
@@ -549,7 +558,7 @@ export const fr: Messages = {
       language: 'Langue',
       theme: 'Thème',
       themes: { dark: 'Sombre', light: 'Clair', system: 'Comme le système' },
-      desktop: 'Notifications du bureau',
+      desktop: 'Notifications du navigateur',
       desktopHint: 'Dans ce navigateur, quand un paquet se termine ou échoue pendant que Rustload est en arrière-plan.',
       desktopUnsupported: 'Les navigateurs n’autorisent les notifications que si Rustload est servi en HTTPS.',
       desktopBlocked: 'Les notifications sont bloquées pour ce site dans les réglages du navigateur.',
@@ -625,6 +634,8 @@ export const fr: Messages = {
     folders: {
       root: 'Dossier racine',
       rootHint: 'Les chemins relatifs des catégories sont créés dans ce dossier.',
+      rootHintApp:
+        'Les téléchargements arrivent dans ce dossier, dans vos Téléchargements. Une catégorie avec le chemin complet d’un autre dossier enregistre là-bas.',
       categories: 'Catégories',
       categoriesHint:
         'Choisissez une catégorie en ajoutant des téléchargements, ou laissez « Automatique » : Rustload applique les règles, puis les extensions, sinon la catégorie par défaut.',
@@ -651,6 +662,8 @@ export const fr: Messages = {
       catchAll: 'Reçoit tout ce qu’aucune autre catégorie ne prend',
       missing:
         'Ce dossier n’existe pas : montez-le dans le conteneur (volumes du docker-compose.yml) ou créez-le. Les paquets envoyés ici échouent d’ici là.',
+      missingApp:
+        'Ce dossier n’existe pas : créez-le ou branchez le disque où il se trouve. Les paquets envoyés ici échouent d’ici là.',
       default: 'Catégorie par défaut',
       defaultHint: 'Utilisée quand aucune règle ni extension ne correspond.',
       makeDefault: 'Définir par défaut',
@@ -672,7 +685,7 @@ export const fr: Messages = {
       deleteArchives: 'Supprimer les archives après une extraction réussie',
       passwords: 'Mots de passe des archives',
       passwordsHint: 'Un par ligne, essayés dans l’ordre quand une archive est chiffrée.',
-      extractorMissing: 'Aucun binaire 7-Zip trouvé sur le serveur : seules les archives ZIP peuvent être extraites.',
+      extractorMissing: '7-Zip est introuvable : seules les archives ZIP peuvent être extraites.',
       extractorFound: 'L’extraction utilise {tool}.',
       extractorInstalled: '7-Zip est prêt : les archives RAR et 7z sont aussi extraites',
       extractorInstallHint:
@@ -718,6 +731,7 @@ export const fr: Messages = {
       username: 'Identifiant ou e-mail',
       password: 'Mot de passe',
       passwordHint: 'Conservé uniquement sur votre serveur, pour se connecter à l’API de l’hébergeur.',
+      passwordHintApp: 'Conservé uniquement sur cet ordinateur, pour se connecter à l’API de l’hébergeur.',
       kinds: { debrid: 'Débrideurs', hoster: 'Comptes premium d’hébergeurs' },
       kindHints: {
         debrid: 'Un seul compte débloque des centaines d’hébergeurs, les magnets et les torrents.',
@@ -731,6 +745,8 @@ export const fr: Messages = {
     },
     notifications: {
       intro: 'Recevez un message quand des paquets se terminent ou échouent.',
+      introApp:
+        'L’app affiche déjà des notifications système sur cet ordinateur. Ajoutez un service pour recevoir aussi un message ailleurs, sur votre téléphone par exemple.',
       add: 'Ajouter une notification',
       edit: 'Modifier la notification',
       empty: 'Aucune notification configurée.',
@@ -787,6 +803,8 @@ export const fr: Messages = {
       extensionHint:
         'Clic droit sur un lien ou une page, ou récupérez tous les liens d’une page. Pour Chrome, Edge, Brave et Firefox.',
       getExtension: 'Obtenir l’extension',
+      extensionApp:
+        'Dans les réglages de l’extension, connectez-la à l’app sur cet ordinateur, ou indiquez l’adresse {address} et la clé d’API ci-dessus.',
       bookmarklet: 'Favori',
       bookmarkletHint:
         'Glissez ce bouton dans votre barre de favoris, puis cliquez dessus sur n’importe quelle page pour envoyer le texte sélectionné ou la page.',
@@ -836,9 +854,13 @@ export const fr: Messages = {
       clicknloadEnabled: 'Accepter les liens envoyés par Click’n’Load',
       clicknloadHint:
         'Les sites de liens dotés d’un bouton Click’n’Load envoient leurs liens directement à Rustload. Le navigateur les envoie sur le port 9666 de votre ordinateur : ce port doit donc atteindre le serveur.',
+      clicknloadHintApp:
+        'Les sites de liens dotés d’un bouton Click’n’Load envoient leurs liens directement à Rustload, sur le port 9666 de cet ordinateur.',
       clicknloadPaused: 'Ajouter les paquets reçus en pause',
       hooks: 'Scripts',
       hooksHint: 'Commandes exécutées sur le serveur. Ces variables d’environnement sont disponibles :',
+      hooksHintApp:
+        'Commandes exécutées sur cet ordinateur ({shell}). Ces variables d’environnement sont disponibles :',
       hookFinished: 'Quand un paquet se termine',
       hookFailed: 'Quand un paquet échoue',
       hookPlaceholder: '/config/scripts/on-finished.sh',
@@ -867,6 +889,8 @@ export const fr: Messages = {
       updateAvailable: 'La version {version} est disponible',
       managedHint:
         'Cette copie de yt-dlp est fournie avec le serveur. Avec les mises à jour automatiques, Rustload installe ici une version plus récente dès sa sortie ; vous pouvez aussi l’installer maintenant.',
+      managedHintApp:
+        'Ce yt-dlp a été trouvé sur cet ordinateur. Avec les mises à jour automatiques, Rustload installe une version plus récente à côté de ses réglages dès sa sortie ; vous pouvez aussi l’installer maintenant.',
       noFfmpeg: 'Introuvable : les vidéos se limitent aux formats qui n’ont pas besoin d’être assemblés',
       ffmpegInstalled: 'ffmpeg {version} est prêt',
       ffmpegInstallHint:
@@ -893,6 +917,7 @@ export const fr: Messages = {
     system: {
       health: 'Diagnostic',
       healthHint: 'Vérifie que Rustload peut faire son travail sur ce serveur.',
+      healthHintApp: 'Vérifie que Rustload peut faire son travail sur cet ordinateur.',
       allGood: 'Tout est en ordre.',
       problems: { one: '{count} point demande votre attention.', other: '{count} points demandent votre attention.' },
       runAgain: 'Vérifier à nouveau',
@@ -942,7 +967,7 @@ export const fr: Messages = {
       signOutHint: 'Se déconnecter de Rustload sur ce navigateur.',
       desktopPassword: 'Mot de passe pour les navigateurs',
       desktopPasswordHint:
-        'L’app s’ouvre sans mot de passe. Définissez-en un pour vous connecter à Rustload depuis un navigateur web sur cet ordinateur, avec le nom affiché en bas de la barre latérale.',
+        'L’app s’ouvre sans mot de passe. Définissez-en un pour vous connecter à Rustload depuis un navigateur web sur cet ordinateur, à l’adresse {address} avec le nom {user}.',
     },
     about: {
       version: 'Version',
@@ -954,6 +979,7 @@ export const fr: Messages = {
       issues: 'Signaler un problème',
       license: 'Publié sous licence MIT.',
       tagline: 'Un gestionnaire de téléchargements léger et rapide pour votre serveur.',
+      taglineApp: 'Un gestionnaire de téléchargements léger et rapide pour votre ordinateur.',
     },
   },
 }

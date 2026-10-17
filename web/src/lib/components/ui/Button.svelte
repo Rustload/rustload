@@ -13,6 +13,8 @@
     /** Renders a link styled as a button. */
     href?: string
     external?: boolean
+    /** For a link: saves its target as a file instead of opening it. */
+    download?: boolean
     children?: Snippet
   }
 
@@ -23,6 +25,7 @@
     loading = false,
     href,
     external = false,
+    download = false,
     type = 'button',
     disabled,
     class: className = '',
@@ -48,6 +51,7 @@
     class={buttonClass(variant, size, String(className))}
     target={external ? '_blank' : undefined}
     rel={external ? 'noopener noreferrer' : undefined}
+    download={download || undefined}
   >
     {@render content()}
   </a>

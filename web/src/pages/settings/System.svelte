@@ -12,6 +12,7 @@
   import Loading from '$lib/components/ui/Loading.svelte'
   import Panel from '$lib/components/ui/Panel.svelte'
   import { hasMessage, t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { accounts, categories } from '$lib/stores/catalog.svelte'
   import { queue } from '$lib/stores/queue.svelte'
   import { settings } from '$lib/stores/settings.svelte'
@@ -86,7 +87,10 @@
   }
 </script>
 
-<Panel title={t('settings.system.health')} description={summary ?? t('settings.system.healthHint')}>
+<Panel
+  title={t('settings.system.health')}
+  description={summary ?? (auth.desktop ? t('settings.system.healthHintApp') : t('settings.system.healthHint'))}
+>
   {#snippet actions()}
     <Button size="sm" icon={RefreshCw} loading={running} onclick={runChecks}>{t('settings.system.runAgain')}</Button>
   {/snippet}
@@ -115,7 +119,7 @@
 <Panel title={t('settings.system.backup')} description={t('settings.system.backupHint')}>
   <Alert tone="warn" icon={TriangleAlert} class="text-small">{t('settings.system.backupSecrets')}</Alert>
   <div class="flex flex-wrap gap-2">
-    <Button icon={Download} href={api.tools.backupUrl()}>{t('settings.system.download')}</Button>
+    <Button icon={Download} href={api.tools.backupUrl()} download>{t('settings.system.download')}</Button>
     <Button icon={Upload} loading={restoring} onclick={() => fileInput?.click()}>
       {t('settings.system.restoreFrom')}
     </Button>

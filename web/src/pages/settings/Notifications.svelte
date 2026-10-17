@@ -12,6 +12,7 @@
   import PanelEmpty from '$lib/components/ui/PanelEmpty.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { settings } from '$lib/stores/settings.svelte'
   import { toasts } from '$lib/stores/toasts.svelte'
   import { ui } from '$lib/stores/ui.svelte'
@@ -53,7 +54,7 @@
   }
 </script>
 
-<Panel description={t('settings.notifications.intro')} flush>
+<Panel description={auth.desktop ? t('settings.notifications.introApp') : t('settings.notifications.intro')} flush>
   {#snippet actions()}
     <Button size="sm" icon={Plus} onclick={() => open(null)}>{t('settings.notifications.add')}</Button>
   {/snippet}

@@ -11,11 +11,18 @@
   import TextInput from '$lib/components/ui/TextInput.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
+  import { categories } from '$lib/stores/catalog.svelte'
   import { settings } from '$lib/stores/settings.svelte'
   import { toasts } from '$lib/stores/toasts.svelte'
   import { formatRelative } from '$lib/utils/format'
 
   const m = $derived(settings.draft!.media)
+  // A path where the file can be: the config folder on a server, the downloads folder in the app.
+  const cookiesPlaceholder = $derived.by(() => {
+    if (!auth.desktop || !categories.root) return '/config/cookies.txt'
+    return `${categories.root}${categories.root.includes('\\') ? '\\' : '/'}cookies.txt`
+  })
 
   let status = $state<MediaStatus | null>(null)
 
@@ -138,7 +145,9 @@
       </p>
     {/if}
     {#if ytdlp && !ytdlp.managed}
-      <p class="text-small text-fg-muted">{t('settings.media.managedHint')}</p>
+      <p class="text-small text-fg-muted">
+        {auth.desktop ? t('settings.media.managedHintApp') : t('settings.media.managedHint')}
+      </p>
     {/if}
     {#if ytdlp?.managed}
       <Toggle
@@ -170,7 +179,7 @@
         bind:value={m.cookies_file}
         mono
         spellcheck={false}
-        placeholder="/config/cookies.txt"
+        placeholder={cookiesPlaceholder}
       />
     {/snippet}
   </Field>

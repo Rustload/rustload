@@ -35,6 +35,7 @@ export const en = {
 
   errors: {
     network: 'Rustload is not reachable. Check that the server is running.',
+    networkApp: 'Rustload is not responding. If it keeps on, quit it from its icon in the {place} and open it again.',
     generic: 'The request failed: {message}',
     passwordTooShort: 'Use at least {min} characters.',
     passwordMismatch: 'The passwords don’t match.',
@@ -139,7 +140,7 @@ export const en = {
     limitToggle: 'Speed limit',
     scheduleClosed: 'Outside the download window, resumes at {time}',
     scheduleClosedShort: 'Waiting for {time}',
-    reconnecting: 'Reconnecting to the server…',
+    reconnecting: 'Reconnecting to Rustload…',
     diskLow: 'Disk almost full',
     ruleActive: 'Slowed to {speed}',
     ruleActiveHint: 'A speed rule from Settings › Schedule applies right now',
@@ -162,6 +163,13 @@ export const en = {
     remember: 'Stay signed in on this device',
     invalid: 'Wrong username or password.',
     alreadySetup: 'An admin account already exists. Sign in instead.',
+    desktopNote:
+      'Rustload runs as an app on this computer and opens without signing in from its icon in the {place}. To use it in a browser, set a password in the app’s Settings › Security.',
+  },
+
+  app: {
+    place: 'notification area',
+    placeMac: 'menu bar',
   },
 
   status: {
@@ -284,6 +292,7 @@ export const en = {
     accountAction: 'Add an account',
     browser: 'Send links from your browser',
     browserBody: 'The browser extension or the bookmarklet adds links and whole pages in one click.',
+    browserBodyApp: 'The browser extension adds links and whole pages in one click.',
     browserAction: 'Set it up',
     first: 'Add your first download',
     firstBody: 'Paste links, magnets or a page: Rustload checks them before anything starts.',
@@ -545,7 +554,7 @@ export const en = {
       language: 'Language',
       theme: 'Theme',
       themes: { dark: 'Dark', light: 'Light', system: 'Match system' },
-      desktop: 'Desktop notifications',
+      desktop: 'Browser notifications',
       desktopHint: 'In this browser, when a package finishes or fails while Rustload is in the background.',
       desktopUnsupported: 'Browsers only allow notifications when Rustload is served over HTTPS.',
       desktopBlocked: 'Notifications are blocked for this site in your browser settings.',
@@ -620,6 +629,8 @@ export const en = {
     folders: {
       root: 'Download root',
       rootHint: 'Relative category paths are created inside this folder.',
+      rootHintApp:
+        'Downloads go to this folder, in your Downloads. A category with the full path of another folder saves there.',
       categories: 'Categories',
       categoriesHint:
         'Pick a category when adding downloads, or leave it on Automatic: Rustload follows the rules, then the extensions, otherwise the default category.',
@@ -646,6 +657,8 @@ export const en = {
       catchAll: 'Receives everything no other category takes',
       missing:
         'This folder does not exist: mount it in the container (volumes of docker-compose.yml) or create it. Packages sent here fail until then.',
+      missingApp:
+        'This folder does not exist: create it or connect the drive it is on. Packages sent here fail until then.',
       default: 'Default category',
       defaultHint: 'Used when no rule or extension matches.',
       makeDefault: 'Make default',
@@ -665,7 +678,7 @@ export const en = {
       deleteArchives: 'Delete archives after a successful extraction',
       passwords: 'Archive passwords',
       passwordsHint: 'One per line, tried in order when an archive is encrypted.',
-      extractorMissing: 'No 7-Zip binary was found on the server: only ZIP archives can be extracted.',
+      extractorMissing: '7-Zip was not found: only ZIP archives can be extracted.',
       extractorFound: 'Extraction uses {tool}.',
       extractorInstalled: '7-Zip is ready: RAR and 7z archives are extracted too',
       extractorInstallHint:
@@ -711,6 +724,7 @@ export const en = {
       username: 'Username or email',
       password: 'Password',
       passwordHint: 'Stored on your server only, to sign in to the host API.',
+      passwordHintApp: 'Stored on this computer only, to sign in to the host API.',
       kinds: { debrid: 'Debrid services', hoster: 'File host premium accounts' },
       kindHints: {
         debrid: 'One account unlocks hundreds of hosts, magnets and torrents.',
@@ -724,6 +738,8 @@ export const en = {
     },
     notifications: {
       intro: 'Get a message when packages finish or fail.',
+      introApp:
+        'The app already shows system notifications on this computer. Add a service to also get a message elsewhere, on your phone for example.',
       add: 'Add notification',
       edit: 'Edit notification',
       empty: 'No notification configured.',
@@ -779,6 +795,8 @@ export const en = {
       extension: 'Browser extension',
       extensionHint: 'Right-click any link or page, or grab every link of a page. For Chrome, Edge, Brave and Firefox.',
       getExtension: 'Get the extension',
+      extensionApp:
+        'In the extension’s settings, connect it to the app on this computer, or enter the address {address} and the API key above.',
       bookmarklet: 'Bookmarklet',
       bookmarkletHint:
         'Drag this button to your bookmarks bar. Click it on any page to send the selected text or the page.',
@@ -824,9 +842,12 @@ export const en = {
       clicknloadEnabled: 'Accept links sent with Click’n’Load',
       clicknloadHint:
         'Link sites with a Click’n’Load button send their links straight to Rustload. The browser posts to port 9666 on your computer, so that port must reach the server.',
+      clicknloadHintApp:
+        'Link sites with a Click’n’Load button send their links straight to Rustload, on port 9666 of this computer.',
       clicknloadPaused: 'Add received packages paused',
       hooks: 'Scripts',
       hooksHint: 'Commands run on the server. These environment variables are available:',
+      hooksHintApp: 'Commands run on this computer ({shell}). These environment variables are available:',
       hookFinished: 'When a package finishes',
       hookFailed: 'When a package fails',
       hookPlaceholder: '/config/scripts/on-finished.sh',
@@ -854,6 +875,8 @@ export const en = {
       updateAvailable: 'Version {version} is available',
       managedHint:
         'This copy of yt-dlp ships with the server. With automatic updates on, Rustload installs a newer copy here as soon as one is released; you can also install it now.',
+      managedHintApp:
+        'This yt-dlp was found on this computer. With automatic updates on, Rustload installs a newer copy next to its settings as soon as one is released; you can also install it now.',
       noFfmpeg: 'Not found: videos are limited to formats that need no merging',
       ffmpegInstalled: 'ffmpeg {version} is ready',
       ffmpegInstallHint:
@@ -879,6 +902,7 @@ export const en = {
     system: {
       health: 'Health check',
       healthHint: 'Checks that Rustload can do its job on this server.',
+      healthHintApp: 'Checks that Rustload can do its job on this computer.',
       allGood: 'Everything looks right.',
       problems: { one: '{count} point needs your attention.', other: '{count} points need your attention.' },
       runAgain: 'Check again',
@@ -927,7 +951,7 @@ export const en = {
       signOutHint: 'Sign out of Rustload on this browser.',
       desktopPassword: 'Password for browsers',
       desktopPasswordHint:
-        'The app opens without a password. Set one to sign in to Rustload from a web browser on this computer, with the name shown at the bottom of the sidebar.',
+        'The app opens without a password. Set one to sign in to Rustload from a web browser on this computer, at {address} with the name {user}.',
     },
     about: {
       version: 'Version',
@@ -939,6 +963,7 @@ export const en = {
       issues: 'Report a problem',
       license: 'Released under the MIT license.',
       tagline: 'A light, fast download manager for your server.',
+      taglineApp: 'A light, fast download manager for your computer.',
     },
   },
 }

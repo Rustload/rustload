@@ -4,6 +4,7 @@
   import { onDestroy, untrack } from 'svelte'
   import { ApiError, api, type DeviceStart, type Provider } from '$lib/api'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { accounts } from '$lib/stores/catalog.svelte'
   import { errorMessage, toasts } from '$lib/stores/toasts.svelte'
   import Alert from '../ui/Alert.svelte'
@@ -235,7 +236,10 @@
               <TextInput {id} bind:value={username} required autocomplete="off" spellcheck={false} />
             {/snippet}
           </Field>
-          <Field label={t('settings.accounts.password')} hint={t('settings.accounts.passwordHint')}>
+          <Field
+            label={t('settings.accounts.password')}
+            hint={auth.desktop ? t('settings.accounts.passwordHintApp') : t('settings.accounts.passwordHint')}
+          >
             {#snippet children({ id, describedBy })}
               <TextInput
                 {id}

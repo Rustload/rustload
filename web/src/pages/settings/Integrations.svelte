@@ -15,6 +15,8 @@
   import TextInput from '$lib/components/ui/TextInput.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { t, type MessageKey } from '$lib/i18n/index.svelte'
+  import { isWindows } from '$lib/utils/app'
+  import { auth } from '$lib/stores/auth.svelte'
   import { categories } from '$lib/stores/catalog.svelte'
   import { settings } from '$lib/stores/settings.svelte'
   import { errorMessage, toasts } from '$lib/stores/toasts.svelte'
@@ -95,6 +97,14 @@
       regenerating = false
     }
   }
+
+  const hookPlaceholder = $derived(
+    !auth.desktop
+      ? t('settings.integrations.hookPlaceholder')
+      : isWindows
+        ? 'C:\\Scripts\\on-finished.cmd'
+        : '~/scripts/on-finished.sh',
+  )
 </script>
 
 <Panel title={t('settings.integrations.apiKey')} description={t('settings.integrations.apiKeyHint')}>
@@ -175,7 +185,10 @@
   {/if}
 </Panel>
 
-<Panel title={t('settings.integrations.clicknload')} description={t('settings.integrations.clicknloadHint')}>
+<Panel
+  title={t('settings.integrations.clicknload')}
+  description={auth.desktop ? t('settings.integrations.clicknloadHintApp') : t('settings.integrations.clicknloadHint')}
+>
   <Toggle bind:checked={s.clicknload.enabled} label={t('settings.integrations.clicknloadEnabled')} />
   <Toggle
     bind:checked={s.clicknload.paused}
@@ -193,7 +206,7 @@
         mono
         spellcheck={false}
         autocomplete="off"
-        placeholder={t('settings.integrations.hookPlaceholder')}
+        placeholder={hookPlaceholder}
       />
     {/snippet}
   </Field>
@@ -203,7 +216,11 @@
     {/snippet}
   </Field>
   <div>
-    <p class="text-small text-fg-muted">{t('settings.integrations.hooksHint')}</p>
+    <p class="text-small text-fg-muted">
+      {auth.desktop
+        ? t('settings.integrations.hooksHintApp', { shell: isWindows ? 'cmd' : 'sh' })
+        : t('settings.integrations.hooksHint')}
+    </p>
     <dl class="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-small">
       {#each ENV_VARS as [name, description] (name)}
         <dt class="font-mono text-xs leading-5">{name}</dt>
@@ -213,11 +230,14 @@
   </div>
 </Panel>
 
-<Panel title={t('settings.metrics.title')} description={t('settings.metrics.intro')}>
-  <Toggle bind:checked={s.integrations.metrics} label={t('settings.metrics.enabled')} />
-  {#if s.integrations.metrics}
-    <p class="text-small text-fg-muted">{t('settings.metrics.auth')}</p>
-    <pre
-      class="overflow-x-auto rounded-control border border-line bg-sunken px-3 py-2.5 font-mono text-xs leading-relaxed">{scrapeConfig}</pre>
-  {/if}
-</Panel>
+<!-- Prometheus scrapes servers; the app only answers on its own computer. -->
+{#if !auth.desktop}
+  <Panel title={t('settings.metrics.title')} description={t('settings.metrics.intro')}>
+    <Toggle bind:checked={s.integrations.metrics} label={t('settings.metrics.enabled')} />
+    {#if s.integrations.metrics}
+      <p class="text-small text-fg-muted">{t('settings.metrics.auth')}</p>
+      <pre
+        class="overflow-x-auto rounded-control border border-line bg-sunken px-3 py-2.5 font-mono text-xs leading-relaxed">{scrapeConfig}</pre>
+    {/if}
+  </Panel>
+{/if}

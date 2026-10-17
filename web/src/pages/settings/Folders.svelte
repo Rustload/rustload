@@ -16,6 +16,7 @@
   import Panel from '$lib/components/ui/Panel.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { categories } from '$lib/stores/catalog.svelte'
   import { settings } from '$lib/stores/settings.svelte'
   import { runWithToast } from '$lib/stores/toasts.svelte'
@@ -56,7 +57,10 @@
   }
 </script>
 
-<Panel title={t('settings.folders.root')} description={t('settings.folders.rootHint')}>
+<Panel
+  title={t('settings.folders.root')}
+  description={auth.desktop ? t('settings.folders.rootHintApp') : t('settings.folders.rootHint')}
+>
   <p class="rounded-control bg-sunken px-3 py-2 font-mono text-small break-all">{categories.root || '—'}</p>
   <Toggle
     bind:checked={storage.create_subfolder}
@@ -85,7 +89,7 @@
           {#if category.missing}
             <p class="mt-1 flex items-start gap-1.5 text-small text-warn">
               <TriangleAlert size={14} class="mt-0.5 shrink-0" aria-hidden="true" />
-              {t('settings.folders.missing')}
+              {auth.desktop ? t('settings.folders.missingApp') : t('settings.folders.missing')}
             </p>
           {/if}
           <p class="mt-1.5 flex flex-wrap gap-1">

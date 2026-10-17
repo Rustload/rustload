@@ -9,6 +9,7 @@
   import Select from '$lib/components/ui/Select.svelte'
   import Toggle from '$lib/components/ui/Toggle.svelte'
   import { LOCALES, i18n, t } from '$lib/i18n/index.svelte'
+  import { appWindow } from '$lib/utils/app'
   import { auth } from '$lib/stores/auth.svelte'
   import { desktop } from '$lib/stores/desktop.svelte'
   import { settings } from '$lib/stores/settings.svelte'
@@ -56,7 +57,7 @@
 </Panel>
 
 <!-- The desktop app shows system notifications itself. -->
-{#if !auth.desktop}
+{#if !auth.desktop && !appWindow}
   <Panel>
     <!-- Recreated when the browser answers, in case the permission was refused. -->
     {#key `${desktop.enabled}:${desktop.permission}:${answered}`}

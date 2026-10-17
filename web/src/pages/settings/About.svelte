@@ -6,6 +6,7 @@
   import Panel from '$lib/components/ui/Panel.svelte'
   import { ISSUES_URL, PROJECT_URL } from '$lib/config'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { system } from '$lib/stores/system.svelte'
   import { formatDuration } from '$lib/utils/format'
 
@@ -27,7 +28,7 @@
     <Logo size={48} tile />
     <div>
       <p class="heading text-xl font-semibold">Rustload</p>
-      <p class="text-fg-muted">{t('settings.about.tagline')}</p>
+      <p class="text-fg-muted">{auth.desktop ? t('settings.about.taglineApp') : t('settings.about.tagline')}</p>
     </div>
   </div>
 

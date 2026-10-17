@@ -109,6 +109,16 @@ impl Text {
         if self.french { format!("Rustload {version} est prête") } else { format!("Rustload {version} is ready") }
     }
 
+    /// The notification for a file the interface downloaded.
+    pub fn download_saved(&self, name: Option<&str>) -> String {
+        match (name, self.french) {
+            (Some(name), false) => format!("“{name}” saved in Downloads"),
+            (Some(name), true) => format!("«\u{a0}{name}\u{a0}» enregistré dans Téléchargements"),
+            (None, false) => "Saved in Downloads".to_owned(),
+            (None, true) => "Enregistré dans Téléchargements".to_owned(),
+        }
+    }
+
     /// A speed as the interface shows it: "24.0 MiB/s", "24,0 Mio/s".
     pub fn speed(&self, bytes_per_second: u64) -> String {
         const UNITS: [[&str; 5]; 2] = [["B", "KiB", "MiB", "GiB", "TiB"], ["o", "Kio", "Mio", "Gio", "Tio"]];

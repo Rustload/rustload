@@ -1,5 +1,6 @@
 import { ApiError } from '$lib/api'
 import { t } from '$lib/i18n/index.svelte'
+import { appWindow, iconPlace } from '$lib/utils/app'
 
 export type ToastLevel = 'success' | 'info' | 'warning' | 'error'
 export type Toast = { id: number; level: ToastLevel; message: string }
@@ -32,7 +33,7 @@ class Toasts {
 
 export function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.code === 'NETWORK') return t('errors.network')
+    if (err.code === 'NETWORK') return networkMessage()
     return err.message || t('errors.generic', { message: err.code })
   }
   return t('errors.generic', { message: err instanceof Error ? err.message : String(err) })
@@ -49,4 +50,9 @@ export async function runWithToast(action: () => Promise<unknown>): Promise<bool
     toasts.error(err)
     return false
   }
+}
+
+/** Rustload cannot be reached: inside the app, it is the app itself that stopped answering. */
+export function networkMessage(): string {
+  return appWindow === 'local' ? t('errors.networkApp', { place: iconPlace() }) : t('errors.network')
 }

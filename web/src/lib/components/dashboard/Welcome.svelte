@@ -3,6 +3,7 @@
   import CircleCheck from '@lucide/svelte/icons/circle-check'
   import X from '@lucide/svelte/icons/x'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { router } from '$lib/router.svelte'
   import { accounts } from '$lib/stores/catalog.svelte'
   import { queue } from '$lib/stores/queue.svelte'
@@ -34,7 +35,7 @@
       id: 'browser',
       done: browserDone,
       title: t('welcome.browser'),
-      body: t('welcome.browserBody'),
+      body: auth.desktop ? t('welcome.browserBodyApp') : t('welcome.browserBody'),
       action: t('welcome.browserAction'),
       run: () => {
         writeStored(BROWSER, '1')

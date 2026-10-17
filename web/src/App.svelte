@@ -4,8 +4,8 @@
   import EmptyState from '$lib/components/ui/EmptyState.svelte'
   import Spinner from '$lib/components/ui/Spinner.svelte'
   import Toasts from '$lib/components/ui/Toasts.svelte'
-  import { t } from '$lib/i18n/index.svelte'
   import { auth } from '$lib/stores/auth.svelte'
+  import { networkMessage } from '$lib/stores/toasts.svelte'
   import AuthScreen from './pages/AuthScreen.svelte'
   import Shell from './Shell.svelte'
 
@@ -28,7 +28,7 @@
   </div>
 {:else if auth.phase === 'unreachable'}
   <div class="grid min-h-dvh place-items-center">
-    <EmptyState icon={ServerOff} title="Rustload" body={t('errors.network')}>
+    <EmptyState icon={ServerOff} title="Rustload" body={networkMessage()}>
       {#snippet action()}
         <Spinner size={18} class="text-fg-faint" />
       {/snippet}

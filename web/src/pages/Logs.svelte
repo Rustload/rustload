@@ -67,7 +67,7 @@
   {#snippet actions()}
     <div class="flex flex-wrap items-center gap-2">
       <Button icon={Trash2} onclick={clear}>{t('logs.clear')}</Button>
-      <Button icon={Download} href={api.logs.fileUrl()}>{t('logs.download')}</Button>
+      <Button icon={Download} href={api.logs.fileUrl()} download>{t('logs.download')}</Button>
     </div>
   {/snippet}
 </PageHeader>

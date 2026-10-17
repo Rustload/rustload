@@ -9,6 +9,7 @@
   import TextInput from '$lib/components/ui/TextInput.svelte'
   import { t } from '$lib/i18n/index.svelte'
   import { auth } from '$lib/stores/auth.svelte'
+  import { iconPlace } from '$lib/utils/app'
   import { errorMessage } from '$lib/stores/toasts.svelte'
   import { passwordErrors } from '$lib/utils/password'
 
@@ -59,6 +60,8 @@
     </h1>
     {#if mode === 'setup'}
       <p class="mt-2 text-fg-muted">{t('auth.setupIntro')}</p>
+    {:else if auth.desktop}
+      <p class="mt-2 text-fg-muted">{t('auth.desktopNote', { place: iconPlace() })}</p>
     {/if}
     <div class="mt-6"><FillStrip /></div>
 
