@@ -12,6 +12,7 @@ use std::{
 };
 
 use crate::{
+    config::Config,
     engine::{
         Engine,
         intake::{self, AddOptions},
@@ -24,8 +25,13 @@ const SCAN_INTERVAL: Duration = Duration::from_secs(5);
 /// A file must not change for this long before it is imported (still being written otherwise).
 const SETTLE_TIME: Duration = Duration::from_secs(3);
 
+/// The watch folder of the Docker image, the default setting.
+const DOCKER_DIR: &str = "/watch";
+
 pub async fn run(engine: Arc<Engine>) {
     let mut seen: HashMap<PathBuf, (u64, SystemTime)> = HashMap::new();
+    // The desktop app creates its folder: the last one it tried.
+    let mut prepared: Option<PathBuf> = None;
     loop {
         tokio::select! {
             _ = engine.shutdown_token().cancelled() => return,
@@ -34,9 +40,14 @@ pub async fn run(engine: Arc<Engine>) {
         let settings = engine.settings.get();
         if !settings.watch.enabled {
             seen.clear();
+            prepared = None;
             continue;
         }
-        let dir = resolve_dir(&engine.config.config_dir, &settings.watch.dir);
+        let dir = resolve_dir(&engine.config, &settings.watch.dir);
+        if engine.config.desktop && prepared.as_ref() != Some(&dir) {
+            prepare(&engine, &dir).await;
+            prepared = Some(dir.clone());
+        }
         let options = AddOptions { category_id: settings.watch.category_id, ..Default::default() };
         for path in ready_files(&dir, &mut seen).await {
             import(&engine, &dir, &path, &options).await;
@@ -44,9 +55,33 @@ pub async fn run(engine: Arc<Engine>) {
     }
 }
 
-fn resolve_dir(config_dir: &Path, dir: &str) -> PathBuf {
+/// A server reads relative folders from its config folder. The desktop app has no Docker volume:
+/// the default and relative folders live in its download root (`Watch` by default).
+fn resolve_dir(config: &Config, dir: &str) -> PathBuf {
+    let dir = dir.trim();
     let path = Path::new(dir);
-    if path.is_absolute() { path.to_path_buf() } else { config_dir.join(path) }
+    if config.desktop {
+        if dir.is_empty() || dir == DOCKER_DIR {
+            return config.download_root.join("Watch");
+        }
+        if !path.is_absolute() {
+            return config.download_root.join(dir.trim_start_matches(['/', '\\']));
+        }
+    }
+    if path.is_absolute() { path.to_path_buf() } else { config.config_dir.join(path) }
+}
+
+/// Creates the desktop app's watch folder, or says why it cannot.
+async fn prepare(engine: &Engine, dir: &Path) {
+    if let Err(error) = tokio::fs::create_dir_all(dir).await {
+        let message = format!("cannot create the watch folder {}: {error}", dir.display());
+        tracing::warn!("{message}");
+        engine.events.notice(
+            Notice::new(NoticeLevel::Warning, "watch_folder_unavailable", message)
+                .param("dir", dir.display().to_string())
+                .param("error", error.to_string()),
+        );
+    }
 }
 
 /// Files that did not change since the previous scan and are old enough.
@@ -145,6 +180,24 @@ pub fn parse_sections(text: &str) -> Vec<(Option<String>, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resolves_the_desktop_apps_folder_in_its_download_root() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut config = Config::for_tests(dir.path());
+        config.desktop = true;
+        let root = config.download_root.clone();
+        assert_eq!(resolve_dir(&config, DOCKER_DIR), root.join("Watch"));
+        assert_eq!(resolve_dir(&config, " "), root.join("Watch"));
+        assert_eq!(resolve_dir(&config, "drop"), root.join("drop"));
+        let elsewhere = dir.path().join("elsewhere");
+        assert_eq!(resolve_dir(&config, elsewhere.to_str().unwrap()), elsewhere);
+
+        config.desktop = false;
+        assert_eq!(resolve_dir(&config, "drop"), config.config_dir.join("drop"));
+        #[cfg(unix)]
+        assert_eq!(resolve_dir(&config, DOCKER_DIR), PathBuf::from(DOCKER_DIR));
+    }
 
     #[test]
     fn parses_text_sections() {

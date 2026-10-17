@@ -134,8 +134,23 @@ pub async fn require_auth(State(state): State<AppState>, jar: CookieJar, mut req
     if !caller.api_key && unsafe_method && !has_csrf_header {
         return ApiError::new(StatusCode::FORBIDDEN, "CSRF", "missing X-Rustload-Request header").into_response();
     }
+    // The desktop app's window stays open for weeks and has no password to sign in again with:
+    // its session moves forward while it is used.
+    let renewed = match (&caller.token_hash, state.config.desktop) {
+        (Some(token_hash), true) => {
+            let now = now();
+            db::users::extend_session(state.db(), token_hash, now + REMEMBER_TTL, now + REMEMBER_TTL / 2)
+                .await
+                .unwrap_or(false)
+        }
+        _ => false,
+    };
     request.extensions_mut().insert(caller);
-    next.run(request).await
+    let response = next.run(request).await;
+    match jar.get(COOKIE).map(|cookie| cookie.value().to_owned()) {
+        Some(token) if renewed => (jar.add(session_cookie(&state, token, true)), response).into_response(),
+        _ => response,
+    }
 }
 
 async fn authenticate(state: &AppState, jar: &CookieJar, api_key: Option<&str>) -> ApiResult<Caller> {
@@ -210,12 +225,9 @@ pub async fn handoff(
         .filter(|next| HeaderValue::from_str(next).is_ok())
         .unwrap_or("/");
     let redirect = Redirect::to(next);
-    let logged_in = match jar.get(COOKIE) {
-        Some(cookie) => db::users::session_user(state.db(), &sha256_hex(cookie.value())).await?.is_some(),
-        None => false,
-    };
-    if logged_in {
-        return Ok(redirect.into_response());
+    // Always a fresh session, replacing the window's previous one, which may be about to expire.
+    if let Some(cookie) = jar.get(COOKIE) {
+        db::users::delete_session(state.db(), &sha256_hex(cookie.value())).await?;
     }
     let user = db::users::first(state.db()).await?.ok_or_else(ApiError::unauthorized)?;
     let cookie = new_session_cookie(&state, user.id, true).await?;
@@ -300,7 +312,10 @@ async fn new_session_cookie(state: &AppState, user_id: i64, remember: bool) -> A
     let ttl = if remember { REMEMBER_TTL } else { SESSION_TTL };
     db::users::insert_session(state.db(), &sha256_hex(&token), user_id, now() + ttl).await?;
     let _ = db::users::purge_expired_sessions(state.db()).await;
+    Ok(session_cookie(state, token, remember))
+}
 
+fn session_cookie(state: &AppState, token: String, remember: bool) -> Cookie<'static> {
     let mut cookie = Cookie::build((COOKIE, token))
         .path("/")
         .http_only(true)
@@ -309,7 +324,7 @@ async fn new_session_cookie(state: &AppState, user_id: i64, remember: bool) -> A
     if remember {
         cookie = cookie.max_age(time_duration(REMEMBER_TTL));
     }
-    Ok(cookie.build())
+    cookie.build()
 }
 
 /// Cookies use the `time` crate's duration type.

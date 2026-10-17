@@ -22,6 +22,7 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 use super::output::{self, Line};
+use crate::util::NoWindow;
 
 /// Largest `-J` output accepted (a 500-entry playlist is a few MiB).
 const MAX_JSON_OUTPUT: u64 = 64 * 1024 * 1024;
@@ -34,6 +35,7 @@ const MAX_STDERR: u64 = 256 * 1024;
 fn command(program: &Path, tmp_dir: &Path) -> Command {
     let mut command = Command::new(program);
     command
+        .no_window()
         .env("PYTHONUTF8", "1")
         .env("PYTHONIOENCODING", "utf-8")
         .stdin(Stdio::null())
@@ -44,6 +46,12 @@ fn command(program: &Path, tmp_dir: &Path) -> Command {
         // Own process group, so that the whole tree can be stopped at once.
         command.process_group(0);
         command.env("TMPDIR", tmp_dir);
+    }
+    // yt-dlp looks for ffmpeg and JavaScript runtimes too: give it Homebrew's folders, which an
+    // app opened from the Finder does not have in its PATH.
+    #[cfg(target_os = "macos")]
+    if let Ok(path) = std::env::join_paths(crate::util::tool_dirs()) {
+        command.env("PATH", path);
     }
     command
 }
@@ -113,6 +121,7 @@ fn kill_group(child: &Child) {
 fn taskkill(pid: u32) -> std::process::Command {
     let mut command = std::process::Command::new("taskkill");
     command
+        .no_window()
         .args(["/PID", &pid.to_string(), "/T", "/F"])
         .stdin(Stdio::null())
         .stdout(Stdio::null())

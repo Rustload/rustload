@@ -9,6 +9,7 @@ use tokio::process::Command;
 use crate::{
     models::{DownloadRow, PackageRow},
     settings::NotificationEvent,
+    util::NoWindow,
 };
 
 const TIMEOUT: Duration = Duration::from_secs(30 * 60);
@@ -62,6 +63,7 @@ async fn run(command: &str, info: &PackageInfo) -> Result<(), String> {
         cmd
     };
     process
+        .no_window()
         .env("RUSTLOAD_EVENT", info.event)
         .env("RUSTLOAD_PACKAGE_ID", info.id.to_string())
         .env("RUSTLOAD_PACKAGE_NAME", &info.name)

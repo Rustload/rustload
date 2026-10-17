@@ -253,7 +253,7 @@ pub(super) async fn check(engine: &Engine, download: &DownloadRow) -> bool {
             Ok(())
         }
         Err(MediaError::Unavailable(message)) if output::classify(&message) == ErrorKind::Permanent => {
-            let reason = explain(&message, ytdlp.has_ffmpeg(), Origin::Link);
+            let reason = explain(&message, ytdlp.has_ffmpeg(), Origin::Link, engine.config.desktop);
             tracing::warn!("media link unavailable: {} ({reason})", download.url);
             mark_failed(engine, download, &reason).await
         }
@@ -298,16 +298,23 @@ async fn expand_in_place(
     Ok(())
 }
 
-/// User-facing explanation of a yt-dlp failure.
-fn explain(message: &str, ffmpeg: bool, origin: Origin) -> String {
+/// User-facing explanation of a yt-dlp failure. `desktop`: in the desktop app, where ffmpeg does
+/// not come with a Docker image.
+fn explain(message: &str, ffmpeg: bool, origin: Origin, desktop: bool) -> String {
     let lower = message.to_ascii_lowercase();
     if origin == Origin::WebPage && lower.contains("unsupported url") {
         return "the link leads to a web page, not a file, and yt-dlp found no video on it".into();
     }
     if !ffmpeg && lower.contains("requested format is not available") {
-        return "this video only exists as separate video and audio streams, which need ffmpeg to be combined: \
-                install ffmpeg (included in the Docker image) or choose audio only"
-            .into();
+        let install = match (desktop, media::tools::can_install_ffmpeg()) {
+            (false, _) => "install ffmpeg (included in the Docker image)",
+            (true, true) => "install ffmpeg in Settings › Video sites",
+            (true, false) => "install ffmpeg with your package manager",
+        };
+        return format!(
+            "this video only exists as separate video and audio streams, which need ffmpeg to be combined: \
+             {install} or choose audio only"
+        );
     }
     let text = output::clean_error(message);
     if output::needs_login(message) {
@@ -317,10 +324,10 @@ fn explain(message: &str, ffmpeg: bool, origin: Origin) -> String {
     }
 }
 
-fn task_error(error: MediaError, ffmpeg: bool, origin: Origin) -> TaskError {
+fn task_error(error: MediaError, ffmpeg: bool, origin: Origin, desktop: bool) -> TaskError {
     match error {
         MediaError::Cancelled => TaskError::Stopped,
-        MediaError::Unavailable(message) => failure(&message, ffmpeg, origin),
+        MediaError::Unavailable(message) => failure(&message, ffmpeg, origin, desktop),
         MediaError::Disabled if origin == Origin::Stream => TaskError::Fatal(m3u::NEEDS_YTDLP.into()),
         error @ (MediaError::Disabled | MediaError::Missing) => TaskError::Fatal(error.to_string()),
         error => TaskError::Transient(error.to_string()),
@@ -328,9 +335,9 @@ fn task_error(error: MediaError, ffmpeg: bool, origin: Origin) -> TaskError {
 }
 
 /// A yt-dlp error: permanent ones are explained, others retried.
-fn failure(message: &str, ffmpeg: bool, origin: Origin) -> TaskError {
+fn failure(message: &str, ffmpeg: bool, origin: Origin, desktop: bool) -> TaskError {
     match output::classify(message) {
-        ErrorKind::Permanent => TaskError::Fatal(explain(message, ffmpeg, origin)),
+        ErrorKind::Permanent => TaskError::Fatal(explain(message, ffmpeg, origin, desktop)),
         ErrorKind::Retryable => TaskError::Transient(output::clean_error(message)),
     }
 }
@@ -349,7 +356,8 @@ pub(super) async fn download(
     live: &LiveDownload,
     origin: Origin,
 ) -> Result<Outcome, TaskError> {
-    let ytdlp = YtDlp::current(engine).await.map_err(|e| task_error(e, false, origin))?;
+    let desktop = engine.config.desktop;
+    let ytdlp = YtDlp::current(engine).await.map_err(|e| task_error(e, false, origin, desktop))?;
     let ffmpeg = ytdlp.has_ffmpeg();
     let settings = engine.settings.get();
     let cancel = live.cancel.clone();
@@ -369,7 +377,7 @@ pub(super) async fn download(
             let info = ytdlp
                 .probe(&download.url, Some(&options), media::PROBE_TIMEOUT, &cancel)
                 .await
-                .map_err(|e| task_error(e, ffmpeg, origin))?;
+                .map_err(|e| task_error(e, ffmpeg, origin, desktop))?;
             if info.is_playlist() {
                 return Err(TaskError::Fatal(PLAYLIST_IN_FILE.into()));
             }
@@ -452,7 +460,7 @@ pub(super) async fn download(
             (Ok(status), _) => {
                 let message = error.or(stderr).unwrap_or_else(|| format!("yt-dlp exited with {status}"));
                 save_progress(engine, download.id, live).await;
-                return Err(failure(&message, ffmpeg, origin));
+                return Err(failure(&message, ffmpeg, origin, desktop));
             }
             (Err(error), _) => return Err(TaskError::Transient(format!("yt-dlp did not finish: {error}"))),
         },
@@ -729,15 +737,27 @@ mod tests {
     #[test]
     fn explains_failures() {
         assert!(
-            explain("[youtube] x: Requested format is not available. Use --list-formats", false, Origin::Link)
+            explain("[youtube] x: Requested format is not available. Use --list-formats", false, Origin::Link, false)
                 .contains("ffmpeg")
         );
         assert_eq!(
-            explain("[youtube] x: Requested format is not available. Use --list-formats", true, Origin::Link),
+            explain("[youtube] x: Requested format is not available. Use --list-formats", true, Origin::Link, false),
             "Requested format is not available."
         );
-        assert!(explain("Unsupported URL: https://example.com/", true, Origin::WebPage).contains("web page"));
-        assert!(explain("[youtube] x: Sign in to confirm your age", true, Origin::Link).contains("cookies file"));
+        assert!(explain("Unsupported URL: https://example.com/", true, Origin::WebPage, false).contains("web page"));
+        assert!(
+            explain("[youtube] x: Sign in to confirm your age", true, Origin::Link, false).contains("cookies file")
+        );
+    }
+
+    #[test]
+    fn tells_the_desktop_app_how_to_get_ffmpeg() {
+        let message = "[youtube] x: Requested format is not available. Use --list-formats";
+        assert!(explain(message, false, Origin::Link, false).contains("Docker image"));
+        let in_app = explain(message, false, Origin::Link, true);
+        assert!(!in_app.contains("Docker"));
+        let expected = if media::tools::can_install_ffmpeg() { "Settings › Video sites" } else { "package manager" };
+        assert!(in_app.contains(expected), "{in_app}");
     }
 
     #[test]
@@ -746,17 +766,23 @@ mod tests {
         assert!(fatal(task_error(
             MediaError::Unavailable("[youtube] x: Video unavailable".into()),
             true,
-            Origin::Link
+            Origin::Link,
+            false
         )));
-        assert!(fatal(task_error(MediaError::Missing, true, Origin::Link)));
+        assert!(fatal(task_error(MediaError::Missing, true, Origin::Link, false)));
         assert!(matches!(
-            task_error(MediaError::Unavailable("HTTP Error 503: Service Unavailable".into()), true, Origin::Link),
+            task_error(
+                MediaError::Unavailable("HTTP Error 503: Service Unavailable".into()),
+                true,
+                Origin::Link,
+                false
+            ),
             TaskError::Transient(_)
         ));
-        assert!(matches!(task_error(MediaError::Timeout(30), true, Origin::Link), TaskError::Transient(_)));
-        assert!(matches!(task_error(MediaError::Cancelled, true, Origin::Link), TaskError::Stopped));
+        assert!(matches!(task_error(MediaError::Timeout(30), true, Origin::Link, false), TaskError::Transient(_)));
+        assert!(matches!(task_error(MediaError::Cancelled, true, Origin::Link, false), TaskError::Stopped));
         assert!(matches!(
-            task_error(MediaError::Disabled, false, Origin::Stream),
+            task_error(MediaError::Disabled, false, Origin::Stream, false),
             TaskError::Fatal(message) if message.contains("HLS")
         ));
     }

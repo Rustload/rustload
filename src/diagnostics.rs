@@ -19,7 +19,7 @@ use crate::{
     },
     models::AccountRow,
     stats::Snapshot,
-    util::{human_bytes, random_token},
+    util::{NoWindow, human_bytes, random_token},
 };
 
 const CHECK_TIMEOUT: Duration = Duration::from_millis(2500);
@@ -76,6 +76,14 @@ impl Outcome {
         self.hint = Some(hint.to_owned());
         self
     }
+
+    /// The desktop app's wording of the hint, when there is one: no container, no host.
+    fn hint_in_app(mut self, desktop: bool, hint: &str) -> Self {
+        if desktop && self.hint.is_some() {
+            self.hint = Some(hint.to_owned());
+        }
+        self
+    }
 }
 
 /// What the checks may look at.
@@ -102,10 +110,10 @@ impl<'a> Context<'a> {
 /// Runs every check, in display order.
 pub async fn run(ctx: &Context<'_>) -> Vec<Check> {
     let config = &ctx.engine.config;
-    let checks: Vec<(&'static str, &'static str, BoxFuture<'_, Outcome>)> = vec![
-        ("download_dir_writable", "Download folder", writable(&config.download_root).boxed()),
+    let mut checks: Vec<(&'static str, &'static str, BoxFuture<'_, Outcome>)> = vec![
+        ("download_dir_writable", "Download folder", writable(&config.download_root, config.desktop).boxed()),
         ("category_folders", "Category folders", category_folders(ctx).boxed()),
-        ("config_dir_writable", "Configuration folder", writable(&config.config_dir).boxed()),
+        ("config_dir_writable", "Configuration folder", writable(&config.config_dir, config.desktop).boxed()),
         ("disk_space", "Disk space", disk_space(ctx).boxed()),
         ("extractor", "Archive extraction", extractor(ctx).boxed()),
         ("media", "Video site tools", media_tools(ctx).boxed()),
@@ -116,6 +124,10 @@ pub async fn run(ctx: &Context<'_>) -> Vec<Check> {
         ("internet", "Internet access", internet(ctx).boxed()),
         ("clock", "System clock", clock(ctx).boxed()),
     ];
+    // The desktop app runs as the person using the computer: no PUID/PGID to check.
+    if config.desktop {
+        checks.retain(|(id, ..)| *id != "permissions");
+    }
     join_all(checks.into_iter().map(|(id, title, check)| async move {
         let outcome = tokio::time::timeout(CHECK_TIMEOUT, check)
             .await
@@ -127,20 +139,26 @@ pub async fn run(ctx: &Context<'_>) -> Vec<Check> {
 
 const PERMISSION_HINT: &str =
     "The folder must exist and be writable by the user Rustload runs as (PUID/PGID with Docker).";
+const PERMISSION_HINT_APP: &str = "The folder must exist and your user account must be able to write to it.";
 
-async fn writable(dir: &Path) -> Outcome {
+async fn writable(dir: &Path, desktop: bool) -> Outcome {
     let probe = dir.join(format!(".rustload-write-test-{}", &random_token()[..12]));
     match tokio::fs::write(&probe, b"ok").await {
         Ok(()) => {
             let _ = tokio::fs::remove_file(&probe).await;
             Outcome::ok(format!("{} is writable.", dir.display()))
         }
-        Err(error) => Outcome::error(format!("Cannot write to {}: {error}.", dir.display()), Some(PERMISSION_HINT)),
+        Err(error) => Outcome::error(
+            format!("Cannot write to {}: {error}.", dir.display()),
+            Some(if desktop { PERMISSION_HINT_APP } else { PERMISSION_HINT }),
+        ),
     }
 }
 
 const MOUNT_HINT: &str = "Mount these folders in the container (volumes of docker-compose.yml) or create them, \
      writable by the user Rustload runs as: the packages sent there fail until then.";
+const MOUNT_HINT_APP: &str =
+    "Create these folders or connect the drives they are on: the packages sent there fail until then.";
 
 /// Folders outside the download root (Docker volumes, network shares) must exist: Rustload does
 /// not create them.
@@ -149,21 +167,23 @@ async fn category_folders(ctx: &Context<'_>) -> Outcome {
         Ok(categories) => categories,
         Err(error) => return Outcome::warn(format!("Cannot read the categories: {error:#}"), None),
     };
-    let root = &ctx.engine.config.download_root;
+    let (root, desktop) = (&ctx.engine.config.download_root, ctx.engine.config.desktop);
     let mut problems = Vec::new();
     let mut mounted = 0;
     for category in categories.iter().filter(|c| Path::new(c.path.trim()).is_absolute()) {
         let dir = category_path(root, category);
         if missing_mount(root, category).await.is_some() {
             problems.push(format!("{} ({}) does not exist", category.name, dir.display()));
-        } else if writable(&dir).await.status != Status::Ok {
+        } else if writable(&dir, desktop).await.status != Status::Ok {
             problems.push(format!("{} ({}) is not writable", category.name, dir.display()));
         } else {
             mounted += 1;
         }
     }
     match (problems.is_empty(), mounted) {
-        (false, _) => Outcome::warn(format!("{}.", problems.join("; ")), Some(MOUNT_HINT)),
+        (false, _) => {
+            Outcome::warn(format!("{}.", problems.join("; ")), Some(if desktop { MOUNT_HINT_APP } else { MOUNT_HINT }))
+        }
         (true, 0) => Outcome::ok("Every category is inside the download folder."),
         (true, n) => Outcome::ok(format!("{n} folder(s) outside the download folder, all writable.")),
     }
@@ -201,12 +221,16 @@ async fn extractor(ctx: &Context<'_>) -> Outcome {
     let Some(tool) = ctx.engine.extractor.tool_path() else {
         let hint = if crate::media::tools::can_install_seven_zip() {
             "Install it from Settings › Extraction to extract RAR and 7z archives."
+        } else if ctx.engine.config.desktop {
+            "Install 7-Zip with your package manager (for example `brew install sevenzip` or `apt install 7zip`) to \
+             extract RAR and 7z archives."
         } else {
             "Install 7-Zip (`7zz` or `7z` in the PATH) to extract RAR and 7z archives. The Docker image includes it."
         };
         return Outcome::warn("7-Zip was not found: only ZIP archives can be extracted.", Some(hint));
     };
     let banner = tokio::process::Command::new(&tool)
+        .no_window()
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -252,7 +276,11 @@ async fn media_tools(ctx: &Context<'_>) -> Outcome {
     match (tools.ytdlp, tools.ffmpeg) {
         (None, _) => Outcome::warn(
             "yt-dlp was not found: links of video sites cannot be downloaded.",
-            Some("Install it from Settings › Video sites, or set its path there. The Docker image includes it."),
+            Some(if ctx.engine.config.desktop {
+                "Install it from Settings › Video sites, or set its path there."
+            } else {
+                "Install it from Settings › Video sites, or set its path there. The Docker image includes it."
+            }),
         ),
         (Some(ytdlp), None) => Outcome::warn(
             format!("yt-dlp {} found, ffmpeg missing.", version(&ytdlp)),
@@ -315,6 +343,13 @@ fn permissions_outcome(_puid: Option<u32>) -> Outcome {
 async fn timezone(ctx: &Context<'_>) -> Outcome {
     let tz = std::env::var("TZ").ok().map(|tz| tz.trim().to_owned()).filter(|tz| !tz.is_empty());
     let now = chrono::Local::now();
+    // The desktop app follows the computer's time zone: TZ is a container setting.
+    if ctx.engine.config.desktop {
+        return Outcome::ok(format!(
+            "Local time: {} (the computer's time zone).",
+            now.format("%Y-%m-%d %H:%M (UTC%:z)")
+        ));
+    }
     timezone_outcome(
         tz.as_deref(),
         &now.format("%Y-%m-%d %H:%M (UTC%:z)").to_string(),
@@ -426,7 +461,10 @@ async fn fetch_probe(http: &reqwest::Client) -> Result<Probe, String> {
 }
 
 async fn internet(ctx: &Context<'_>) -> Outcome {
-    internet_outcome(ctx.probe().await)
+    internet_outcome(ctx.probe().await).hint_in_app(
+        ctx.engine.config.desktop,
+        "Check this computer's network connection, VPN or proxy: downloads and debrid accounts need internet access.",
+    )
 }
 
 fn internet_outcome(probe: &Result<Probe, String>) -> Outcome {
@@ -442,7 +480,10 @@ fn internet_outcome(probe: &Result<Probe, String>) -> Outcome {
 }
 
 async fn clock(ctx: &Context<'_>) -> Outcome {
-    clock_outcome(ctx.probe().await)
+    clock_outcome(ctx.probe().await).hint_in_app(
+        ctx.engine.config.desktop,
+        "Turn on automatic time in the system settings: a wrong clock breaks HTTPS connections and debrid logins.",
+    )
 }
 
 fn clock_outcome(probe: &Result<Probe, String>) -> Outcome {
@@ -557,8 +598,10 @@ Usage: NanaZipC"
     #[tokio::test]
     async fn checks_folder_writability() {
         let dir = tempfile::tempdir().unwrap();
-        assert_eq!(writable(dir.path()).await.status, Status::Ok);
+        assert_eq!(writable(dir.path(), false).await.status, Status::Ok);
         assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0);
-        assert_eq!(writable(&dir.path().join("missing")).await.status, Status::Error);
+        assert_eq!(writable(&dir.path().join("missing"), false).await.status, Status::Error);
+        let in_app = writable(&dir.path().join("missing"), true).await;
+        assert_eq!(in_app.hint.as_deref(), Some(PERMISSION_HINT_APP));
     }
 }

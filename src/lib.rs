@@ -80,6 +80,9 @@ impl Server {
         }
         match engine.extractor.tool_name() {
             Some(tool) => tracing::info!("archive extraction with {tool}"),
+            None if media::tools::can_install_seven_zip() => tracing::warn!(
+                "7-Zip not found: only ZIP archives can be extracted; install it from Settings › Extraction"
+            ),
             None => tracing::warn!("7-Zip not found: only ZIP archives can be extracted"),
         }
 

@@ -37,15 +37,20 @@
     })
   })
 
+  /** The server is on Windows when its download root has a drive or is a network share. */
+  const windows = $derived(/^[a-z]:[\\/]|^\\\\/i.test(categories.root))
+
+  /** As the server decides: on Windows only a drive or a network share (`D:\Films`, `\\nas\films`)
+   *  is absolute, and `/series` stays below the download root; elsewhere, a leading `/`. */
   function isAbsolute(p: string): boolean {
-    return p.startsWith('/') || /^[a-z]:[\\/]/i.test(p)
+    return windows ? /^[a-z]:[\\/]|^\\\\/i.test(p) : p.startsWith('/')
   }
 
   const resolved = $derived.by(() => {
     const p = path.trim()
     if (isAbsolute(p)) return p
     const root = categories.root.replace(/[\\/]+$/, '')
-    return p ? `${root}/${p.replace(/^[\\/]+/, '')}` : root
+    return p ? `${root}${windows ? '\\' : '/'}${p.replace(/^[\\/]+/, '')}` : root
   })
 
   function normalizeExtension(raw: string): string | null {

@@ -38,6 +38,37 @@ async fn opens_logged_in_once_per_address() {
 }
 
 #[tokio::test]
+async fn opening_the_window_again_replaces_its_session() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = Config::desktop(dir.path().join("config"), dir.path().join("downloads"), 0, "tester");
+    let server = Server::start(config).await.unwrap();
+    let handle = server.handle();
+    let http = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build().unwrap();
+    let session = |response: &reqwest::Response| {
+        response.headers()["set-cookie"].to_str().unwrap().split(';').next().unwrap().to_owned()
+    };
+    let user = |cookie: String| {
+        let http = http.clone();
+        let url = format!("http://{}/api/auth/status", handle.address());
+        async move {
+            let status: serde_json::Value =
+                http.get(url).header("cookie", cookie).send().await.unwrap().json().await.unwrap();
+            status["user"]["username"].as_str().map(str::to_owned)
+        }
+    };
+
+    let first = session(&http.get(handle.login_url("/").unwrap()).send().await.unwrap());
+    let reopened = http.get(handle.login_url("/").unwrap()).header("cookie", &first).send().await.unwrap();
+    assert_eq!(reopened.status(), 303);
+    let second = session(&reopened);
+    assert_ne!(first, second);
+    assert_eq!(user(second).await.as_deref(), Some("tester"));
+    assert_eq!(user(first).await, None);
+
+    server.stop().await.unwrap();
+}
+
+#[tokio::test]
 async fn servers_issue_no_login_addresses() {
     let dir = tempfile::tempdir().unwrap();
     let mut config = Config::desktop(dir.path().join("config"), dir.path().join("downloads"), 0, "tester");

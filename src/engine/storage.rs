@@ -22,7 +22,9 @@ pub fn category_path(root: &Path, category: &CategoryRow) -> PathBuf {
     } else if path.is_absolute() {
         path.to_path_buf()
     } else {
-        root.join(path)
+        // On Windows `/series` is not absolute (no drive) but `join` would still put it at the root
+        // of the drive: like the interface, keep it below the download root.
+        root.join(path.to_string_lossy().trim_start_matches(['/', '\\']))
     }
 }
 
@@ -123,8 +125,13 @@ impl Engine {
             && let Some(dir) = missing_mount(&self.config.download_root, category).await
         {
             // Not stored: the next attempt resolves the folder again, once it is mounted.
+            let fix = if self.config.desktop {
+                "create it or connect the drive it is on"
+            } else {
+                "mount it in the container or create it"
+            };
             return Err(TaskError::Fatal(format!(
-                "the folder {} of the category {} does not exist: mount it in the container or create it, then retry",
+                "the folder {} of the category {} does not exist: {fix}, then retry",
                 dir.display(),
                 category.name
             )));
@@ -273,5 +280,22 @@ mod tests {
             c.path = "/media/movies".into();
             assert_eq!(category_path(root, &c), PathBuf::from("/media/movies"));
         }
+    }
+
+    /// Only a drive or a network share is absolute on Windows: `/series` stays below the root,
+    /// where the interface shows it, instead of `C:\series`.
+    #[cfg(windows)]
+    #[test]
+    fn keeps_rooted_paths_below_the_download_root_on_windows() {
+        let root = Path::new(r"C:\Users\me\Downloads\Rustload");
+        let mut c = category(1, "", true);
+        c.path = "/series".into();
+        assert_eq!(category_path(root, &c), root.join("series"));
+        c.path = r"\films\new".into();
+        assert_eq!(category_path(root, &c), root.join(r"films\new"));
+        c.path = r"D:\Films".into();
+        assert_eq!(category_path(root, &c), PathBuf::from(r"D:\Films"));
+        c.path = r"\\nas\media".into();
+        assert_eq!(category_path(root, &c), PathBuf::from(r"\\nas\media"));
     }
 }

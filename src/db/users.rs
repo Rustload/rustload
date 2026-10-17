@@ -80,6 +80,20 @@ pub async fn session_user(db: &Db, token_hash: &str) -> Result<Option<UserRow>> 
     .await?)
 }
 
+/// Moves the expiry of a valid session to `expires_at` if it expires before `threshold`. Returns
+/// whether it did: most calls write nothing.
+pub async fn extend_session(db: &Db, token_hash: &str, expires_at: i64, threshold: i64) -> Result<bool> {
+    let updated =
+        sqlx::query("UPDATE sessions SET expires_at = ? WHERE token_hash = ? AND expires_at < ? AND expires_at > ?")
+            .bind(expires_at)
+            .bind(token_hash)
+            .bind(threshold)
+            .bind(now())
+            .execute(db)
+            .await?;
+    Ok(updated.rows_affected() > 0)
+}
+
 pub async fn delete_session(db: &Db, token_hash: &str) -> Result<()> {
     sqlx::query("DELETE FROM sessions WHERE token_hash = ?").bind(token_hash).execute(db).await?;
     Ok(())
@@ -98,4 +112,27 @@ pub async fn delete_other_sessions(db: &Db, user_id: i64, keep_token_hash: &str)
 pub async fn purge_expired_sessions(db: &Db) -> Result<()> {
     sqlx::query("DELETE FROM sessions WHERE expires_at <= ?").bind(now()).execute(db).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn extends_only_sessions_close_to_their_end() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = crate::db::open(&dir.path().join("rustload.db")).await.unwrap();
+        let user = insert(&db, "me", "hash").await.unwrap();
+        let now = now();
+        insert_session(&db, "fresh", user, now + 1000).await.unwrap();
+        insert_session(&db, "old", user, now + 10).await.unwrap();
+        insert_session(&db, "expired", user, now - 10).await.unwrap();
+
+        assert!(!extend_session(&db, "fresh", now + 2000, now + 500).await.unwrap());
+        assert!(extend_session(&db, "old", now + 2000, now + 500).await.unwrap());
+        assert!(!extend_session(&db, "old", now + 2000, now + 500).await.unwrap());
+        assert!(!extend_session(&db, "expired", now + 2000, now + 500).await.unwrap());
+        assert!(session_user(&db, "old").await.unwrap().is_some());
+        assert!(session_user(&db, "expired").await.unwrap().is_none());
+    }
 }

@@ -625,8 +625,7 @@ pub fn executable(name: &str) -> String {
 
 fn find_in_path(name: &str) -> Option<PathBuf> {
     let file = executable(name);
-    std::env::var_os("PATH")
-        .and_then(|paths| std::env::split_paths(&paths).map(|dir| dir.join(&file)).find(|p| p.is_file()))
+    crate::util::tool_dirs().into_iter().map(|dir| dir.join(&file)).find(|p| p.is_file())
 }
 
 /// musl-based Linux (Alpine, the Docker image) needs the `musllinux` builds.

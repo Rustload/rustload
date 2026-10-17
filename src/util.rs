@@ -4,6 +4,47 @@ use std::borrow::Cow;
 
 use sha2::{Digest, Sha256};
 
+/// Child processes get no console window on Windows: the desktop app has none of its own, so
+/// every tool it starts (yt-dlp, 7-Zip, hooks) would otherwise open a black window.
+pub trait NoWindow {
+    fn no_window(&mut self) -> &mut Self;
+}
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+impl NoWindow for std::process::Command {
+    fn no_window(&mut self) -> &mut Self {
+        #[cfg(windows)]
+        std::os::windows::process::CommandExt::creation_flags(self, CREATE_NO_WINDOW);
+        self
+    }
+}
+
+impl NoWindow for tokio::process::Command {
+    fn no_window(&mut self) -> &mut Self {
+        #[cfg(windows)]
+        self.creation_flags(CREATE_NO_WINDOW);
+        self
+    }
+}
+
+/// Folders searched for external tools: `PATH`, and on macOS the package managers' folders
+/// (Homebrew, MacPorts), which an app opened from the Finder does not get in its `PATH`.
+pub fn tool_dirs() -> Vec<std::path::PathBuf> {
+    #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
+    let mut dirs: Vec<std::path::PathBuf> =
+        std::env::var_os("PATH").map(|path| std::env::split_paths(&path).collect()).unwrap_or_default();
+    #[cfg(target_os = "macos")]
+    for extra in ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"] {
+        let extra = std::path::PathBuf::from(extra);
+        if !dirs.contains(&extra) {
+            dirs.push(extra);
+        }
+    }
+    dirs
+}
+
 /// Current unix time in seconds.
 pub fn now() -> i64 {
     chrono::Utc::now().timestamp()
