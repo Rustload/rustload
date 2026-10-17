@@ -68,6 +68,7 @@ export const en = {
     queue_finished: 'All downloads are done',
     download_failed: '“{name}” failed: {error}',
     account_error: 'Account “{label}”: {error}',
+    watch_folder_unavailable: 'The watch folder {dir} cannot be used: {error}',
     watch_imported: {
       one: 'Imported {count} package from {file}',
       other: 'Imported {count} packages from {file}',
@@ -640,6 +641,7 @@ export const en = {
       path: 'Folder',
       pathHint:
         'Relative to the download root, or an absolute path such as /series: with Docker, mount it in the container first (/srv/series:/series in the volumes).',
+      pathHintApp: 'Relative to the download root, or the full path of an existing folder, such as {example}.',
       resolved: 'Saves to {path}',
       extensions: 'Extensions',
       extensionsHint: 'Type an extension and press Enter.',

@@ -2,6 +2,7 @@
   import { untrack } from 'svelte'
   import { ApiError, type Category } from '$lib/api'
   import { t } from '$lib/i18n/index.svelte'
+  import { auth } from '$lib/stores/auth.svelte'
   import { categories } from '$lib/stores/catalog.svelte'
   import { errorMessage } from '$lib/stores/toasts.svelte'
   import Alert from '../ui/Alert.svelte'
@@ -83,6 +84,19 @@
       saving = false
     }
   }
+
+  // The app has no volumes to mount: any existing folder of this computer will do.
+  const pathHint = $derived(
+    auth.desktop
+      ? t('settings.folders.pathHintApp', {
+          example: categories.root.includes('\\')
+            ? 'D:\\Films'
+            : categories.root.startsWith('/Users/')
+              ? '/Volumes/Media/Films'
+              : '/mnt/media/films',
+        })
+      : t('settings.folders.pathHint'),
+  )
 </script>
 
 <Dialog bind:open title={category ? t('settings.folders.edit') : t('settings.folders.add')} initialFocus="input">
@@ -92,7 +106,7 @@
         <TextInput {id} bind:value={name} required maxlength={60} />
       {/snippet}
     </Field>
-    <Field label={t('settings.folders.path')} hint={t('settings.folders.pathHint')}>
+    <Field label={t('settings.folders.path')} hint={pathHint}>
       {#snippet children({ id, describedBy })}
         <TextInput {id} bind:value={path} mono spellcheck={false} autocomplete="off" aria-describedby={describedBy} />
         <p class="mt-1.5 truncate font-mono text-xs text-fg-faint" title={resolved}>

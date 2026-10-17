@@ -66,6 +66,7 @@ export const fr: Messages = {
     queue_finished: 'Tous les téléchargements sont terminés',
     download_failed: '« {name} » a échoué : {error}',
     account_error: 'Compte « {label} » : {error}',
+    watch_folder_unavailable: 'Le dossier surveillé {dir} est inutilisable : {error}',
     watch_imported: {
       one: '{count} paquet importé depuis {file}',
       other: '{count} paquets importés depuis {file}',
@@ -645,6 +646,7 @@ export const fr: Messages = {
       path: 'Dossier',
       pathHint:
         'Relatif au dossier racine, ou chemin absolu comme /series : avec Docker, montez-le d’abord dans le conteneur (/srv/series:/series dans les volumes).',
+      pathHintApp: 'Relatif au dossier racine, ou chemin complet d’un dossier existant, comme {example}.',
       resolved: 'Enregistré dans {path}',
       extensions: 'Extensions',
       extensionsHint: 'Saisissez une extension puis appuyez sur Entrée.',
