@@ -37,27 +37,35 @@ Plain ES modules, HTML and CSS: no build step, no dependencies.
 
 ## Install
 
-### Chrome, Edge, Brave (unpacked)
+Every [release](https://github.com/rustload/rustload/releases/latest) carries the extension.
 
-1. Open `chrome://extensions` (Edge: `edge://extensions`, Brave: `brave://extensions`).
-2. Turn on **Developer mode**.
-3. Click **Load unpacked** and select this `extension` folder (the one containing
-   `manifest.json`).
+### Chrome, Edge, Brave
+
+1. Download [rustload-extension.zip](https://github.com/rustload/rustload/releases/latest/download/rustload-extension.zip)
+   and unzip it into a folder you keep: the browser loads the extension from there.
+2. Open `chrome://extensions` (Edge: `edge://extensions`, Brave: `brave://extensions`) and turn on
+   **Developer mode**.
+3. Click **Load unpacked** and select that folder (the one containing `manifest.json`).
 4. Pin Rustload to the toolbar from the puzzle-piece menu.
 
-The settings page opens by itself after installation.
+The settings page opens by itself after installation. These browsers only install packaged
+extensions from their stores: loaded this way, the extension works the same but does not update
+itself. To update it, unzip a newer release into the same folder and click the reload arrow on its
+card in the extensions page.
 
 ### Firefox
 
-For development or a quick try:
+When the release has a `rustload-firefox.xpi`, open it with Firefox (or drop it on a Firefox
+window): it is signed by Mozilla, installs in one click and updates itself. It is not listed on
+addons.mozilla.org.
+
+Otherwise, for a quick try:
 
 1. Open `about:debugging#/runtime/this-firefox`.
-2. Click **Load Temporary Add-on…** and select `extension/manifest.json`.
+2. Click **Load Temporary Add-on…** and select `rustload-extension.zip` (or `manifest.json` in a
+   copy of this folder).
 
-A temporary add-on stays until Firefox restarts. For a permanent install, the add-on has to be
-signed by Mozilla (submit the zip below to [addons.mozilla.org](https://addons.mozilla.org),
-listed or self-distributed), or use Firefox Developer Edition / Nightly with
-`xpinstall.signatures.required` set to `false`.
+A temporary add-on stays until Firefox restarts.
 
 ## Configuration
 
@@ -99,13 +107,13 @@ Chrome Web Store and addons.mozilla.org):
 
 ```sh
 npx web-ext build --source-dir extension --artifacts-dir dist --ignore-files README.md
-# → dist/rustload-1.0.0.zip
+# → dist/rustload-1.1.0.zip
 ```
 
 or by hand on Linux/macOS:
 
 ```sh
-cd extension && zip -r -X ../rustload-extension-1.0.0.zip . -x README.md
+cd extension && zip -r -X ../rustload-extension.zip . -x README.md
 ```
 
 (Avoid Windows PowerShell 5's `Compress-Archive`: it writes `\` in paths, which Firefox rejects.)

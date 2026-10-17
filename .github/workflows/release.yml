@@ -172,14 +172,45 @@ jobs:
         with:
           persist-credentials: false
       # The zip holds manifest.json at its root, as the Chrome Web Store and addons.mozilla.org want.
+      # Its name has no version, so releases/latest/download/rustload-extension.zip always works.
       - run: |
-          version="${GITHUB_REF_NAME#v}"
-          [ "$GITHUB_REF_TYPE" = tag ] || version="dev-${GITHUB_SHA::7}"
           mkdir dist
-          cd extension && zip -q -r -X "../dist/rustload-extension-$version.zip" . -x README.md
+          cd extension && zip -q -r -X ../dist/rustload-extension.zip . -x README.md
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-extension
+          path: dist/*
+          if-no-files-found: error
+
+  # Firefox only installs add-ons signed by Mozilla. Signing as "unlisted" publishes nothing on
+  # addons.mozilla.org: the signed file is attached to the release and updates itself through
+  # firefox-updates.json. Skipped until the AMO_JWT_ISSUER/AMO_JWT_SECRET secrets exist (an API key
+  # of a free addons.mozilla.org account), and only for releases: each version can be signed once.
+  firefox:
+    name: Firefox add-on
+    needs: ci
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - if: env.AMO_JWT_ISSUER != ''
+        run: |
+          npx --yes web-ext@8.10.0 sign --channel unlisted --source-dir extension --artifacts-dir signed \
+            --ignore-files README.md --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
+          mkdir dist
+          mv signed/*.xpi dist/rustload-firefox.xpi
+      - if: env.AMO_JWT_ISSUER != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-firefox
           path: dist/*
           if-no-files-found: error
 
@@ -208,7 +239,7 @@ jobs:
   publish:
     name: Publish
     if: github.ref_type == 'tag'
-    needs: [versions, binary, desktop, extension]
+    needs: [versions, binary, desktop, extension, firefox]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -225,6 +256,13 @@ jobs:
           merge-multiple: true
       # The manifest the desktop app checks for updates (releases/latest/download/latest.json).
       - run: python3 .github/scripts/update_manifest.py dist "${GITHUB_REF_NAME#v}" "$GITHUB_REPOSITORY"
+      # What installed Firefox add-ons check for updates, when the release has a signed one.
+      - run: |
+          [ -f dist/rustload-firefox.xpi ] || exit 0
+          version="${GITHUB_REF_NAME#v}"
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/rustload-firefox.xpi"
+          jq -n --arg version "$version" --arg url "$url" --arg id "$(jq -r .browser_specific_settings.gecko.id extension/manifest.json)" \
+            '{addons: {($id): {updates: [{version: $version, update_link: $url}]}}}' > dist/firefox-updates.json
       - run: cd dist && sha256sum -- * > SHA256SUMS
       # Anyone can check a download came from this workflow: `gh attestation verify <file> -R rustload/rustload`.
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -249,7 +287,7 @@ jobs:
             echo "- **Docker** (\`linux/amd64\`, \`linux/arm64\`): \`ghcr.io/rustload/rustload:$version\` — see the [quick start](https://github.com/rustload/rustload#quick-start-docker)."
             echo "- **Binary**: download the archive for your system below, extract it and run \`rustload\` — see [running without Docker](https://github.com/rustload/rustload#without-docker)."
             echo "- **Desktop app**: \`Rustload_${version}_x64-setup.exe\` (Windows), \`Rustload_${version}_universal.dmg\` (macOS), \`Rustload_${version}_amd64.AppImage\` or \`.deb\` (Linux) — see [the desktop app](https://github.com/rustload/rustload#desktop-app). Installed apps update themselves."
-            echo "- **Browser extension**: \`rustload-extension-$version.zip\` — see [its guide](https://github.com/rustload/rustload/blob/main/extension/README.md)."
+            echo "- **Browser extension**: \`rustload-firefox.xpi\` for Firefox (when present: one click, updates itself) or \`rustload-extension.zip\` for Chrome, Edge and Brave — see [how to install it](https://github.com/rustload/rustload/blob/main/extension/README.md#install)."
             echo
             echo "\`SHA256SUMS\` lists the checksum of every file; \`gh attestation verify <file> -R rustload/rustload\` proves it was built here."
             echo

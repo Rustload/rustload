@@ -19,6 +19,12 @@ All notable changes to this project are documented here. The format follows
   Video sites* and *Settings › Extraction*, checked against their checksums and used without a
   restart.
 
+### Changed
+
+- Releases carry the browser extension as `rustload-extension.zip`, always at the same address
+  (`releases/latest/download/rustload-extension.zip`), and *Get the extension* in the settings
+  opens its install guide.
+
 ## [1.0.0] - 2026-10-16
 
 First public version.

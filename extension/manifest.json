@@ -45,6 +45,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "rustload@rustload.github.io",
+      "update_url": "https://github.com/rustload/rustload/releases/latest/download/firefox-updates.json",
       "strict_min_version": "128.0",
       "data_collection_permissions": {
         "required": ["none"]
