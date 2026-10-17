@@ -22,7 +22,8 @@ use std::{
 use anyhow::Context;
 use rustload::{Config, Server};
 use tauri::{
-    AppHandle, Manager, RunEvent, Url, WebviewUrl, WebviewWindowBuilder, WindowEvent, webview::NewWindowResponse,
+    AppHandle, Manager, PhysicalPosition, PhysicalSize, RunEvent, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent, webview::NewWindowResponse,
 };
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_notification::NotificationExt;
@@ -60,7 +61,8 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_window_state::Builder::new().build())
+        // The chooser has a size of its own; a size saved at another display scale would not fit it.
+        .plugin(tauri_plugin_window_state::Builder::new().with_denylist(&[chooser::WINDOW]).build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![chooser::current, chooser::use_local, chooser::use_server])
         .setup(|app| {
@@ -185,6 +187,7 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
         .data_directory(data_dir)
         // The interface takes dropped .torrent files itself.
         .disable_drag_drop_handler()
+        .initialization_script(OPEN_LINKS_IN_BROWSER)
         // Links to other sites (documentation, debrid services) open in the browser.
         .on_navigation(move |url| navigating.1.is_interface(url) || open_in_browser(&navigating.0, url))
         .on_new_window(move |url, _| {
@@ -193,9 +196,43 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
         })
         .build();
     if let Ok(window) = built {
+        fit_on_screen(&window);
         let _ = window.set_focus();
     }
 }
+
+/// Keeps `window` within its screen's work area: the size it opens with, or the one remembered
+/// from another display or another scale, can be larger than this screen.
+pub fn fit_on_screen(window: &WebviewWindow) {
+    let (Ok(Some(monitor)), Ok(outer), Ok(inner)) =
+        (window.current_monitor(), window.outer_size(), window.inner_size())
+    else {
+        return;
+    };
+    let area = monitor.work_area();
+    if outer.width <= area.size.width && outer.height <= area.size.height {
+        return;
+    }
+    // The frame and title bar stay as they are: only the content shrinks.
+    let (width, height) = (outer.width.min(area.size.width), outer.height.min(area.size.height));
+    let (frame_width, frame_height) = (outer.width - inner.width, outer.height - inner.height);
+    let _ = window.set_size(PhysicalSize::new(width - frame_width, height - frame_height));
+    // Centred in the work area, clear of the taskbar.
+    let x = area.position.x + ((area.size.width - width) / 2) as i32;
+    let y = area.position.y + ((area.size.height - height) / 2) as i32;
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
+/// WebView2 raises no new-window request for a `target="_blank" rel="noopener"` link, so such links
+/// would do nothing: they go through `window.open`, which `on_new_window` sends to the browser.
+const OPEN_LINKS_IN_BROWSER: &str = r#"
+document.addEventListener('click', (event) => {
+  const link = event.target instanceof Element ? event.target.closest('a[href]') : null
+  if (!link || link.target !== '_blank' || event.defaultPrevented || event.button !== 0) return
+  event.preventDefault()
+  window.open(link.href)
+})
+"#;
 
 /// Always `false`: the window stays on the interface.
 fn open_in_browser(app: &AppHandle, url: &Url) -> bool {

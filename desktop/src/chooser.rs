@@ -10,7 +10,7 @@ use crate::{
     prefs::Mode,
 };
 
-const WINDOW: &str = "chooser";
+pub const WINDOW: &str = "chooser";
 
 pub fn open(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(WINDOW) {
@@ -19,12 +19,15 @@ pub fn open(app: &AppHandle) {
         let _ = window.set_focus();
         return;
     }
-    let _ = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App("index.html".into()))
+    let built = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App("index.html".into()))
         .title("Rustload")
         .inner_size(560.0, 660.0)
-        .resizable(false)
+        .min_inner_size(420.0, 480.0)
         .center()
         .build();
+    if let Ok(window) = built {
+        crate::fit_on_screen(&window);
+    }
 }
 
 /// The mode in use, to start the page from (never the API key).
