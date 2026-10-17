@@ -206,5 +206,7 @@ system notifications, and magnet links handed over by the system (command line o
 an event on macOS) open the add dialog at `/?add=…`. A second launch passes its arguments to the
 running instance (single-instance plugin). `updater.rs` checks the release's `latest.json`
 (written by `.github/scripts/update_manifest.py`), downloads signed updates and installs them in a
-quiet moment. The interface window loads an `http://` address, so it
+quiet moment. `portable.rs` turns on the portable mode when a `data` folder sits next to the
+program: the app's data, its webviews' data and the remembered window size (kept in logical pixels
+in `desktop.json`, so a change of display scale does not shrink the window) then live there. The interface window loads an `http://` address, so it
 has no access to the app's commands.

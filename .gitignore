@@ -25,3 +25,6 @@ desktop.ini
 *.db-shm
 *.db-wal
 *.sqlite*
+
+# Local tool folders
+.claude/

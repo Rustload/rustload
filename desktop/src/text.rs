@@ -18,6 +18,7 @@ pub struct Text {
     pub background_body: &'static str,
     pub start_failed: &'static str,
     pub update_body: &'static str,
+    pub update_body_portable: &'static str,
     french: bool,
 }
 
@@ -33,7 +34,8 @@ const EN: Text = Text {
     background_title: "Rustload keeps downloading",
     background_body: "Its icon in the notification area opens it again or quits it.",
     start_failed: "Rustload could not start.",
-    update_body: "It installs itself when you are not using the app, or now from the icon's menu.",
+    update_body: "It installs itself when you are not using the app, or now from the icon’s menu.",
+    update_body_portable: "This portable copy does not update itself: download the new one from the icon’s menu.",
     french: false,
 };
 
@@ -50,6 +52,7 @@ const FR: Text = Text {
     background_body: "Son icône dans la zone de notification le rouvre ou le quitte.",
     start_failed: "Rustload n’a pas pu démarrer.",
     update_body: "Elle s’installe d’elle-même quand vous n’utilisez pas l’app, ou tout de suite depuis le menu de l’icône.",
+    update_body_portable: "Cette copie portable ne se met pas à jour seule\u{a0}: téléchargez la nouvelle depuis le menu de l’icône.",
     french: true,
 };
 
@@ -92,12 +95,13 @@ impl Text {
         format!("{name} — {state}")
     }
 
-    /// The tray menu's action once update `version` is downloaded.
-    pub fn update_item(&self, version: &str) -> String {
-        if self.french {
-            format!("Installer la version {version} et redémarrer")
-        } else {
-            format!("Install version {version} and restart")
+    /// The tray menu's action once update `version` is downloaded (found, for a portable copy).
+    pub fn update_item(&self, version: &str, portable: bool) -> String {
+        match (portable, self.french) {
+            (false, false) => format!("Install version {version} and restart"),
+            (false, true) => format!("Installer la version {version} et redémarrer"),
+            (true, false) => format!("Download version {version}"),
+            (true, true) => format!("Télécharger la version {version}"),
         }
     }
 

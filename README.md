@@ -122,7 +122,9 @@ window is closed. On first start it asks how you want to use it:
   address and API key (*Settings › Integrations*), without opening a browser.
 
 Either way it opens magnet links, turns finished or failed packages into system notifications and
-updates itself (signed updates, installed when you are not using it). The installers are not signed
+updates itself (signed updates, installed when you are not using it). On Windows,
+`Rustload_…_x64-portable.zip` runs without installing: unzip it anywhere, a USB drive included; its
+`data` folder keeps everything the app writes. The installers are not signed
 yet: Windows SmartScreen asks for confirmation (*More info › Run
 anyway*) and macOS wants the app opened from its context menu the first time.
 

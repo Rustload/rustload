@@ -24,6 +24,16 @@ pub struct Prefs {
     pub port: Option<u16>,
     /// Closing the window once explained that Rustload keeps downloading.
     pub background_hint_shown: bool,
+    /// The interface window as it was last closed, in logical pixels: the same size at any
+    /// display scale.
+    pub window: Option<WindowSize>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct WindowSize {
+    pub width: f64,
+    pub height: f64,
+    pub maximized: bool,
 }
 
 impl Prefs {

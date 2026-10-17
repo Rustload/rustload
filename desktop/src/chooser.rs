@@ -19,8 +19,10 @@ pub fn open(app: &AppHandle) {
         let _ = window.set_focus();
         return;
     }
+    let data_dir = app.state::<Desktop>().data_dir.join("webview");
     let built = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::App("index.html".into()))
         .title("Rustload")
+        .data_directory(data_dir)
         .inner_size(560.0, 660.0)
         .min_inner_size(420.0, 480.0)
         .center()

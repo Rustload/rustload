@@ -13,8 +13,9 @@ All notable changes to this project are documented here. The format follows
   downloading once the window is closed. It can start with the computer, open magnet links and
   turns finished and failed packages into system notifications. On first start it asks whether to
   download on this computer or to drive a Rustload server (gateway mode, with the server's API key).
-  It updates itself with signed updates, installed when nothing is downloading. The installers are
-  not signed yet.
+  It updates itself with signed updates, installed when nothing is downloading. On Windows a
+  portable copy (`…_x64-portable.zip`) runs without installing and keeps its data in its own `data`
+  folder. The installers are not signed yet.
 - On Windows, ffmpeg (yt-dlp's recommended build) and 7-Zip install in one click from *Settings ›
   Video sites* and *Settings › Extraction*, checked against their checksums and used without a
   restart.

@@ -157,6 +157,25 @@ jobs:
             [ -e "$file" ] && mv "$file" "dist/Rustload_${version}_universal.app.tar.gz${file#dist/Rustload.app.tar.gz}"
           done
           ls -l dist
+      # The same program without installer: its `data` folder turns on the portable mode.
+      - name: Portable copy
+        if: runner.os == 'Windows'
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/Cargo.toml | head -n 1)"
+          dir=portable/Rustload
+          mkdir -p "$dir/data"
+          exe=desktop/target/release/Rustload.exe
+          [ -f "$exe" ] || exe=desktop/target/release/rustload-desktop.exe
+          cp "$exe" "$dir/Rustload.exe"
+          cp LICENSE desktop/THIRD-PARTY-LICENSES.md "$dir/"
+          cat > "$dir/data/README.txt" <<'EOF'
+          Rustload runs as a portable app because this folder is next to Rustload.exe: its settings,
+          queue, history and window data stay here, nothing goes to your user profile. Downloads still
+          go to your Downloads\Rustload folder (categories can send them elsewhere). Without this
+          folder, Rustload keeps its data in your user profile like the installed app.
+          EOF
+          (cd portable && 7z a -tzip -bso0 "../dist/Rustload_${version}_x64-portable.zip" Rustload)
+          ls -l dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-desktop-${{ matrix.name }}
@@ -286,7 +305,7 @@ jobs:
             echo
             echo "- **Docker** (\`linux/amd64\`, \`linux/arm64\`): \`ghcr.io/rustload/rustload:$version\` — see the [quick start](https://github.com/rustload/rustload#quick-start-docker)."
             echo "- **Binary**: download the archive for your system below, extract it and run \`rustload\` — see [running without Docker](https://github.com/rustload/rustload#without-docker)."
-            echo "- **Desktop app**: \`Rustload_${version}_x64-setup.exe\` (Windows), \`Rustload_${version}_universal.dmg\` (macOS), \`Rustload_${version}_amd64.AppImage\` or \`.deb\` (Linux) — see [the desktop app](https://github.com/rustload/rustload#desktop-app). Installed apps update themselves."
+            echo "- **Desktop app**: \`Rustload_${version}_x64-setup.exe\` (Windows, or \`Rustload_${version}_x64-portable.zip\` to run without installing), \`Rustload_${version}_universal.dmg\` (macOS), \`Rustload_${version}_amd64.AppImage\` or \`.deb\` (Linux) — see [the desktop app](https://github.com/rustload/rustload#desktop-app). Installed apps update themselves."
             echo "- **Browser extension**: \`rustload-firefox.xpi\` for Firefox (when present: one click, updates itself) or \`rustload-extension.zip\` for Chrome, Edge and Brave — see [how to install it](https://github.com/rustload/rustload/blob/main/extension/README.md#install)."
             echo
             echo "\`SHA256SUMS\` lists the checksum of every file; \`gh attestation verify <file> -R rustload/rustload\` proves it was built here."

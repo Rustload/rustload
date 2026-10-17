@@ -8,6 +8,7 @@
 mod backend;
 mod chooser;
 mod magnets;
+mod portable;
 mod prefs;
 mod text;
 mod tray;
@@ -31,7 +32,7 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::{
     backend::Backend,
-    prefs::{Mode, Prefs},
+    prefs::{Mode, Prefs, WindowSize},
     text::text,
 };
 
@@ -61,8 +62,6 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        // The chooser has a size of its own; a size saved at another display scale would not fit it.
-        .plugin(tauri_plugin_window_state::Builder::new().with_denylist(&[chooser::WINDOW]).build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![chooser::current, chooser::use_local, chooser::use_server])
         .setup(|app| {
@@ -78,6 +77,7 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if window.label() == WINDOW && matches!(event, WindowEvent::CloseRequested { .. }) {
+                remember_window(window.app_handle());
                 explain_background(window.app_handle());
             }
         })
@@ -88,7 +88,10 @@ fn main() {
         // Closing the window keeps going: only *Quit* (or the system) ends the app. Before a mode is
         // chosen, closing the chooser ends it.
         RunEvent::ExitRequested { code: None, api, .. } if backend(app).is_some() => api.prevent_exit(),
-        RunEvent::Exit => stop(app),
+        RunEvent::Exit => {
+            remember_window(app);
+            stop(app);
+        }
         #[cfg(target_os = "macos")]
         RunEvent::Reopen { .. } => open_window(app, None),
         _ => {}
@@ -96,7 +99,10 @@ fn main() {
 }
 
 fn start(app: &AppHandle) -> anyhow::Result<()> {
-    let data_dir = app.path().app_local_data_dir().context("no folder for the app's data")?;
+    let data_dir = match portable::data_dir() {
+        Some(dir) => dir.clone(),
+        None => app.path().app_local_data_dir().context("no folder for the app's data")?,
+    };
     std::fs::create_dir_all(&data_dir).with_context(|| format!("cannot create {}", data_dir.display()))?;
     let prefs = Prefs::load(&data_dir);
     let mode = prefs.mode.clone();
@@ -179,9 +185,11 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
     let Some(url) = backend.page(path.unwrap_or("/")) else { return };
     let data_dir = app.state::<Desktop>().data_dir.join("webview");
     let (navigating, opening) = ((app.clone(), backend.clone()), app.clone());
+    let remembered = app.state::<Desktop>().prefs.lock().expect("poisoned").window;
+    let size = remembered.unwrap_or(WindowSize { width: 1280.0, height: 820.0, maximized: false });
     let built = WebviewWindowBuilder::new(app, WINDOW, WebviewUrl::External(url))
         .title("Rustload")
-        .inner_size(1280.0, 820.0)
+        .inner_size(size.width, size.height)
         .min_inner_size(420.0, 560.0)
         .center()
         .data_directory(data_dir)
@@ -197,12 +205,37 @@ pub fn open_window(app: &AppHandle, path: Option<&str>) {
         .build();
     if let Ok(window) = built {
         fit_on_screen(&window);
+        if size.maximized {
+            let _ = window.maximize();
+        }
         let _ = window.set_focus();
     }
 }
 
-/// Keeps `window` within its screen's work area: the size it opens with, or the one remembered
-/// from another display or another scale, can be larger than this screen.
+/// Keeps the interface window's size for next time (not its position: screens change).
+fn remember_window(app: &AppHandle) {
+    let (Some(desktop), Some(window)) = (app.try_state::<Desktop>(), app.get_webview_window(WINDOW)) else {
+        return;
+    };
+    let (Ok(size), Ok(scale), Ok(maximized)) = (window.inner_size(), window.scale_factor(), window.is_maximized())
+    else {
+        return;
+    };
+    let mut prefs = desktop.prefs.lock().expect("poisoned");
+    // A maximised window keeps the size it returns to.
+    let size = match (maximized, prefs.window) {
+        (true, Some(previous)) => WindowSize { maximized: true, ..previous },
+        _ => {
+            let size = size.to_logical::<f64>(scale);
+            WindowSize { width: size.width, height: size.height, maximized }
+        }
+    };
+    prefs.window = Some(size);
+    prefs.save(&desktop.data_dir);
+}
+
+/// Opens `window` centred in its screen's work area, clear of the taskbar, and within it: the size
+/// it opens with, or the one remembered from another display, can be larger than this screen.
 pub fn fit_on_screen(window: &WebviewWindow) {
     let (Ok(Some(monitor)), Ok(outer), Ok(inner)) =
         (window.current_monitor(), window.outer_size(), window.inner_size())
@@ -210,14 +243,12 @@ pub fn fit_on_screen(window: &WebviewWindow) {
         return;
     };
     let area = monitor.work_area();
-    if outer.width <= area.size.width && outer.height <= area.size.height {
-        return;
-    }
-    // The frame and title bar stay as they are: only the content shrinks.
     let (width, height) = (outer.width.min(area.size.width), outer.height.min(area.size.height));
-    let (frame_width, frame_height) = (outer.width - inner.width, outer.height - inner.height);
-    let _ = window.set_size(PhysicalSize::new(width - frame_width, height - frame_height));
-    // Centred in the work area, clear of the taskbar.
+    if (width, height) != (outer.width, outer.height) {
+        // The frame and title bar stay as they are: only the content shrinks.
+        let (frame_width, frame_height) = (outer.width - inner.width, outer.height - inner.height);
+        let _ = window.set_size(PhysicalSize::new(width - frame_width, height - frame_height));
+    }
     let x = area.position.x + ((area.size.width - width) / 2) as i32;
     let y = area.position.y + ((area.size.height - height) / 2) as i32;
     let _ = window.set_position(PhysicalPosition::new(x, y));

@@ -131,7 +131,8 @@ fenêtre fermée. Au premier lancement, elle demande comment vous voulez l'utili
 
 Dans les deux cas, elle ouvre les liens magnet, signale les paquets terminés ou en échec par des
 notifications système et se met à jour toute seule (mises à jour signées, installées quand vous ne
-l'utilisez pas). Les installeurs ne sont pas encore signés : Windows SmartScreen demande une
+l'utilisez pas). Sous Windows, `Rustload_…_x64-portable.zip` fonctionne sans installation :
+décompressez-le où vous voulez, clé USB comprise ; son dossier `data` garde tout ce que l'app écrit. Les installeurs ne sont pas encore signés : Windows SmartScreen demande une
 confirmation (*Informations complémentaires › Exécuter quand même*) et macOS veut que l'app soit
 ouverte depuis son menu contextuel la première fois.
 

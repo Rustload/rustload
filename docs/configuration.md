@@ -560,3 +560,9 @@ project's key. It installs it once nothing is downloading and its window is not 
 shows a small progress window), or right away from the first line of the icon's menu. The `.deb`
 package is updated by downloading the new one; the AppImage, the Windows and the macOS apps update
 themselves.
+
+**Portable mode.** When a folder named `data` sits next to the program (`Rustload.exe`, or the
+AppImage file), the app keeps its settings, queue, history, window sizes and browser data there and
+writes nothing to the user profile; downloads still go to *Downloads/Rustload*. The Windows
+`…_x64-portable.zip` of each release comes with that folder. A portable copy does not update
+itself: the icon's menu offers to download the new version.
