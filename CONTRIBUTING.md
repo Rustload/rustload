@@ -66,7 +66,7 @@ Dependabot updates are not blocked on it.
 `extension/` is a Manifest V3 extension with no build step: load the folder unpacked in Chrome
 (*chrome://extensions*, developer mode) or as a temporary add-on in Firefox (*about:debugging*).
 It talks to the API with the API key and follows the same design rules as the web interface. CI
-runs `npx web-ext lint --source-dir extension`. See [extension/README.md](extension/README.md).
+runs `npx web-ext lint --self-hosted --source-dir extension` (the add-on is self-distributed). See [extension/README.md](extension/README.md).
 
 ## Desktop app
 

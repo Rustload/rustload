@@ -122,4 +122,4 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-      - run: npx --yes web-ext@8.10.0 lint --source-dir extension
+      - run: npx --yes web-ext@8.10.0 lint --self-hosted --source-dir extension

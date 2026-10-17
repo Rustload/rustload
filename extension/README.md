@@ -117,7 +117,7 @@ cd extension && zip -r -X ../rustload-extension.zip . -x README.md
 ```
 
 (Avoid Windows PowerShell 5's `Compress-Archive`: it writes `\` in paths, which Firefox rejects.)
-`npx web-ext lint --source-dir extension` checks the extension against Firefox's rules; its only
+`npx web-ext lint --self-hosted --source-dir extension` checks the extension against Firefox's rules; its only
 expected warning is that Firefox ignores `background.service_worker` (it uses
 `background.scripts`, declared next to it).
 
