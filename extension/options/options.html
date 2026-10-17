@@ -29,55 +29,82 @@
       <form id="form" novalidate autocomplete="off">
         <section class="panel" aria-labelledby="server-title">
           <header class="panel-head">
-            <h2 class="panel-title heading" id="server-title" data-i18n="optServerSection"></h2>
-            <p class="panel-intro" data-i18n="optServerIntro"></p>
+            <h2 class="panel-title heading" id="server-title" data-i18n="optConnectionSection"></h2>
+            <p class="panel-intro" data-i18n="optConnectionIntro"></p>
           </header>
           <div class="panel-body">
-            <div class="field">
-              <label class="label" for="server-url" data-i18n="optServerUrl"></label>
-              <input
-                class="input"
-                id="server-url"
-                type="url"
-                inputmode="url"
-                spellcheck="false"
-                placeholder="http://nas:8800"
-                aria-describedby="server-url-hint"
-              />
-              <p class="hint" id="server-url-hint" data-i18n="optServerUrlHint"></p>
+            <div class="mode-choice" role="radiogroup" aria-labelledby="server-title">
+              <label class="mode-option">
+                <input type="radio" name="mode" value="app" />
+                <span>
+                  <span class="mode-name" data-i18n="optModeApp"></span>
+                  <span class="mode-hint" data-i18n="optModeAppHint"></span>
+                </span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="server" />
+                <span>
+                  <span class="mode-name" data-i18n="optModeServer"></span>
+                  <span class="mode-hint" data-i18n="optModeServerHint"></span>
+                </span>
+              </label>
             </div>
 
-            <div class="field">
-              <label class="label" for="api-key" data-i18n="optApiKey"></label>
-              <div class="input-group">
-                <input
-                  class="input mono"
-                  id="api-key"
-                  type="password"
-                  spellcheck="false"
-                  autocomplete="off"
-                  aria-describedby="api-key-hint"
-                />
-                <button
-                  type="button"
-                  class="btn btn-secondary icon-btn"
-                  id="toggle-key"
-                  aria-pressed="false"
-                  data-i18n-title="optShowKey"
-                  data-i18n-aria-label="optShowKey"
-                >
-                  <span data-icon="eye"></span>
-                </button>
-              </div>
-              <p class="hint" id="api-key-hint" data-i18n="optApiKeyHint"></p>
-            </div>
-
-            <div class="test-row">
-              <button type="button" class="btn btn-secondary" id="test">
-                <span data-icon="refresh-cw" data-size="15"></span>
-                <span data-i18n="optTest"></span>
+            <div class="test-row" id="app-mode" hidden>
+              <button type="button" class="btn btn-secondary" id="connect-app">
+                <span data-icon="plug" data-size="15"></span>
+                <span data-i18n="optConnectApp"></span>
               </button>
-              <p class="test-result" id="test-result" role="status" aria-live="polite"></p>
+              <p class="test-result" id="app-result" role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="mode-fields" id="server-mode" hidden>
+              <div class="field">
+                <label class="label" for="server-url" data-i18n="optServerUrl"></label>
+                <input
+                  class="input"
+                  id="server-url"
+                  type="url"
+                  inputmode="url"
+                  spellcheck="false"
+                  placeholder="http://nas:8800"
+                  aria-describedby="server-url-hint"
+                />
+                <p class="hint" id="server-url-hint" data-i18n="optServerUrlHint"></p>
+              </div>
+
+              <div class="field">
+                <label class="label" for="api-key" data-i18n="optApiKey"></label>
+                <div class="input-group">
+                  <input
+                    class="input mono"
+                    id="api-key"
+                    type="password"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-describedby="api-key-hint"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-secondary icon-btn"
+                    id="toggle-key"
+                    aria-pressed="false"
+                    data-i18n-title="optShowKey"
+                    data-i18n-aria-label="optShowKey"
+                  >
+                    <span data-icon="eye"></span>
+                  </button>
+                </div>
+                <p class="hint" id="api-key-hint" data-i18n="optApiKeyHint"></p>
+              </div>
+
+              <div class="test-row">
+                <button type="button" class="btn btn-secondary" id="test">
+                  <span data-icon="refresh-cw" data-size="15"></span>
+                  <span data-i18n="optTest"></span>
+                </button>
+                <p class="test-result" id="test-result" role="status" aria-live="polite"></p>
+              </div>
             </div>
           </div>
         </section>

@@ -551,11 +551,61 @@
   "optionsSubtitle": {
     "message": "Extension de navigateur"
   },
-  "optServerSection": {
-    "message": "Serveur"
+  "optConnectionSection": {
+    "message": "Connexion"
   },
-  "optServerIntro": {
+  "optConnectionIntro": {
     "message": "Le Rustload auquel ce navigateur envoie les liens."
+  },
+  "optModeApp": {
+    "message": "L’app Rustload sur cet ordinateur"
+  },
+  "optModeAppHint": {
+    "message": "Se connecte en un clic : vous l’autorisez dans l’app."
+  },
+  "optModeServer": {
+    "message": "Un serveur Rustload"
+  },
+  "optModeServerHint": {
+    "message": "Sur un NAS, dans Docker ou ailleurs : son adresse et sa clé d’API."
+  },
+  "optConnectApp": {
+    "message": "Se connecter à l’app"
+  },
+  "optAppSearching": {
+    "message": "Recherche de l’app sur cet ordinateur…"
+  },
+  "optAppConfirm": {
+    "message": "Autorisez la connexion dans l’app Rustload…"
+  },
+  "optGetApp": {
+    "message": "Obtenir l’app"
+  },
+  "errAppNotRunning": {
+    "message": "L’app Rustload n’est pas ouverte sur cet ordinateur : ouvrez-la et réessayez."
+  },
+  "errAppServerHere": {
+    "message": "Un serveur Rustload répond à $URL$, pas l’app : choisissez « Un serveur Rustload » et donnez sa clé d’API.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errAppOutdated": {
+    "message": "Cette version de l’app Rustload ne sait pas encore connecter l’extension : mettez-la à jour."
+  },
+  "errAppRefused": {
+    "message": "La connexion a été refusée dans l’app Rustload."
+  },
+  "errAppTimeout": {
+    "message": "Personne n’a répondu dans l’app Rustload. Réessayez et autorisez la connexion dans l’app."
+  },
+  "errAppBusy": {
+    "message": "L’app Rustload pose déjà la question : répondez-y d’abord."
+  },
+  "errAppFailed": {
+    "message": "L’app Rustload n’a pas pu connecter ce navigateur. Réessayez."
   },
   "optServerUrl": {
     "message": "Adresse du serveur"

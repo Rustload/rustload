@@ -70,7 +70,14 @@ A temporary add-on stays until Firefox restarts.
 ## Configuration
 
 Open the extension's settings (gear icon in the popup, or right-click the toolbar icon →
-*Options*):
+*Options*) and choose how to connect:
+
+- **Rustload app on this computer**: click **Connect to the app** and allow the connection in the
+  Rustload desktop app (running on this computer, in "on this computer" mode). The extension finds
+  it on `127.0.0.1` (port 8800 or the next ones), asks it for its address and API key, and saves
+  them; the browser asks once for access to `127.0.0.1`. When the app drives a server (gateway
+  mode), choose the server instead.
+- **Rustload server**: type its address and API key:
 
 | Setting | |
 |---|---|

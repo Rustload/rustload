@@ -2,6 +2,11 @@ import { ext } from './browser.js'
 
 /** Everything the extension stores, in `storage.local` only (never synced, never logged). */
 export const DEFAULTS = Object.freeze({
+  /**
+   * `app` (the desktop app on this computer, connected by pairing) or `server` (an address and API
+   * key typed in). Both end up in `serverUrl` and `apiKey`; '' = not chosen yet.
+   */
+  mode: '',
   serverUrl: '',
   apiKey: '',
   addPaused: false,
@@ -18,6 +23,11 @@ export async function loadSettings() {
 
 export function saveSettings(values) {
   return ext.storage.local.set(values)
+}
+
+/** The connection mode: the one chosen, else `server` for a server set before modes existed. */
+export function connectionMode(settings) {
+  return settings.mode || (settings.serverUrl ? 'server' : 'app')
 }
 
 /**

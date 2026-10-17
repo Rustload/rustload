@@ -19,6 +19,8 @@ pub struct Text {
     pub start_failed: &'static str,
     pub update_body: &'static str,
     pub update_body_portable: &'static str,
+    pub pair_allow: &'static str,
+    pub pair_refuse: &'static str,
     french: bool,
 }
 
@@ -36,6 +38,8 @@ const EN: Text = Text {
     start_failed: "Rustload could not start.",
     update_body: "It installs itself when you are not using the app, or now from the icon’s menu.",
     update_body_portable: "This portable copy does not update itself: download the new one from the icon’s menu.",
+    pair_allow: "Allow",
+    pair_refuse: "Refuse",
     french: false,
 };
 
@@ -53,6 +57,8 @@ const FR: Text = Text {
     start_failed: "Rustload n’a pas pu démarrer.",
     update_body: "Elle s’installe d’elle-même quand vous n’utilisez pas l’app, ou tout de suite depuis le menu de l’icône.",
     update_body_portable: "Cette copie portable ne se met pas à jour seule\u{a0}: téléchargez la nouvelle depuis le menu de l’icône.",
+    pair_allow: "Autoriser",
+    pair_refuse: "Refuser",
     french: true,
 };
 
@@ -116,6 +122,21 @@ impl Text {
             (Some(name), true) => format!("«\u{a0}{name}\u{a0}» enregistré dans Téléchargements"),
             (None, false) => "Saved in Downloads".to_owned(),
             (None, true) => "Enregistré dans Téléchargements".to_owned(),
+        }
+    }
+
+    /// The question asked when the browser extension (of `browser`, if it says) wants to connect.
+    pub fn pair_question(&self, browser: &str) -> String {
+        let browser = if browser.is_empty() { String::new() } else { format!(" ({browser})") };
+        if self.french {
+            format!(
+                "Autoriser l’extension de navigateur{browser} à se connecter à Rustload\u{202f}? Elle pourra ajouter des \
+                 téléchargements et les suivre."
+            )
+        } else {
+            format!(
+                "Allow the browser extension{browser} to connect to Rustload? It will be able to add downloads and follow them."
+            )
         }
     }
 
@@ -194,5 +215,11 @@ mod tests {
         let finished = json!({ "level": "success", "key": "package_finished", "params": { "name": "Film" } });
         assert_eq!(EN.notice(&finished).as_deref(), Some("“Film” finished downloading"));
         assert!(EN.notice(&json!({ "level": "info", "key": "queue_finished" })).is_none());
+    }
+
+    #[test]
+    fn names_the_browser_asking_to_pair() {
+        assert!(EN.pair_question("Firefox").starts_with("Allow the browser extension (Firefox) to connect"));
+        assert!(FR.pair_question("").starts_with("Autoriser l’extension de navigateur à se connecter"));
     }
 }

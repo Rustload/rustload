@@ -551,11 +551,61 @@
   "optionsSubtitle": {
     "message": "Browser extension"
   },
-  "optServerSection": {
-    "message": "Server"
+  "optConnectionSection": {
+    "message": "Connection"
   },
-  "optServerIntro": {
+  "optConnectionIntro": {
     "message": "The Rustload this browser sends links to."
+  },
+  "optModeApp": {
+    "message": "Rustload app on this computer"
+  },
+  "optModeAppHint": {
+    "message": "Connects in one click: you allow it in the app."
+  },
+  "optModeServer": {
+    "message": "Rustload server"
+  },
+  "optModeServerHint": {
+    "message": "On a NAS, in Docker or elsewhere: its address and API key."
+  },
+  "optConnectApp": {
+    "message": "Connect to the app"
+  },
+  "optAppSearching": {
+    "message": "Looking for the app on this computer…"
+  },
+  "optAppConfirm": {
+    "message": "Allow the connection in the Rustload app…"
+  },
+  "optGetApp": {
+    "message": "Get the app"
+  },
+  "errAppNotRunning": {
+    "message": "The Rustload app isn’t running on this computer: open it and try again."
+  },
+  "errAppServerHere": {
+    "message": "A Rustload server answers at $URL$, not the app: choose “Rustload server” and give it its API key.",
+    "placeholders": {
+      "url": {
+        "content": "$1"
+      }
+    }
+  },
+  "errAppOutdated": {
+    "message": "This version of the Rustload app can’t connect the extension yet: update it."
+  },
+  "errAppRefused": {
+    "message": "The connection was refused in the Rustload app."
+  },
+  "errAppTimeout": {
+    "message": "Nobody answered in the Rustload app. Try again and allow the connection there."
+  },
+  "errAppBusy": {
+    "message": "The Rustload app is already asking: answer it first."
+  },
+  "errAppFailed": {
+    "message": "The Rustload app could not connect this browser. Try again."
   },
   "optServerUrl": {
     "message": "Server address"

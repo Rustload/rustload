@@ -8,6 +8,7 @@
 mod backend;
 mod chooser;
 mod magnets;
+mod pairing;
 mod portable;
 mod prefs;
 mod text;
@@ -143,6 +144,7 @@ fn start_local(app: &AppHandle, data_dir: &Path) -> anyhow::Result<Server> {
     let config =
         Config::desktop(data_dir.to_path_buf(), downloads, free_port(saved_port.unwrap_or(DEFAULT_PORT)), &username());
     let server = tauri::async_runtime::block_on(Server::start(config))?;
+    pairing::register(app, &server.handle());
     let port = server.handle().address().port();
     if saved_port != Some(port) {
         let mut prefs = desktop.prefs.lock().expect("poisoned");

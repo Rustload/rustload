@@ -5,13 +5,18 @@ import { errorText } from '../lib/errors.js'
 import { formatBytes } from '../lib/format.js'
 import { localize, t } from '../lib/i18n.js'
 import { hydrateIcons } from '../lib/icons.js'
+import { APP_PATTERN, findApp, pairWithApp } from '../lib/pairing.js'
 import {
+  connectionMode,
   hasHostPermission,
   loadSettings,
   originPattern,
   parseServerUrl,
   saveSettings,
 } from '../lib/settings.js'
+
+/** The desktop app's section of the README, for "the app isn't running". */
+const APP_URL = 'https://github.com/rustload/rustload#desktop-app'
 
 /** Settings as last saved. */
 let saved = null
@@ -68,8 +73,20 @@ function selectedCategory() {
   return { categoryId: Number(value), categoryName: known?.name ?? saved.categoryName }
 }
 
+function currentMode() {
+  return document.querySelector('input[name="mode"]:checked')?.value ?? 'server'
+}
+
+/** Shows the fields of the chosen mode. */
+function applyMode() {
+  const app = currentMode() === 'app'
+  $('app-mode').hidden = !app
+  $('server-mode').hidden = app
+}
+
 function formValues() {
   return {
+    mode: currentMode(),
     serverUrlText: $('server-url').value.trim(),
     apiKey: $('api-key').value.trim(),
     addPaused: $('add-paused').checked,
@@ -83,6 +100,7 @@ function isDirty() {
   const parsed = parseServerUrl(values.serverUrlText)
   const url = parsed.url ?? values.serverUrlText
   return (
+    values.mode !== connectionMode(saved) ||
     url !== saved.serverUrl ||
     values.apiKey !== saved.apiKey ||
     values.addPaused !== saved.addPaused ||
@@ -153,9 +171,10 @@ async function loadCategories({ serverUrl, apiKey }) {
 
 // ---- Connection test -----------------------------------------------------------------------
 
+/** Connection results show under the chosen mode's button. */
 function showTestResult(kind, content) {
-  const box = $('test-result')
-  box.replaceChildren()
+  const box = $(currentMode() === 'app' ? 'app-result' : 'test-result')
+  for (const id of ['app-result', 'test-result']) $(id).replaceChildren()
   if (kind === 'pending') {
     box.append(el('span', 'spinner'), el('span', '', content))
   } else if (kind === 'ok') {
@@ -201,6 +220,7 @@ async function save(serverUrl, granted) {
   const values = formValues()
   const previous = saved.serverUrl
   const next = {
+    mode: values.mode,
     serverUrl,
     apiKey: values.apiKey,
     addPaused: values.addPaused,
@@ -232,6 +252,79 @@ async function save(serverUrl, granted) {
   else showTestResult('', '')
 }
 
+// ---- Desktop app ---------------------------------------------------------------------------
+
+/** One sentence for a failed connection to the app, with a way out when there is one. */
+function pairingErrorContent(error) {
+  const text = el('span')
+  switch (error?.kind) {
+    case 'notRunning': {
+      text.append(t('errAppNotRunning'), ' ')
+      const link = el('a', '', t('optGetApp'))
+      link.href = APP_URL
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      text.append(link)
+      return text
+    }
+    case 'serverHere':
+      return t('errAppServerHere', { url: error.url })
+    case 'outdated':
+      return t('errAppOutdated')
+    case 'refused':
+      return t('errAppRefused')
+    case 'timeout':
+      return t('errAppTimeout')
+    case 'busy':
+      return t('errAppBusy')
+    default:
+      return t('errAppFailed')
+  }
+}
+
+/**
+ * Finds the app on this computer and asks it for its address and API key: the person allows it
+ * in the app. Called from a click, as the browser only shows its permission prompt then.
+ */
+function connectApp() {
+  let granted
+  try {
+    granted = ext.permissions.request({ origins: [APP_PATTERN] }).catch(() => false)
+  } catch {
+    granted = Promise.resolve(false)
+  }
+  pairApp(granted)
+}
+
+async function pairApp(granted) {
+  const button = $('connect-app')
+  button.disabled = true
+  ++testRun
+  try {
+    if (!(await granted)) {
+      showTestResult('bad', errorText({ kind: 'permission' }, 'http://127.0.0.1'))
+      return
+    }
+    showTestResult('pending', t('optAppSearching'))
+    const appUrl = await findApp()
+    showTestResult('pending', t('optAppConfirm'))
+    const { serverUrl, apiKey } = await pairWithApp(appUrl)
+    $('server-url').value = serverUrl
+    $('api-key').value = apiKey
+    await save(serverUrl, Promise.resolve(true))
+  } catch (error) {
+    const content = pairingErrorContent(error)
+    if (typeof content === 'string') showTestResult('bad', content)
+    else {
+      const box = $('app-result')
+      box.replaceChildren(iconSlot('circle-alert', { className: 'tone-bad' }), content)
+      content.classList.add('tone-bad')
+    }
+  } finally {
+    button.disabled = false
+  }
+}
+
 // ---- Init ----------------------------------------------------------------------------------
 
 async function init() {
@@ -240,6 +333,9 @@ async function init() {
   $('version').textContent = `v${ext.runtime.getManifest().version}`
 
   saved = await loadSettings()
+  const mode = document.querySelector(`input[name="mode"][value="${connectionMode(saved)}"]`)
+  if (mode) mode.checked = true
+  applyMode()
   $('server-url').value = saved.serverUrl
   $('api-key').value = saved.apiKey
   $('add-paused').checked = saved.addPaused
@@ -254,6 +350,14 @@ async function init() {
   $('server-url').addEventListener('input', () => {
     if ($('server-url').getAttribute('aria-invalid')) showUrlError(null)
   })
+
+  for (const radio of document.querySelectorAll('input[name="mode"]')) {
+    radio.addEventListener('change', () => {
+      applyMode()
+      showTestResult('', '')
+    })
+  }
+  $('connect-app').addEventListener('click', connectApp)
 
   $('toggle-key').addEventListener('click', () => {
     const input = $('api-key')
@@ -288,6 +392,11 @@ async function init() {
 
   form.addEventListener('submit', (event) => {
     event.preventDefault()
+    // The app's address and key come from pairing: connect first if this browser isn't yet.
+    if (currentMode() === 'app' && saved.mode !== 'app') {
+      connectApp()
+      return
+    }
     const parsed = parseServerUrl($('server-url').value)
     if (parsed.error && parsed.error !== 'empty') {
       showUrlError(parsed.error)
@@ -301,7 +410,7 @@ async function init() {
   })
 
   if (saved.serverUrl && (await hasHostPermission(saved.serverUrl))) runTest()
-  else if (!saved.serverUrl) $('server-url').focus()
+  else if (!saved.serverUrl) $(currentMode() === 'app' ? 'connect-app' : 'server-url').focus()
 }
 
 init()

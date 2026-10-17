@@ -12,6 +12,7 @@ mod logs;
 mod media;
 mod monitoring;
 mod packages;
+pub mod pairing;
 mod settings;
 mod stats;
 mod system;
@@ -45,12 +46,23 @@ pub struct AppState {
     pub config: Arc<Config>,
     pub logs: Arc<LogBuffer>,
     pub auth: Arc<auth::AuthState>,
+    pub pairing: Arc<pairing::Pairing>,
+    /// Where the interface listens (the configured port may be 0).
+    pub address: SocketAddr,
     device_flows: Arc<Mutex<HashMap<String, accounts::DeviceFlow>>>,
 }
 
 impl AppState {
-    pub fn new(engine: Arc<Engine>, config: Arc<Config>, logs: Arc<LogBuffer>) -> Self {
-        Self { engine, config, logs, auth: Arc::default(), device_flows: Arc::default() }
+    pub fn new(engine: Arc<Engine>, config: Arc<Config>, logs: Arc<LogBuffer>, address: SocketAddr) -> Self {
+        Self {
+            engine,
+            config,
+            logs,
+            auth: Arc::default(),
+            pairing: Arc::default(),
+            address,
+            device_flows: Arc::default(),
+        }
     }
 
     fn db(&self) -> &crate::db::Db {
@@ -64,6 +76,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/auth/setup", post(auth::setup))
         .route("/api/auth/login", post(auth::login))
         .route("/api/auth/handoff", get(auth::handoff))
+        .route("/api/desktop/pair", post(pairing::pair).options(pairing::preflight))
         .route("/api/health", get(monitoring::health));
 
     let protected = Router::new()

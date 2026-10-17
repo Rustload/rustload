@@ -31,6 +31,7 @@ Conventions:
 | POST | `/api/auth/logout` | – | `204` |
 | PUT | `/api/auth/password` | `{ current_password, new_password }` | `204`. `400 INVALID_CREDENTIALS` |
 | GET | `/api/auth/handoff?code=…&next=…` | – | Desktop app only: `303` to `next` + cookie. `401` for an unknown or used code, `404` on a server |
+| POST | `/api/desktop/pair` | `{ browser?: string }` | Desktop app only, for the browser extension: `{ api_key, url }` once allowed in the app (see below) |
 
 Password rules: at least 8 characters.
 
@@ -39,6 +40,15 @@ answers on `127.0.0.1`, its account has a random password, and the app opens the
 `/api/auth/handoff` with a single-use code valid for one minute; `next` must be a path of the
 interface (anything else redirects to `/`). There, `current_password` may be left out of
 `PUT /api/auth/password`: setting a password lets a browser on the same computer sign in.
+
+`/api/desktop/pair` connects the browser extension to the desktop app without copying the API key:
+the app asks the person (naming `browser`, as the extension reports it) and the request waits up
+to a minute for the answer. Only requests from this computer with a browser-extension `Origin`
+(`chrome-extension://`, `moz-extension://`, `safari-web-extension://`) are accepted, and only that
+origin may read the answer (CORS, preflight included). Errors: `403 NOT_AN_EXTENSION`,
+`403 PAIRING_REFUSED`, `408 PAIRING_TIMEOUT`, `409 PAIRING_IN_PROGRESS` (the app is already
+asking), `503 PAIRING_UNAVAILABLE` (the app cannot ask yet), `404` on a server.
+The key is the one in *Settings › Integrations*; regenerating it disconnects the extension.
 
 ## System / queue control
 

@@ -114,6 +114,64 @@ form {
   margin-top: 0.125rem;
 }
 
+/* ---- Connection mode ----------------------------------------------------------------------- */
+
+.mode-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+}
+
+@media (max-width: 34rem) {
+  .mode-choice {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  cursor: pointer;
+}
+
+.mode-option:hover {
+  border-color: var(--line-strong);
+}
+
+.mode-option:has(input:checked) {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.mode-option input {
+  flex-shrink: 0;
+  margin: 0.1875rem 0 0;
+  accent-color: var(--signal);
+}
+
+.mode-name {
+  display: block;
+  font-weight: 600;
+}
+
+.mode-hint {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--fg-muted);
+}
+
+.mode-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 /* ---- Connection test ----------------------------------------------------------------------- */
 
 .test-row {

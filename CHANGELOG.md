@@ -19,6 +19,9 @@ All notable changes to this project are documented here. The format follows
 - On Windows, ffmpeg (yt-dlp's recommended build) and 7-Zip install in one click from *Settings ›
   Video sites* and *Settings › Extraction*, checked against their checksums and used without a
   restart.
+- The browser extension connects to the desktop app on the same computer in one click: choose
+  *Rustload app on this computer*, allow it in the app, and it receives the address and API key.
+  *Rustload server* keeps the address and API key typed in.
 
 ### Changed
 

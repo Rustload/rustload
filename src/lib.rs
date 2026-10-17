@@ -34,7 +34,7 @@ use tracing_appender::non_blocking::WorkerGuard;
 
 use crate::{engine::Engine, events::EventBus, settings::SettingsStore};
 
-pub use crate::{config::Config, events::Event};
+pub use crate::{api::pairing::PairRequest, config::Config, events::Event};
 
 /// Debrid accounts are re-checked this often (premium expiry, quota).
 const ACCOUNT_CHECK_INTERVAL: Duration = Duration::from_secs(6 * 3600);
@@ -94,7 +94,7 @@ impl Server {
         tokio::spawn(engine::media::maintain(engine.clone()));
         let engine_task = tokio::spawn(engine.clone().run());
 
-        let state = api::AppState::new(engine.clone(), config.clone(), logs);
+        let state = api::AppState::new(engine.clone(), config.clone(), logs, address);
         let serve_task = {
             let (state, token) = (state.clone(), shutdown.clone());
             tokio::spawn(async move {
@@ -104,7 +104,7 @@ impl Server {
                 served
             })
         };
-        let handle = Handle { engine, state, address };
+        let handle = Handle { engine, state };
         Ok(Self { handle, shutdown, serve_task, engine_task, _log_guard: log_guard })
     }
 
@@ -134,13 +134,12 @@ impl Server {
 pub struct Handle {
     engine: Arc<Engine>,
     state: api::AppState,
-    address: SocketAddr,
 }
 
 impl Handle {
     /// Where the web interface listens.
     pub fn address(&self) -> SocketAddr {
-        self.address
+        self.state.address
     }
 
     /// Live events, the ones the interface receives: `stats` every second, `notice` for messages
@@ -162,6 +161,16 @@ impl Handle {
         &self.engine.config.download_root
     }
 
+    /// Lets the browser extension pair with the desktop app: `approve` shows the request to the
+    /// person and resolves to their answer (`POST /api/desktop/pair`, [`Config::desktop`] only).
+    pub fn set_pairing_approver<F, Fut>(&self, approve: F)
+    where
+        F: Fn(PairRequest) -> Fut + Send + Sync + 'static,
+        Fut: std::future::Future<Output = bool> + Send + 'static,
+    {
+        self.state.pairing.set_approver(Arc::new(move |request| Box::pin(approve(request))));
+    }
+
     /// A single-use address that opens the interface already logged in, at `path` (`/` for the
     /// dashboard, `/?add=…` to add links). Only for [`Config::desktop`], whose interface answers on
     /// this computer only.
@@ -169,7 +178,7 @@ impl Handle {
         anyhow::ensure!(self.engine.config.desktop, "login addresses are only issued to the desktop app");
         let code = self.state.auth.issue_handoff();
         let next = percent_encoding::utf8_percent_encode(path, percent_encoding::NON_ALPHANUMERIC);
-        Ok(format!("http://127.0.0.1:{}/api/auth/handoff?code={code}&next={next}", self.address.port()))
+        Ok(format!("http://127.0.0.1:{}/api/auth/handoff?code={code}&next={next}", self.address().port()))
     }
 }
 
