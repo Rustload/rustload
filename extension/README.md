@@ -55,11 +55,11 @@ card in the extensions page.
 
 ### Firefox
 
-When the release has a `rustload-firefox.xpi`, open it with Firefox (or drop it on a Firefox
-window): it is signed by Mozilla, installs in one click and updates itself. It is not listed on
-addons.mozilla.org.
+Open [rustload-firefox.xpi](https://github.com/rustload/rustload/releases/latest/download/rustload-firefox.xpi)
+with Firefox (or drop it on a Firefox window) and confirm: it is signed by Mozilla, installs in one
+click and updates itself. It is not listed on addons.mozilla.org.
 
-Otherwise, for a quick try:
+To try a copy of this folder instead (an unsigned change, for instance):
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and select `rustload-extension.zip` (or `manifest.json` in a

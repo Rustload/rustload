@@ -306,7 +306,7 @@ jobs:
             echo "- **Docker** (\`linux/amd64\`, \`linux/arm64\`): \`ghcr.io/rustload/rustload:$version\` — see the [quick start](https://github.com/rustload/rustload#quick-start-docker)."
             echo "- **Binary**: download the archive for your system below, extract it and run \`rustload\` — see [running without Docker](https://github.com/rustload/rustload#without-docker)."
             echo "- **Desktop app**: \`Rustload_${version}_x64-setup.exe\` (Windows, or \`Rustload_${version}_x64-portable.zip\` to run without installing), \`Rustload_${version}_universal.dmg\` (macOS), \`Rustload_${version}_amd64.AppImage\` or \`.deb\` (Linux) — see [the desktop app](https://github.com/rustload/rustload#desktop-app). Installed apps update themselves."
-            echo "- **Browser extension**: \`rustload-firefox.xpi\` for Firefox (when present: one click, updates itself) or \`rustload-extension.zip\` for Chrome, Edge and Brave — see [how to install it](https://github.com/rustload/rustload/blob/main/extension/README.md#install)."
+            echo "- **Browser extension**: \`rustload-firefox.xpi\` for Firefox (one click, updates itself) or \`rustload-extension.zip\` for Chrome, Edge and Brave — see [how to install it](https://github.com/rustload/rustload/blob/main/extension/README.md#install)."
             echo
             echo "\`SHA256SUMS\` lists the checksum of every file; \`gh attestation verify <file> -R rustload/rustload\` proves it was built here."
             echo
