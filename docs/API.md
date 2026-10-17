@@ -103,7 +103,7 @@ type DiagnosticCheck = {
 | `extractor` | 7-Zip found and its version (`warn`: ZIP only, or the binary does not run) |
 | `media` | yt-dlp and ffmpeg found, with their versions (`warn`: yt-dlp missing, or ffmpeg missing) |
 | `permissions` | uid/gid/umask on Linux and whether `PUID`/`PGID` were applied (`warn` when running as root) |
-| `timezone` | `TZ` and the local time (`warn`: unknown zone, or `TZ` unset while the schedule is enabled) |
+| `timezone` | `TZ` and the local time (`warn`: unknown zone, or `TZ` unset while the schedule is enabled; the desktop app uses the computer's time zone) |
 | `accounts` | Enabled debrid accounts whose last check failed (`warn`) |
 | `auth` | `warn` when auth is disabled and the request did not come through a reverse proxy (`X-Forwarded-*`/`Forwarded` headers), or when HTTPS is used without `RUSTLOAD_SECURE_COOKIES` |
 | `internet` | One HEAD request to `https://www.cloudflare.com/cdn-cgi/trace` (`warn` if it fails) |
@@ -367,7 +367,7 @@ type LinkInfo = {
 
 ## Statistics
 
-Completed files are counted when they finish, in local days (container `TZ`). Statistics do not
+Completed files are counted when they finish, in local days (the system time zone, `TZ` in Docker). Statistics do not
 depend on the history: clearing it keeps them.
 
 | Method | Path | Body | Response |
@@ -677,7 +677,7 @@ type Settings = {
   }
   schedule: {
     enabled: boolean                // when true, downloads only run inside the window
-    start: string                   // "HH:MM" local time (container TZ)
+    start: string                   // "HH:MM" local time (system time zone, TZ in Docker)
     end: string                     // "HH:MM"; end < start means the window crosses midnight
     days: boolean[]                 // 7 entries, Monday first
     speed_rules: SpeedRule[]        // at most 10, default []; apply whether `enabled` is on or not

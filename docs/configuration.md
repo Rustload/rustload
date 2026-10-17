@@ -43,7 +43,9 @@ own in *Settings › Folders*. Each category has:
 
 - a **folder**, relative to the download root (`music` → `/downloads/music`, created when needed)
   or absolute. An absolute folder is a volume you mount: with Docker, add it to the `volumes` of
-  `docker-compose.yml` first (`/srv/series:/series`), then use `/series`;
+  `docker-compose.yml` first (`/srv/series:/series`), then use `/series`. In the desktop app or
+  with the binary, it is any existing folder (`D:\Films` on Windows, where a path that does not
+  start with a drive letter is relative to the download root);
 - an optional **rule**: a regular expression, case-insensitive, matched against the package name,
   its links and its file names (`jeu\.fr` for everything coming from that site, `S\d{2}E\d{2}` for
   episodes);
@@ -90,7 +92,7 @@ For torrents, the torrent's own folder structure is kept below it.
 
 *Speed rules* lower the speed limit during time windows — "slow during the day, full speed at
 night": each rule has a start and end time, days of the week and a limit (KiB/s). Up to 10 rules;
-they use the same windows as the schedule (container time zone, end before start crosses
+they use the same windows as the schedule (the system time zone, `TZ` in Docker; end before start crosses
 midnight, equal times cover the whole day) and apply even when the schedule itself is off. When
 rules overlap, or a global speed limit is set, the lowest limit wins. Changes apply immediately,
 and the limit switches by itself when the clock enters or leaves a window.
@@ -107,7 +109,7 @@ seconds.
 ### Schedule
 
 With *Only download during a time window*, downloads run between the start and end times on the
-selected days, using the container time zone (`TZ`). A window ending before it starts crosses
+selected days, using the system time zone (`TZ` in Docker). A window ending before it starts crosses
 midnight (e.g. 23:00 → 07:00 belongs to the day it starts). Outside the window running downloads
 are paused and resume automatically, from where they stopped.
 
@@ -365,10 +367,10 @@ Other ways in:
 - **Browser extension** (Chrome, Edge, Brave, Firefox): right-click a link, a selection or a page,
   or pick links from the whole page. See [extension/README.md](../extension/README.md); it uses the
   API key.
-- **Bookmarklet**: drag *Send to Rustload* from *Settings › Integrations* to the bookmarks bar.
+- **Bookmarklet** (servers): drag *Send to Rustload* from *Settings › Integrations* to the bookmarks bar.
   It opens Rustload with the selected text, or the current page, in the grabber
   (`http://<server>:8800/?add=<link>` works too).
-- **Phone share sheet**: once Rustload is installed as an app (*Settings › Integrations*, or the
+- **Phone share sheet** (servers): once Rustload is installed as an app (*Settings › Integrations*, or the
   browser's *Install* / *Add to Home Screen* menu), it appears as a share target. Browsers only
   allow installing over HTTPS (or `localhost`), so put Rustload behind a reverse proxy with a
   certificate to use it.
@@ -376,13 +378,15 @@ Other ways in:
 
 The interface is keyboard friendly: <kbd>Ctrl</kbd>+<kbd>K</kbd> (or <kbd>/</kbd>) opens the
 command palette to search packages and run actions, <kbd>G</kbd> then a letter jumps to a page,
-<kbd>?</kbd> lists the shortcuts. *Settings › General* also offers desktop notifications for
-finished and failed packages while the tab is in the background (HTTPS only, like installing).
+<kbd>?</kbd> lists the shortcuts. In a browser, *Settings › General* also offers browser
+notifications for finished and failed packages while the tab is in the background (HTTPS only, like
+installing); the desktop app shows system notifications instead.
 
 ## Watch folder
 
 *Settings › Integrations › Watch folder*: files dropped in the folder (`/watch` by default — mount
-it as a volume) are imported automatically and then moved to `.imported/` (or `.failed/`).
+it as a volume; *Watch* in the download root in the desktop app) are imported automatically and then
+moved to `.imported/` (or `.failed/`).
 
 - `.torrent` files are sent to the debrid service.
 - `.magnet`, `.txt` and `.links` files contain one link or magnet per line. Lines starting with
@@ -398,7 +402,7 @@ authentication, so Rustload only listens on the loopback interface by default, o
 requests whose `Host` is a loopback address, and adds received links **paused** (this can be
 changed in the settings).
 
-- Same machine, without Docker: nothing to do.
+- Same machine, without Docker (the desktop app included): nothing to do.
 - Docker on the same machine: the image listens on all interfaces *of the container*; publish the
   port on the loopback interface only, `127.0.0.1:9666:9666`. **Never** publish it as `9666:9666`.
 - Remote server: forward the port from the computer running the browser, for example
@@ -446,7 +450,8 @@ done:
 
 ## Hooks
 
-*Settings › Integrations › Hooks* runs a shell command (`sh -c`) when a package finishes or fails.
+*Settings › Integrations › Hooks* runs a shell command (`sh -c`, `cmd /C` on Windows) when a package
+finishes or fails.
 Details are passed as environment variables:
 
 | Variable | Content |
@@ -476,7 +481,7 @@ curl -H "X-Api-Key: $KEY" -H "Content-Type: application/json" \
 ## Monitoring
 
 **Diagnostics**: *Settings* runs a series of checks — folders writable, disk space, 7-Zip, video
-site tools (yt-dlp and ffmpeg), file ownership (`PUID`/`PGID`), time zone, debrid accounts,
+site tools (yt-dlp and ffmpeg), file ownership (`PUID`/`PGID`, Linux servers), time zone, debrid accounts,
 authentication, internet access and system clock — and explains how to fix what is wrong. Include
 its result when reporting a problem.
 

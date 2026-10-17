@@ -52,7 +52,8 @@ ordre, et Rustload passe au suivant quand un quota est atteint.
 d'autres sites grâce à yt-dlp, plus toute page que yt-dlp connaît si *Essayer yt-dlp sur les
 autres pages web* est activé : choix de la qualité ou audio seul, playlists complètes, sous-titres,
 SponsorBlock. Les flux HLS (`.m3u8`) deviennent un seul fichier vidéo et les listes M3U leurs
-liens. yt-dlp se met à jour tout seul ; ffmpeg est inclus dans l'image Docker.
+liens. yt-dlp se met à jour tout seul ; ffmpeg est inclus dans l'image Docker et s'installe en un
+clic dans l'app Windows.
 
 **Des fichiers fiables.** Extraction automatique (RAR, 7z, ZIP, tar, multi-volumes, liste de mots de
 passe), vérification des sommes de contrôle (SFV, MD5, SHA) avec une marque « vérifié », catégories
@@ -128,6 +129,9 @@ fenêtre fermée. Au premier lancement, elle demande comment vous voulez l'utili
   depuis les paramètres.
 - **Avec votre serveur Rustload** : l'app pilote le Rustload de votre NAS ou de votre serveur Docker
   avec son adresse et sa clé d'API (*Paramètres › Intégrations*), sans ouvrir de navigateur.
+
+L'extension de navigateur se connecte en un clic à l'app du même ordinateur : choisissez *L'app
+Rustload sur cet ordinateur* dans ses réglages et autorisez-la dans l'app.
 
 Dans les deux cas, elle ouvre les liens magnet, signale les paquets terminés ou en échec par des
 notifications système et se met à jour toute seule (mises à jour signées, installées quand vous ne

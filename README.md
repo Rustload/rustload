@@ -49,7 +49,7 @@ falls back to the next one when a quota runs out.
 twenty other sites through yt-dlp, plus any page yt-dlp supports once *Try yt-dlp on other web
 pages* is on: pick a quality or audio only, grab whole playlists, subtitles, SponsorBlock. HLS
 streams (`.m3u8`) become one video file and M3U lists their links. yt-dlp updates itself; ffmpeg
-ships in the Docker image.
+ships in the Docker image and installs in one click in the Windows app.
 
 **Files you can trust.** Automatic extraction (RAR, 7z, ZIP, tar, multi-volume, password lists),
 checksum verification (SFV, MD5, SHA) with a "verified" mark, categories that pick their folder by
@@ -120,6 +120,9 @@ window is closed. On first start it asks how you want to use it:
   can start with the computer. 7-Zip and ffmpeg install in one click from the settings on Windows.
 - **With your Rustload server**: the app drives the Rustload of your NAS or Docker server with its
   address and API key (*Settings › Integrations*), without opening a browser.
+
+The browser extension connects to the app on the same computer in one click: choose *Rustload app
+on this computer* in its settings and allow it in the app.
 
 Either way it opens magnet links, turns finished or failed packages into system notifications and
 updates itself (signed updates, installed when you are not using it). On Windows,
