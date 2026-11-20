@@ -54,7 +54,7 @@ url = "2"
 zip = { version = "9", default-features = false, features = ["deflate", "deflate64", "bzip2", "lzma", "aes-crypto"] }
 
 [target.'cfg(unix)'.dependencies]
-nix = { version = "0.31", features = ["user", "fs", "signal", "process"] }
+nix = { version = "0.32", features = ["user", "fs", "signal", "process"] }
 
 [dev-dependencies]
 tempfile = "3"
