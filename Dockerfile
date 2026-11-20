@@ -17,7 +17,7 @@ COPY web/ ./
 RUN pnpm build
 
 # --- Static binary (musl) ----------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM rust:1-bookworm@sha256:e12566d5abc17a0da741628782cdb504b68b8961f5bfcf677936bf3e8b32de29 AS build
+FROM --platform=$BUILDPLATFORM rust:1-bookworm@sha256:ade39a710ef85f3506cffcfec3e8a24ba090badef1dff2fb798f71d878833fea AS build
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3-pip \
  && rm -rf /var/lib/apt/lists/* \
